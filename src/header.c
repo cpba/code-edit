@@ -69,11 +69,4 @@ void init_header(chandler *handler)
 	handler_header->button_preferences = gtk_button_new_from_icon_name("preferences-system-symbolic", GTK_ICON_SIZE_BUTTON);
 	gtk_header_bar_pack_end(GTK_HEADER_BAR(handler_header->header_bar), GTK_WIDGET(handler_header->button_preferences));
 	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_header->button_preferences))), "circular");
-	/* Revealer button users */
-	handler_header->revealer_button_users = gtk_revealer_new();
-	gtk_header_bar_pack_end(GTK_HEADER_BAR(handler_header->header_bar), GTK_WIDGET(handler_header->revealer_button_users));
-	/* Button users */
-	handler_header->button_users = gtk_button_new_from_icon_name("system-users-symbolic", GTK_ICON_SIZE_BUTTON);
-	gtk_header_bar_pack_end(GTK_HEADER_BAR(handler_header->header_bar), GTK_WIDGET(handler_header->button_users));
-	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_header->button_users))), "circular");
 }

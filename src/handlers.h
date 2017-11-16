@@ -66,8 +66,6 @@ struct chandler_header {
 	GtkWidget *button_save_document;
 	GtkWidget *button_save_as_document;
 	GtkWidget *button_preferences;
-	GtkWidget *revealer_button_users;
-	GtkWidget *button_users;
 };
 
 struct chandler_frame_tree_view {
