@@ -24,7 +24,7 @@ static void button_new_document_clicked(GtkWidget *widget, gpointer user_data)
 {
 	chandler *handler = user_data;
 	cdocument *document = new_document(handler, NULL);
-	new_view(handler, document);
+	add_view_for_document(handler, document);
 }
 
 static void button_save_document_clicked(GtkWidget *widget, gpointer user_data)
@@ -33,7 +33,7 @@ static void button_save_document_clicked(GtkWidget *widget, gpointer user_data)
 	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook));
 	GtkWidget *scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), current_page);
 	cview *view = g_object_get_data(G_OBJECT(scrolled_window), "view");
-	if (view->document->file_name) {
+	if (view->document->file) {
 		g_print("Save existing file.\n");
 	} else {
 		g_print("Save file.\n");

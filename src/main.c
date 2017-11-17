@@ -22,6 +22,37 @@
 #include <gtk/gtk.h>
 #include "handlers.h"
 
+void document_load_progress(goffset current_num_bytes, goffset total_num_bytes, gpointer user_data)
+{
+	cdocument *document = user_data;
+	cview *view = NULL;
+	double percentage = (double)current_num_bytes / (double)total_num_bytes;
+	GList *element = g_list_first(document->views);
+	while (element) {
+		view = element->data;
+		gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), TRUE);
+		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(view->progress_bar), percentage);
+		element = g_list_next(element);
+	}
+}
+
+void document_load_progress_end(gpointer user_data)
+{
+	cdocument *document = user_data;
+	cview *view = NULL;
+	GList *element = g_list_first(document->views);
+	while (element) {
+		view = element->data;
+		gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), FALSE);
+		element = g_list_next(element);
+	}
+}
+
+void document_async_ready(GObject *source_object, GAsyncResult *res, gpointer user_data)
+{
+	gtk_source_file_loader_load_finish(GTK_SOURCE_FILE_LOADER(source_object), res, NULL);
+}
+
 cdocument *new_document(chandler *handler, gchar *file_name)
 {
 	GtkSourceLanguageManager *source_language_manager = gtk_source_language_manager_get_default();
@@ -29,23 +60,57 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 	document->source_buffer = gtk_source_buffer_new(NULL);
 	document->source_language = gtk_source_language_manager_get_language(GTK_SOURCE_LANGUAGE_MANAGER(source_language_manager), "c");
 	gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(document->source_buffer), document->source_language);
+	document->source_file = gtk_source_file_new();
 	if (file_name) {
-		document->file_name = g_string_new(file_name);
+		document->file = g_file_new_for_path(file_name);
+		gtk_source_file_set_location(GTK_SOURCE_FILE(document->source_file), G_FILE(document->file));
+		document->source_file_loader = gtk_source_file_loader_new(GTK_SOURCE_BUFFER(document->source_buffer), GTK_SOURCE_FILE(document->source_file));
+		gtk_source_file_loader_load_async(GTK_SOURCE_FILE_LOADER(document->source_file_loader),
+			G_PRIORITY_LOW,
+			NULL,
+			document_load_progress,
+			document,
+			document_load_progress_end,
+			document_async_ready,
+			document);
 	} else {
-		document->file_name = NULL;
+		document->file = NULL;
 	}
 	document->views = NULL;
 	handler->documents = g_list_append(handler->documents, document);
 	return document;
 }
 
-cview *new_view(chandler *handler, cdocument *document)
+void add_view_for_document(chandler *handler, cdocument *document)
 {
 	cview *view = malloc(sizeof(cview));
-	GtkWidget *box_tab = NULL;
+	GtkWidget *box = NULL;
 	view->document = document;
+	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	g_object_set_data(G_OBJECT(box), "view", view);
+	/* Revealer info bar */
+	view->revealer_progress_bar = gtk_revealer_new();
+	gtk_container_add(GTK_CONTAINER(box), GTK_WIDGET(view->revealer_progress_bar));
+	gtk_widget_set_hexpand(GTK_WIDGET(view->revealer_progress_bar), TRUE);
+	gtk_widget_set_vexpand(GTK_WIDGET(view->revealer_progress_bar), FALSE);
+	gtk_widget_set_halign(GTK_WIDGET(view->revealer_progress_bar), GTK_ALIGN_FILL);
+	gtk_widget_set_valign(GTK_WIDGET(view->revealer_progress_bar), GTK_ALIGN_START);
+	gtk_revealer_set_transition_type(GTK_REVEALER(view->revealer_progress_bar), GTK_REVEALER_TRANSITION_TYPE_SLIDE_DOWN);
+	/* Progress bar */
+	view->progress_bar = gtk_progress_bar_new();
+	gtk_container_add(GTK_CONTAINER(view->revealer_progress_bar), GTK_WIDGET(view->progress_bar));
+	gtk_widget_set_hexpand(GTK_WIDGET(view->progress_bar), TRUE);
+	gtk_widget_set_vexpand(GTK_WIDGET(view->progress_bar), FALSE);
+	gtk_widget_set_halign(GTK_WIDGET(view->progress_bar), GTK_ALIGN_FILL);
+	gtk_widget_set_valign(GTK_WIDGET(view->progress_bar), GTK_ALIGN_CENTER);
+	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(view->progress_bar), 0.5);
+	/* Source view */
 	view->scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-	g_object_set_data(G_OBJECT(view->scrolled_window), "view", view);
+	gtk_container_add(GTK_CONTAINER(box), GTK_WIDGET(view->scrolled_window));
+	gtk_widget_set_hexpand(GTK_WIDGET(view->scrolled_window), TRUE);
+	gtk_widget_set_vexpand(GTK_WIDGET(view->scrolled_window), TRUE);
+	gtk_widget_set_halign(GTK_WIDGET(view->scrolled_window), GTK_ALIGN_FILL);
+	gtk_widget_set_valign(GTK_WIDGET(view->scrolled_window), GTK_ALIGN_FILL);
 	view->source_view = gtk_source_view_new_with_buffer(GTK_SOURCE_BUFFER(document->source_buffer));
 	gtk_container_add(GTK_CONTAINER(view->scrolled_window), GTK_WIDGET(view->source_view));
 	gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(document->source_buffer), document->source_language);
@@ -53,25 +118,26 @@ cview *new_view(chandler *handler, cdocument *document)
 	gtk_source_view_set_show_right_margin(GTK_SOURCE_VIEW(view->source_view), TRUE);
 	gtk_text_view_set_monospace(GTK_TEXT_VIEW(view->source_view), TRUE);
 	/* Tab */
-	box_tab = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	view->box_tab = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	/* Label */
 	view->label_tab = gtk_label_new("");
+	gtk_container_add(GTK_CONTAINER(view->box_tab), GTK_WIDGET(view->label_tab));
+	gtk_widget_set_hexpand(GTK_WIDGET(view->label_tab), TRUE);
+	gtk_widget_set_vexpand(GTK_WIDGET(view->label_tab), TRUE);
+	gtk_widget_set_halign(GTK_WIDGET(view->label_tab), GTK_ALIGN_FILL);
+	gtk_widget_set_valign(GTK_WIDGET(view->label_tab), GTK_ALIGN_FILL);
 	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(view->label_tab))), GTK_STYLE_CLASS_DIM_LABEL);
 	gtk_label_set_use_markup(GTK_LABEL(view->label_tab), TRUE);
-	if (document->file_name) {
-		gchar *basename = g_path_get_basename(document->file_name->str);
+	if (document->file) {
+		gchar *basename = g_file_get_basename(G_FILE(document->file));
 		gtk_label_set_markup(GTK_LABEL(view->label_tab), basename);
 		g_free(basename);
 	} else {
 		gtk_label_set_markup(GTK_LABEL(view->label_tab), "<i>Untitled</i>");
 	}
-	gtk_container_add(GTK_CONTAINER(box_tab), GTK_WIDGET(view->label_tab));
-	gtk_widget_set_hexpand(GTK_WIDGET(view->label_tab), TRUE);
-	gtk_widget_set_vexpand(GTK_WIDGET(view->label_tab), TRUE);
-	gtk_widget_set_halign(GTK_WIDGET(view->label_tab), GTK_ALIGN_FILL);
-	gtk_widget_set_valign(GTK_WIDGET(view->label_tab), GTK_ALIGN_FILL);
 	/* Button close */
 	view->button_close_tab = gtk_button_new_from_icon_name("window-close-symbolic", GTK_ICON_SIZE_BUTTON);
-	gtk_container_add(GTK_CONTAINER(box_tab), GTK_WIDGET(view->button_close_tab));
+	gtk_container_add(GTK_CONTAINER(view->box_tab), GTK_WIDGET(view->button_close_tab));
 	gtk_widget_set_hexpand(GTK_WIDGET(view->button_close_tab), FALSE);
 	gtk_widget_set_vexpand(GTK_WIDGET(view->button_close_tab), TRUE);
 	gtk_widget_set_halign(GTK_WIDGET(view->button_close_tab), GTK_ALIGN_END);
@@ -79,13 +145,12 @@ cview *new_view(chandler *handler, cdocument *document)
 	gtk_button_set_relief(GTK_BUTTON(view->button_close_tab), GTK_RELIEF_NONE);
 	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(view->button_close_tab))), "circular");
 	/* Add to notebook */
-	gtk_notebook_append_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), GTK_WIDGET(view->scrolled_window), GTK_WIDGET(box_tab));
-	gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(handler->handler_frame_view.notebook), GTK_WIDGET(view->scrolled_window), TRUE);
+	gtk_notebook_append_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), GTK_WIDGET(box), GTK_WIDGET(view->box_tab));
+	gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(handler->handler_frame_view.notebook), GTK_WIDGET(box), TRUE);
 	gtk_widget_show_all(GTK_WIDGET(handler->handler_frame_view.notebook));
-	gtk_widget_show_all(GTK_WIDGET(box_tab));
+	gtk_widget_show_all(GTK_WIDGET(view->box_tab));
 	/* Update document */
 	document->views = g_list_append(document->views, view);
-	return view;
 }
 
 static void activate_show_about(GSimpleAction *simple, GVariant *parameter, gpointer user_data)

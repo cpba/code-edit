@@ -40,18 +40,19 @@ typedef struct chandler chandler;
 
 struct cdocument {
 	gboolean preview;
-	gboolean loading;
-	gboolean saving;
-	GString *file_name;
-	GtkSourceBuffer *source_buffer;
-	GtkSourceLanguage *source_language;
+	GFile *file;
+	GtkSourceFile *source_file;
 	GtkSourceFileLoader *source_file_loader;
 	GtkSourceFileSaver *source_file_saver;
+	GtkSourceBuffer *source_buffer;
+	GtkSourceLanguage *source_language;
 	GList *views;
 };
 
 struct cview {
 	cdocument *document;
+	GtkWidget *revealer_progress_bar;
+	GtkWidget *progress_bar;
 	GtkWidget *scrolled_window;
 	GtkWidget *source_view;
 	GtkWidget *box_tab;
@@ -121,7 +122,7 @@ struct chandler {
 };
 
 cdocument *new_document(chandler *handler, gchar *file_name);
-cview *new_view(chandler *handler, cdocument *document);
+void add_view_for_document(chandler *handler, cdocument *document);
 
 void init_frame_tree_view(chandler *handler);
 void init_frame_view(chandler *handler);
