@@ -30,19 +30,25 @@ static void button_new_document_clicked(GtkWidget *widget, gpointer user_data)
 static void button_open_document_clicked(GtkWidget *widget, gpointer user_data)
 {
 	chandler *handler = user_data;
+	gint response = 0;
 	GtkWidget *dialog = gtk_file_chooser_dialog_new("Open",
 		GTK_WINDOW(handler->handler_window.window),
 		GTK_FILE_CHOOSER_ACTION_OPEN,
 		"Open", GTK_RESPONSE_OK,
 		NULL);
-	gint responce = gtk_dialog_run(GTK_DIALOG(dialog));
-	if (responce == GTK_RESPONSE_OK) {
-		gchar *file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-		if (file_name) {
+	gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), TRUE);
+	response = gtk_dialog_run(GTK_DIALOG(dialog));
+	if (response == GTK_RESPONSE_OK) {
+		GSList *file_names = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
+		GSList *file_name_iter = file_names;
+		while (file_name_iter) {
+			gchar *file_name = file_name_iter->data;
 			cdocument *document = new_document(handler, file_name);
 			add_view_for_document(handler, document);
 			g_free(file_name);
+			file_name_iter = file_name_iter->next;
 		}
+		g_slist_free(file_names);
 	}
 	gtk_widget_destroy(GTK_WIDGET(dialog));
 }
