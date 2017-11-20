@@ -64,6 +64,7 @@ struct chandler_header {
 	chandler *handler;
 	GtkWidget *header_bar;
 	GtkWidget *button_new_document;
+	GtkWidget *button_open_document;
 	GtkWidget *button_save_document;
 	GtkWidget *button_save_as_document;
 	GtkWidget *button_preferences;

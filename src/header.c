@@ -27,6 +27,26 @@ static void button_new_document_clicked(GtkWidget *widget, gpointer user_data)
 	add_view_for_document(handler, document);
 }
 
+static void button_open_document_clicked(GtkWidget *widget, gpointer user_data)
+{
+	chandler *handler = user_data;
+	GtkWidget *dialog = gtk_file_chooser_dialog_new("Open",
+		GTK_WINDOW(handler->handler_window.window),
+		GTK_FILE_CHOOSER_ACTION_OPEN,
+		"Open", GTK_RESPONSE_OK,
+		NULL);
+	gint responce = gtk_dialog_run(GTK_DIALOG(dialog));
+	if (responce == GTK_RESPONSE_OK) {
+		gchar *file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+		if (file_name) {
+			cdocument *document = new_document(handler, file_name);
+			add_view_for_document(handler, document);
+			g_free(file_name);
+		}
+	}
+	gtk_widget_destroy(GTK_WIDGET(dialog));
+}
+
 static void button_save_document_clicked(GtkWidget *widget, gpointer user_data)
 {
 	chandler *handler = user_data;
@@ -60,6 +80,11 @@ void init_header(chandler *handler)
 	gtk_header_bar_pack_start(GTK_HEADER_BAR(handler_header->header_bar), GTK_WIDGET(handler_header->button_new_document));
 	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_header->button_new_document))), "circular");
 	g_signal_connect(handler_header->button_new_document, "clicked", G_CALLBACK(button_new_document_clicked), handler);
+	/* Button open document */
+	handler_header->button_open_document = gtk_button_new_from_icon_name("document-open-symbolic", GTK_ICON_SIZE_BUTTON);
+	gtk_header_bar_pack_start(GTK_HEADER_BAR(handler_header->header_bar), GTK_WIDGET(handler_header->button_open_document));
+	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_header->button_open_document))), "circular");
+	g_signal_connect(handler_header->button_open_document, "clicked", G_CALLBACK(button_open_document_clicked), handler);
 	/* Button save document */
 	handler_header->button_save_document = gtk_button_new_from_icon_name("document-save-symbolic", GTK_ICON_SIZE_BUTTON);
 	gtk_header_bar_pack_start(GTK_HEADER_BAR(handler_header->header_bar), GTK_WIDGET(handler_header->button_save_document));
