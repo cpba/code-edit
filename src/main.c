@@ -50,7 +50,16 @@ void document_load_progress_end(gpointer user_data)
 
 void document_async_ready(GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
+	cdocument *document = user_data;
 	gtk_source_file_loader_load_finish(GTK_SOURCE_FILE_LOADER(source_object), res, NULL);
+	g_object_unref(G_OBJECT(document->source_file_loader));
+}
+
+void free_document(cdocument *document)
+{
+	g_object_unref(G_OBJECT(document->file));
+	g_object_unref(G_OBJECT(document->source_file));
+	free(document);
 }
 
 cdocument *new_document(chandler *handler, gchar *file_name)
@@ -81,16 +90,57 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 	return document;
 }
 
+static void button_close_tab_clicked(GtkWidget *widget, gpointer user_data)
+{
+	chandler *handler = user_data;
+	cview *view = g_object_get_data(G_OBJECT(widget), "view");
+	close_view(handler, view);
+}
+
+void close_view(chandler *handler, cview *view)
+{
+	gboolean close = FALSE;
+	gint views_count = g_list_length(view->document->views);
+	if (views_count > 1) {
+		close = TRUE;
+	} else {
+		if (gtk_text_buffer_get_modified(GTK_TEXT_BUFFER(view->document->source_buffer))) {
+			gint response = 0;
+			GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(handler->handler_window.window),
+				GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR,
+				GTK_MESSAGE_QUESTION,
+				GTK_BUTTONS_OK_CANCEL,
+				"Close the tab without saving the modifications?");
+			response = gtk_dialog_run(GTK_DIALOG(dialog));
+			if (response == GTK_RESPONSE_OK) {
+				close = TRUE;
+			}
+			gtk_widget_destroy(GTK_WIDGET(dialog));
+		} else {
+			close = TRUE;
+		}
+	}
+	if (close) {
+		view->document->views = g_list_remove(view->document->views, view);
+		gtk_widget_destroy(GTK_WIDGET(view->box));
+	}
+	if (g_list_length(view->document->views) == 0) {
+		free_document(view->document);
+	}
+	if (close) {
+		free(view);
+	}
+}
+
 void add_view_for_document(chandler *handler, cdocument *document)
 {
 	cview *view = malloc(sizeof(cview));
-	GtkWidget *box = NULL;
 	view->document = document;
-	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	g_object_set_data(G_OBJECT(box), "view", view);
+	view->box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	g_object_set_data(G_OBJECT(view->box), "view", view);
 	/* Revealer info bar */
 	view->revealer_progress_bar = gtk_revealer_new();
-	gtk_container_add(GTK_CONTAINER(box), GTK_WIDGET(view->revealer_progress_bar));
+	gtk_container_add(GTK_CONTAINER(view->box), GTK_WIDGET(view->revealer_progress_bar));
 	gtk_widget_set_hexpand(GTK_WIDGET(view->revealer_progress_bar), TRUE);
 	gtk_widget_set_vexpand(GTK_WIDGET(view->revealer_progress_bar), FALSE);
 	gtk_widget_set_halign(GTK_WIDGET(view->revealer_progress_bar), GTK_ALIGN_FILL);
@@ -106,7 +156,7 @@ void add_view_for_document(chandler *handler, cdocument *document)
 	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(view->progress_bar), 0.5);
 	/* Source view */
 	view->scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-	gtk_container_add(GTK_CONTAINER(box), GTK_WIDGET(view->scrolled_window));
+	gtk_container_add(GTK_CONTAINER(view->box), GTK_WIDGET(view->scrolled_window));
 	gtk_widget_set_hexpand(GTK_WIDGET(view->scrolled_window), TRUE);
 	gtk_widget_set_vexpand(GTK_WIDGET(view->scrolled_window), TRUE);
 	gtk_widget_set_halign(GTK_WIDGET(view->scrolled_window), GTK_ALIGN_FILL);
@@ -144,9 +194,11 @@ void add_view_for_document(chandler *handler, cdocument *document)
 	gtk_widget_set_valign(GTK_WIDGET(view->button_close_tab), GTK_ALIGN_FILL);
 	gtk_button_set_relief(GTK_BUTTON(view->button_close_tab), GTK_RELIEF_NONE);
 	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(view->button_close_tab))), "circular");
+	g_object_set_data(G_OBJECT(view->button_close_tab), "view", view);
+	g_signal_connect(view->button_close_tab, "clicked", G_CALLBACK(button_close_tab_clicked), handler);
 	/* Add to notebook */
-	gtk_notebook_append_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), GTK_WIDGET(box), GTK_WIDGET(view->box_tab));
-	gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(handler->handler_frame_view.notebook), GTK_WIDGET(box), TRUE);
+	gtk_notebook_append_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), GTK_WIDGET(view->box), GTK_WIDGET(view->box_tab));
+	gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(handler->handler_frame_view.notebook), GTK_WIDGET(view->box), TRUE);
 	gtk_widget_show_all(GTK_WIDGET(handler->handler_frame_view.notebook));
 	gtk_widget_show_all(GTK_WIDGET(view->box_tab));
 	/* Update document */

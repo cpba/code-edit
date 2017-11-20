@@ -51,6 +51,7 @@ struct cdocument {
 
 struct cview {
 	cdocument *document;
+	GtkWidget *box;
 	GtkWidget *revealer_progress_bar;
 	GtkWidget *progress_bar;
 	GtkWidget *scrolled_window;
@@ -123,6 +124,7 @@ struct chandler {
 };
 
 cdocument *new_document(chandler *handler, gchar *file_name);
+void close_view(chandler *handler, cview *view);
 void add_view_for_document(chandler *handler, cdocument *document);
 
 void init_frame_tree_view(chandler *handler);
