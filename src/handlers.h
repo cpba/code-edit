@@ -35,6 +35,7 @@ typedef struct chandler_header chandler_header;
 typedef struct chandler_frame_tree_view chandler_frame_tree_view;
 typedef struct chandler_frame_view chandler_frame_view;
 typedef struct chandler_frame_preferences chandler_frame_preferences;
+typedef struct chandler_statusbar chandler_statusbar;
 typedef struct chandler_window chandler_window;
 typedef struct chandler chandler;
 
@@ -105,12 +106,15 @@ struct chandler_frame_preferences {
 	GtkSizeGroup *size_group_input;
 };
 
+struct chandler_statusbar {
+	GtkWidget *revealer_statusbar;
+	GtkWidget *statusbar;
+};
+
 struct chandler_window {
 	GtkWidget *window;
 	GtkWidget *box;
 	GtkWidget *box_frames;
-	GtkWidget *revealer_statusbar;
-	GtkWidget *statusbar;
 };
 
 struct chandler {
@@ -118,6 +122,7 @@ struct chandler {
 	GList *documents;
 	chandler_window handler_window;
 	chandler_header handler_header;
+	chandler_statusbar handler_statusbar;
 	chandler_frame_preferences handler_frame_preferences;
 	chandler_frame_view handler_frame_view;
 	chandler_frame_tree_view handler_frame_tree_view;

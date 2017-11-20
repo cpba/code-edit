@@ -22,23 +22,23 @@
 
 void init_statusbar(chandler *handler)
 {
-	chandler_window *handler_window = &handler->handler_window;
+	chandler_statusbar *handler_statusbar = &handler->handler_statusbar;
 	/* Revealer status bar */
-	handler_window->revealer_statusbar = gtk_revealer_new();
-	gtk_widget_set_name(GTK_WIDGET(handler_window->revealer_statusbar), "revealer_statusbar");
-	gtk_container_add(GTK_CONTAINER(handler_window->box), GTK_WIDGET(handler_window->revealer_statusbar));
-	gtk_widget_set_hexpand(GTK_WIDGET(handler_window->revealer_statusbar), TRUE);
-	gtk_widget_set_vexpand(GTK_WIDGET(handler_window->revealer_statusbar), FALSE);
-	gtk_widget_set_halign(GTK_WIDGET(handler_window->revealer_statusbar), GTK_ALIGN_FILL);
-	gtk_widget_set_valign(GTK_WIDGET(handler_window->revealer_statusbar), GTK_ALIGN_FILL);
-	gtk_revealer_set_transition_type(GTK_REVEALER(handler_window->revealer_statusbar), GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP);
+	handler_statusbar->revealer_statusbar = gtk_revealer_new();
+	gtk_widget_set_name(GTK_WIDGET(handler_statusbar->revealer_statusbar), "revealer_statusbar");
+	gtk_container_add(GTK_CONTAINER(handler->handler_window.box), GTK_WIDGET(handler_statusbar->revealer_statusbar));
+	gtk_widget_set_hexpand(GTK_WIDGET(handler_statusbar->revealer_statusbar), TRUE);
+	gtk_widget_set_vexpand(GTK_WIDGET(handler_statusbar->revealer_statusbar), FALSE);
+	gtk_widget_set_halign(GTK_WIDGET(handler_statusbar->revealer_statusbar), GTK_ALIGN_FILL);
+	gtk_widget_set_valign(GTK_WIDGET(handler_statusbar->revealer_statusbar), GTK_ALIGN_FILL);
+	gtk_revealer_set_transition_type(GTK_REVEALER(handler_statusbar->revealer_statusbar), GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP);
 	/* Statusbar */
-	handler_window->statusbar = gtk_action_bar_new();
-	gtk_widget_set_name(GTK_WIDGET(handler_window->statusbar), "statusbar");
-	gtk_container_add(GTK_CONTAINER(handler_window->revealer_statusbar), GTK_WIDGET(handler_window->statusbar));
-	gtk_widget_set_hexpand(GTK_WIDGET(handler_window->statusbar), TRUE);
-	gtk_widget_set_vexpand(GTK_WIDGET(handler_window->statusbar), FALSE);
-	gtk_widget_set_halign(GTK_WIDGET(handler_window->statusbar), GTK_ALIGN_FILL);
-	gtk_widget_set_valign(GTK_WIDGET(handler_window->statusbar), GTK_ALIGN_FILL);
-	gtk_revealer_set_reveal_child(GTK_REVEALER(handler_window->revealer_statusbar), TRUE);
+	handler_statusbar->statusbar = gtk_action_bar_new();
+	gtk_widget_set_name(GTK_WIDGET(handler_statusbar->statusbar), "statusbar");
+	gtk_container_add(GTK_CONTAINER(handler_statusbar->revealer_statusbar), GTK_WIDGET(handler_statusbar->statusbar));
+	gtk_widget_set_hexpand(GTK_WIDGET(handler_statusbar->statusbar), TRUE);
+	gtk_widget_set_vexpand(GTK_WIDGET(handler_statusbar->statusbar), FALSE);
+	gtk_widget_set_halign(GTK_WIDGET(handler_statusbar->statusbar), GTK_ALIGN_FILL);
+	gtk_widget_set_valign(GTK_WIDGET(handler_statusbar->statusbar), GTK_ALIGN_FILL);
+	gtk_revealer_set_reveal_child(GTK_REVEALER(handler_statusbar->revealer_statusbar), TRUE);
 }
