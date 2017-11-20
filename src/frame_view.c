@@ -20,7 +20,7 @@
 #include <gtk/gtk.h>
 #include "handlers.h"
 
-void notebook_switch_page(GtkNotebook *notebook, GtkWidget *page, guint page_num, gpointer user_data)
+void notebook_switch_page(GtkWidget *widget, GtkWidget *page, guint page_num, gpointer user_data)
 {
 	chandler *handler = user_data;
 	cview *view = g_object_get_data(G_OBJECT(page), "view");
@@ -35,6 +35,7 @@ void notebook_switch_page(GtkNotebook *notebook, GtkWidget *page, guint page_num
 		gtk_header_bar_set_title(GTK_HEADER_BAR(handler->handler_header.header_bar), "Untitled");
 		gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->handler_header.header_bar), NULL);
 	}
+	update_statusbar(handler, view);
 }
 
 void init_frame_view(chandler *handler)

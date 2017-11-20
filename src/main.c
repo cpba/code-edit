@@ -22,7 +22,27 @@
 #include <gtk/gtk.h>
 #include "handlers.h"
 
-void document_load_progress(goffset current_num_bytes, goffset total_num_bytes, gpointer user_data)
+void update_statusbar(chandler *handler, cview *view)
+{
+	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook));
+	if (current_page > -1) {
+		GtkWidget *page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), current_page);
+		if (!view) {
+			view = g_object_get_data(G_OBJECT(page), "view");
+		}
+		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_statusbar.revealer_statusbar), TRUE);
+		if (view->document->encoding) {
+			gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.label_encoding),
+				gtk_source_encoding_get_charset(view->document->encoding));
+			gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_statusbar.revealer_encoding), TRUE);
+		}
+	} else {
+		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_statusbar.revealer_encoding), FALSE);
+		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_statusbar.revealer_statusbar), FALSE);
+	}
+}
+
+static void document_load_progress(goffset current_num_bytes, goffset total_num_bytes, gpointer user_data)
 {
 	cdocument *document = user_data;
 	cview *view = NULL;
@@ -36,29 +56,33 @@ void document_load_progress(goffset current_num_bytes, goffset total_num_bytes, 
 	}
 }
 
-void document_load_progress_end(gpointer user_data)
+static void document_async_ready(GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
 	cdocument *document = user_data;
+	chandler *handler = document->handler;
 	cview *view = NULL;
 	GList *element = g_list_first(document->views);
+	gtk_source_file_loader_load_finish(GTK_SOURCE_FILE_LOADER(source_object), res, NULL);
+	document->encoding = gtk_source_file_get_encoding(GTK_SOURCE_FILE(document->source_file));
+	g_object_unref(G_OBJECT(document->source_file_loader));
+	document->source_file_loader = NULL;
 	while (element) {
 		view = element->data;
 		gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), FALSE);
 		element = g_list_next(element);
 	}
-}
-
-void document_async_ready(GObject *source_object, GAsyncResult *res, gpointer user_data)
-{
-	cdocument *document = user_data;
-	gtk_source_file_loader_load_finish(GTK_SOURCE_FILE_LOADER(source_object), res, NULL);
-	g_object_unref(G_OBJECT(document->source_file_loader));
+	update_statusbar(handler, NULL);
 }
 
 void free_document(cdocument *document)
 {
-	g_object_unref(G_OBJECT(document->file));
-	g_object_unref(G_OBJECT(document->source_file));
+	if (document->file) {
+		g_object_unref(G_OBJECT(document->file));
+	}
+	if (document->source_file) {
+		g_object_unref(G_OBJECT(document->source_file));
+	}
+	g_object_unref(G_OBJECT(document->source_buffer));
 	free(document);
 }
 
@@ -66,6 +90,8 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 {
 	GtkSourceLanguageManager *source_language_manager = gtk_source_language_manager_get_default();
 	cdocument *document = malloc(sizeof(cdocument));
+	document->handler = handler;
+	document->encoding = NULL;
 	document->source_buffer = gtk_source_buffer_new(NULL);
 	document->source_language = gtk_source_language_manager_get_language(GTK_SOURCE_LANGUAGE_MANAGER(source_language_manager), "c");
 	gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(document->source_buffer), document->source_language);
@@ -79,7 +105,7 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 			NULL,
 			document_load_progress,
 			document,
-			document_load_progress_end,
+			NULL,
 			document_async_ready,
 			document);
 	} else {
@@ -95,6 +121,7 @@ static void button_close_tab_clicked(GtkWidget *widget, gpointer user_data)
 	chandler *handler = user_data;
 	cview *view = g_object_get_data(G_OBJECT(widget), "view");
 	close_view(handler, view);
+	update_statusbar(handler, NULL);
 }
 
 void close_view(chandler *handler, cview *view)
@@ -135,6 +162,7 @@ void close_view(chandler *handler, cview *view)
 void add_view_for_document(chandler *handler, cdocument *document)
 {
 	cview *view = malloc(sizeof(cview));
+	gint page_index = 0;
 	view->document = document;
 	view->box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	g_object_set_data(G_OBJECT(view->box), "view", view);
@@ -197,12 +225,14 @@ void add_view_for_document(chandler *handler, cdocument *document)
 	g_object_set_data(G_OBJECT(view->button_close_tab), "view", view);
 	g_signal_connect(view->button_close_tab, "clicked", G_CALLBACK(button_close_tab_clicked), handler);
 	/* Add to notebook */
-	gtk_notebook_append_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), GTK_WIDGET(view->box), GTK_WIDGET(view->box_tab));
+	page_index = gtk_notebook_append_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), GTK_WIDGET(view->box), GTK_WIDGET(view->box_tab));
 	gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(handler->handler_frame_view.notebook), GTK_WIDGET(view->box), TRUE);
 	gtk_widget_show_all(GTK_WIDGET(handler->handler_frame_view.notebook));
 	gtk_widget_show_all(GTK_WIDGET(view->box_tab));
 	/* Update document */
 	document->views = g_list_append(document->views, view);
+	/* Show page */
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), page_index);
 }
 
 static void activate_show_about(GSimpleAction *simple, GVariant *parameter, gpointer user_data)

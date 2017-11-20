@@ -45,9 +45,11 @@ struct cdocument {
 	GtkSourceFile *source_file;
 	GtkSourceFileLoader *source_file_loader;
 	GtkSourceFileSaver *source_file_saver;
+	GtkSourceEncoding *encoding;
 	GtkSourceBuffer *source_buffer;
 	GtkSourceLanguage *source_language;
 	GList *views;
+	chandler *handler;
 };
 
 struct cview {
@@ -108,7 +110,9 @@ struct chandler_frame_preferences {
 
 struct chandler_statusbar {
 	GtkWidget *revealer_statusbar;
-	GtkWidget *statusbar;
+	GtkWidget *action_bar;
+	GtkWidget *revealer_encoding;
+	GtkWidget *label_encoding;
 };
 
 struct chandler_window {
@@ -128,6 +132,8 @@ struct chandler {
 	chandler_frame_tree_view handler_frame_tree_view;
 };
 
+void update_statusbar(chandler *handler, cview *view);
+void free_document(cdocument *document);
 cdocument *new_document(chandler *handler, gchar *file_name);
 void close_view(chandler *handler, cview *view);
 void add_view_for_document(chandler *handler, cdocument *document);

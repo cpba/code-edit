@@ -33,12 +33,28 @@ void init_statusbar(chandler *handler)
 	gtk_widget_set_valign(GTK_WIDGET(handler_statusbar->revealer_statusbar), GTK_ALIGN_FILL);
 	gtk_revealer_set_transition_type(GTK_REVEALER(handler_statusbar->revealer_statusbar), GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP);
 	/* Statusbar */
-	handler_statusbar->statusbar = gtk_action_bar_new();
-	gtk_widget_set_name(GTK_WIDGET(handler_statusbar->statusbar), "statusbar");
-	gtk_container_add(GTK_CONTAINER(handler_statusbar->revealer_statusbar), GTK_WIDGET(handler_statusbar->statusbar));
-	gtk_widget_set_hexpand(GTK_WIDGET(handler_statusbar->statusbar), TRUE);
-	gtk_widget_set_vexpand(GTK_WIDGET(handler_statusbar->statusbar), FALSE);
-	gtk_widget_set_halign(GTK_WIDGET(handler_statusbar->statusbar), GTK_ALIGN_FILL);
-	gtk_widget_set_valign(GTK_WIDGET(handler_statusbar->statusbar), GTK_ALIGN_FILL);
+	handler_statusbar->action_bar = gtk_action_bar_new();
+	gtk_widget_set_name(GTK_WIDGET(handler_statusbar->action_bar), "action_bar");
+	gtk_container_add(GTK_CONTAINER(handler_statusbar->revealer_statusbar), GTK_WIDGET(handler_statusbar->action_bar));
+	gtk_widget_set_hexpand(GTK_WIDGET(handler_statusbar->action_bar), TRUE);
+	gtk_widget_set_vexpand(GTK_WIDGET(handler_statusbar->action_bar), FALSE);
+	gtk_widget_set_halign(GTK_WIDGET(handler_statusbar->action_bar), GTK_ALIGN_FILL);
+	gtk_widget_set_valign(GTK_WIDGET(handler_statusbar->action_bar), GTK_ALIGN_FILL);
 	gtk_revealer_set_reveal_child(GTK_REVEALER(handler_statusbar->revealer_statusbar), TRUE);
+	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_statusbar->action_bar))), GTK_STYLE_CLASS_FLAT);
+	/* Revealer encoding */
+	handler_statusbar->revealer_encoding = gtk_revealer_new();
+	gtk_widget_set_name(GTK_WIDGET(handler_statusbar->revealer_encoding), "revealer_encoding");
+	gtk_action_bar_pack_end(GTK_ACTION_BAR(handler_statusbar->action_bar), GTK_WIDGET(handler_statusbar->revealer_encoding));
+	gtk_revealer_set_transition_type(GTK_REVEALER(handler_statusbar->revealer_encoding), GTK_REVEALER_TRANSITION_TYPE_SLIDE_LEFT);
+	/* Label encoding */
+	handler_statusbar->label_encoding = gtk_button_new();
+	gtk_widget_set_name(GTK_WIDGET(handler_statusbar->label_encoding), "label_encoding");
+	gtk_container_add(GTK_CONTAINER(handler_statusbar->revealer_encoding), GTK_WIDGET(handler_statusbar->label_encoding));
+	gtk_widget_set_hexpand(GTK_WIDGET(handler_statusbar->label_encoding), FALSE);
+	gtk_widget_set_vexpand(GTK_WIDGET(handler_statusbar->label_encoding), FALSE);
+	gtk_widget_set_halign(GTK_WIDGET(handler_statusbar->label_encoding), GTK_ALIGN_FILL);
+	gtk_widget_set_valign(GTK_WIDGET(handler_statusbar->label_encoding), GTK_ALIGN_CENTER);
+	gtk_widget_show_all(handler_statusbar->revealer_encoding);
+	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_statusbar->label_encoding))), GTK_STYLE_CLASS_FLAT);
 }
