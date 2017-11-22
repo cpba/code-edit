@@ -23,6 +23,7 @@
 void update_statusbar(chandler *handler, cview *view)
 {
 	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook));
+	GtkSourceLanguage *source_language = NULL;
 	if (current_page > -1) {
 		GtkWidget *page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), current_page);
 		if (!view) {
@@ -30,12 +31,17 @@ void update_statusbar(chandler *handler, cview *view)
 		}
 		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_statusbar.revealer_statusbar), TRUE);
 		if (view->document->encoding) {
-			gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.label_encoding),
+			gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.button_encoding),
 				gtk_source_encoding_get_charset(view->document->encoding));
-			gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_statusbar.revealer_encoding), TRUE);
+		}
+		source_language = gtk_source_buffer_get_language(GTK_SOURCE_BUFFER(view->document->source_buffer));
+		if (source_language) {
+			gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.button_language),
+				gtk_source_language_get_name(GTK_SOURCE_LANGUAGE(source_language)));
+		} else {
+			gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.button_language), "Plain Text");
 		}
 	} else {
-		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_statusbar.revealer_encoding), FALSE);
 		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_statusbar.revealer_statusbar), FALSE);
 	}
 }
@@ -62,19 +68,22 @@ void init_statusbar(chandler *handler)
 	gtk_widget_set_valign(GTK_WIDGET(handler_statusbar->action_bar), GTK_ALIGN_FILL);
 	gtk_revealer_set_reveal_child(GTK_REVEALER(handler_statusbar->revealer_statusbar), TRUE);
 	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_statusbar->action_bar))), GTK_STYLE_CLASS_FLAT);
-	/* Revealer encoding */
-	handler_statusbar->revealer_encoding = gtk_revealer_new();
-	gtk_widget_set_name(GTK_WIDGET(handler_statusbar->revealer_encoding), "revealer_encoding");
-	gtk_action_bar_pack_end(GTK_ACTION_BAR(handler_statusbar->action_bar), GTK_WIDGET(handler_statusbar->revealer_encoding));
-	gtk_revealer_set_transition_type(GTK_REVEALER(handler_statusbar->revealer_encoding), GTK_REVEALER_TRANSITION_TYPE_SLIDE_LEFT);
-	/* Label encoding */
-	handler_statusbar->label_encoding = gtk_button_new();
-	gtk_widget_set_name(GTK_WIDGET(handler_statusbar->label_encoding), "label_encoding");
-	gtk_container_add(GTK_CONTAINER(handler_statusbar->revealer_encoding), GTK_WIDGET(handler_statusbar->label_encoding));
-	gtk_widget_set_hexpand(GTK_WIDGET(handler_statusbar->label_encoding), FALSE);
-	gtk_widget_set_vexpand(GTK_WIDGET(handler_statusbar->label_encoding), FALSE);
-	gtk_widget_set_halign(GTK_WIDGET(handler_statusbar->label_encoding), GTK_ALIGN_FILL);
-	gtk_widget_set_valign(GTK_WIDGET(handler_statusbar->label_encoding), GTK_ALIGN_CENTER);
-	gtk_widget_show_all(handler_statusbar->revealer_encoding);
-	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_statusbar->label_encoding))), GTK_STYLE_CLASS_FLAT);
+	/* Button language */
+	handler_statusbar->button_language = gtk_menu_button_new();
+	gtk_widget_set_name(GTK_WIDGET(handler_statusbar->button_language), "button_language");
+	gtk_action_bar_pack_end(GTK_ACTION_BAR(handler_statusbar->action_bar), GTK_WIDGET(handler_statusbar->button_language));
+	gtk_widget_set_hexpand(GTK_WIDGET(handler_statusbar->button_language), FALSE);
+	gtk_widget_set_vexpand(GTK_WIDGET(handler_statusbar->button_language), FALSE);
+	gtk_widget_set_halign(GTK_WIDGET(handler_statusbar->button_language), GTK_ALIGN_FILL);
+	gtk_widget_set_valign(GTK_WIDGET(handler_statusbar->button_language), GTK_ALIGN_CENTER);
+	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_statusbar->button_language))), GTK_STYLE_CLASS_FLAT);
+	/* Button encoding */
+	handler_statusbar->button_encoding = gtk_menu_button_new();
+	gtk_widget_set_name(GTK_WIDGET(handler_statusbar->button_encoding), "button_encoding");
+	gtk_action_bar_pack_end(GTK_ACTION_BAR(handler_statusbar->action_bar), GTK_WIDGET(handler_statusbar->button_encoding));
+	gtk_widget_set_hexpand(GTK_WIDGET(handler_statusbar->button_encoding), FALSE);
+	gtk_widget_set_vexpand(GTK_WIDGET(handler_statusbar->button_encoding), FALSE);
+	gtk_widget_set_halign(GTK_WIDGET(handler_statusbar->button_encoding), GTK_ALIGN_FILL);
+	gtk_widget_set_valign(GTK_WIDGET(handler_statusbar->button_encoding), GTK_ALIGN_CENTER);
+	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_statusbar->button_encoding))), GTK_STYLE_CLASS_FLAT);
 }

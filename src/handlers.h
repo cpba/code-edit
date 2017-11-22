@@ -47,7 +47,6 @@ struct cdocument {
 	GtkSourceFileSaver *source_file_saver;
 	GtkSourceEncoding *encoding;
 	GtkSourceBuffer *source_buffer;
-	GtkSourceLanguage *source_language;
 	GList *views;
 	chandler *handler;
 };
@@ -111,8 +110,8 @@ struct chandler_frame_preferences {
 struct chandler_statusbar {
 	GtkWidget *revealer_statusbar;
 	GtkWidget *action_bar;
-	GtkWidget *revealer_encoding;
-	GtkWidget *label_encoding;
+	GtkWidget *button_encoding;
+	GtkWidget *button_language;
 };
 
 struct chandler_window {

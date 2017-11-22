@@ -135,6 +135,9 @@ void free_document(cdocument *document)
 cdocument *new_document(chandler *handler, gchar *file_name)
 {
 	GtkSourceLanguageManager *source_language_manager = gtk_source_language_manager_get_default();
+	GtkSourceLanguage *source_language = NULL;
+	gboolean result_uncertain = FALSE;
+	gchar *content_type = NULL;
 	cdocument *document = get_document_by_file_name(handler, file_name);
 	if (!document) {
 		document = malloc(sizeof(cdocument));
@@ -147,10 +150,18 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 		g_object_set_data(G_OBJECT(document->source_buffer), "document", document);
 		g_signal_connect(document->source_buffer, "changed", G_CALLBACK(source_buffer_changed), handler);
 		g_signal_connect(document->source_buffer, "modified-changed", G_CALLBACK(source_buffer_changed), handler);
-		document->source_language = gtk_source_language_manager_get_language(GTK_SOURCE_LANGUAGE_MANAGER(source_language_manager), "c");
-		gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(document->source_buffer), document->source_language);
 		document->source_file = gtk_source_file_new();
 		if (file_name) {
+			content_type = g_content_type_guess(file_name, NULL, 0, &result_uncertain);
+			if (result_uncertain) {
+				g_free(content_type);
+				content_type = NULL;
+			}
+			source_language = gtk_source_language_manager_guess_language(GTK_SOURCE_LANGUAGE_MANAGER(source_language_manager), file_name, content_type);
+			if (content_type) {
+				g_free(content_type);
+			}
+			gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(document->source_buffer), source_language);
 			document->file = g_file_new_for_path(file_name);
 			gtk_source_file_set_location(GTK_SOURCE_FILE(document->source_file), G_FILE(document->file));
 			document->source_file_loader = gtk_source_file_loader_new(GTK_SOURCE_BUFFER(document->source_buffer), GTK_SOURCE_FILE(document->source_file));
@@ -246,7 +257,6 @@ void add_view_for_document(chandler *handler, cdocument *document)
 	gtk_widget_set_valign(GTK_WIDGET(view->scrolled_window), GTK_ALIGN_FILL);
 	view->source_view = gtk_source_view_new_with_buffer(GTK_SOURCE_BUFFER(document->source_buffer));
 	gtk_container_add(GTK_CONTAINER(view->scrolled_window), GTK_WIDGET(view->source_view));
-	gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(document->source_buffer), document->source_language);
 	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(view->source_view), TRUE);
 	gtk_source_view_set_show_right_margin(GTK_SOURCE_VIEW(view->source_view), TRUE);
 	gtk_text_view_set_monospace(GTK_TEXT_VIEW(view->source_view), TRUE);
