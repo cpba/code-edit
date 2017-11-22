@@ -66,7 +66,6 @@ void init_statusbar(chandler *handler)
 	gtk_widget_set_vexpand(GTK_WIDGET(handler_statusbar->action_bar), FALSE);
 	gtk_widget_set_halign(GTK_WIDGET(handler_statusbar->action_bar), GTK_ALIGN_FILL);
 	gtk_widget_set_valign(GTK_WIDGET(handler_statusbar->action_bar), GTK_ALIGN_FILL);
-	gtk_revealer_set_reveal_child(GTK_REVEALER(handler_statusbar->revealer_statusbar), TRUE);
 	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_statusbar->action_bar))), GTK_STYLE_CLASS_FLAT);
 	/* Button language */
 	handler_statusbar->button_language = gtk_menu_button_new();

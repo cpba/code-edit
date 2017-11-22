@@ -166,6 +166,4 @@ void init_frame_view(chandler *handler)
 	gtk_widget_set_halign(GTK_WIDGET(handler_frame_view->button_replace_all), GTK_ALIGN_FILL);
 	gtk_widget_set_valign(GTK_WIDGET(handler_frame_view->button_replace_all), GTK_ALIGN_CENTER);
 	gtk_size_group_add_widget(GTK_SIZE_GROUP(size_group), GTK_WIDGET(handler_frame_view->button_replace_all));
-	/* Reveal search and replace */
-	gtk_revealer_set_reveal_child(GTK_REVEALER(handler_frame_view->revealer_search_and_replace), TRUE);
 }
