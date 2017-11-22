@@ -61,7 +61,7 @@ static void document_load_progress(goffset current_num_bytes, goffset total_num_
 {
 	cdocument *document = user_data;
 	cview *view = NULL;
-	double percentage = (double)current_num_bytes / (double)total_num_bytes;
+	gdouble percentage = (gdouble)current_num_bytes / (gdouble)total_num_bytes;
 	GList *element = g_list_first(document->views);
 	while (element) {
 		view = element->data;

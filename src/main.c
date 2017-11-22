@@ -67,7 +67,7 @@ static void application_shutdown(GtkApplication *application, gpointer user_data
 	/* Save session */
 }
 
-int main(int argc, char **args)
+int main(void)
 {
 	chandler *handler = malloc(sizeof(chandler));
 	memset(handler, 0, sizeof(chandler));
