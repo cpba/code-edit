@@ -28,6 +28,7 @@ void update_document_views_status(cdocument *document)
 	gchar *basename = NULL;
 	while (view_iter) {
 		view = view_iter->data;
+		/* Update tab label */
 		if (!document->source_file_loader && gtk_text_buffer_get_modified(GTK_TEXT_BUFFER(document->source_buffer))) {
 			text = g_string_new("• ");
 		} else {
@@ -46,6 +47,12 @@ void update_document_views_status(cdocument *document)
 		}
 		gtk_label_set_markup(GTK_LABEL(view->label_tab), text->str);
 		g_string_free(text, TRUE);
+		/* Update if document is editable */
+		if (document->source_file_loader || document->source_file_saver) {
+			gtk_text_view_set_editable(GTK_TEXT_VIEW(view->source_view), FALSE);
+		} else {
+			gtk_text_view_set_editable(GTK_TEXT_VIEW(view->source_view), TRUE);
+		}
 		view_iter = view_iter->next;
 	}
 }
@@ -79,6 +86,7 @@ static void document_async_ready(GObject *source_object, GAsyncResult *res, gpoi
 		gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), FALSE);
 		element = g_list_next(element);
 	}
+	update_document_views_status(document);
 	update_statusbar(handler, NULL);
 }
 
@@ -154,6 +162,7 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 		} else {
 			document->file = NULL;
 		}
+		document->source_file_saver = NULL;
 		document->views = NULL;
 		handler->documents = g_list_append(handler->documents, document);
 	}
