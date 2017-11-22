@@ -86,33 +86,99 @@ void free_document(cdocument *document)
 	free(document);
 }
 
+static void update_document_views_status(cdocument *document)
+{
+	cview *view = NULL;
+	GList *view_iter = document->views;
+	GString *text = NULL;
+	gchar *basename = NULL;
+	while (view_iter) {
+		view = view_iter->data;
+		if (!document->source_file_loader && gtk_text_buffer_get_modified(GTK_TEXT_BUFFER(document->source_buffer))) {
+			text = g_string_new("• ");
+		} else {
+			text = g_string_new("");
+		}
+		if (document->file) {
+			basename = g_file_get_basename(G_FILE(document->file));
+		} else {
+			basename = NULL;
+		}
+		if (basename) {
+			text = g_string_append(text, basename);
+			g_free(basename);
+		} else {
+			text = g_string_append(text, "<i>Untitled</i>");
+		}
+		gtk_label_set_markup(GTK_LABEL(view->label_tab), text->str);
+		g_string_free(text, TRUE);
+		view_iter = view_iter->next;
+	}
+}
+
+static void source_buffer_changed(GtkTextBuffer *text_buffer, gpointer user_data)
+{
+	cdocument *document = g_object_get_data(G_OBJECT(text_buffer), "document");
+	update_document_views_status(document);
+}
+
+static cdocument *get_document_by_file_name(chandler *handler, gchar *file_name)
+{
+	gint i = 0;
+	gchar *path = NULL;
+	cdocument *result = NULL;
+	cdocument *document = NULL;
+	GList *document_iter = handler->documents;
+	while (document_iter && !result) {
+		document = document_iter->data;
+		path = NULL;
+		if (document->file) {
+			path = g_file_get_path(G_FILE(document->file));
+		}
+		if (path) {
+			if (g_strcmp0(file_name, path) == 0) {
+				result = document;
+			}
+			g_free(path);
+		}
+		document_iter = document_iter->next;
+	}
+	return result;
+}
+
 cdocument *new_document(chandler *handler, gchar *file_name)
 {
 	GtkSourceLanguageManager *source_language_manager = gtk_source_language_manager_get_default();
-	cdocument *document = malloc(sizeof(cdocument));
-	document->handler = handler;
-	document->encoding = NULL;
-	document->source_buffer = gtk_source_buffer_new(NULL);
-	document->source_language = gtk_source_language_manager_get_language(GTK_SOURCE_LANGUAGE_MANAGER(source_language_manager), "c");
-	gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(document->source_buffer), document->source_language);
-	document->source_file = gtk_source_file_new();
-	if (file_name) {
-		document->file = g_file_new_for_path(file_name);
-		gtk_source_file_set_location(GTK_SOURCE_FILE(document->source_file), G_FILE(document->file));
-		document->source_file_loader = gtk_source_file_loader_new(GTK_SOURCE_BUFFER(document->source_buffer), GTK_SOURCE_FILE(document->source_file));
-		gtk_source_file_loader_load_async(GTK_SOURCE_FILE_LOADER(document->source_file_loader),
-			G_PRIORITY_LOW,
-			NULL,
-			document_load_progress,
-			document,
-			NULL,
-			document_async_ready,
-			document);
-	} else {
-		document->file = NULL;
+	cdocument *document = get_document_by_file_name(handler, file_name);
+	if (!document) {
+		document = malloc(sizeof(cdocument));
+		document->handler = handler;
+		document->encoding = NULL;
+		document->source_buffer = gtk_source_buffer_new(NULL);
+		g_object_set_data(G_OBJECT(document->source_buffer), "document", document);
+		g_signal_connect(document->source_buffer, "changed", G_CALLBACK(source_buffer_changed), handler);
+		g_signal_connect(document->source_buffer, "modified-changed", G_CALLBACK(source_buffer_changed), handler);
+		document->source_language = gtk_source_language_manager_get_language(GTK_SOURCE_LANGUAGE_MANAGER(source_language_manager), "c");
+		gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(document->source_buffer), document->source_language);
+		document->source_file = gtk_source_file_new();
+		if (file_name) {
+			document->file = g_file_new_for_path(file_name);
+			gtk_source_file_set_location(GTK_SOURCE_FILE(document->source_file), G_FILE(document->file));
+			document->source_file_loader = gtk_source_file_loader_new(GTK_SOURCE_BUFFER(document->source_buffer), GTK_SOURCE_FILE(document->source_file));
+			gtk_source_file_loader_load_async(GTK_SOURCE_FILE_LOADER(document->source_file_loader),
+				G_PRIORITY_LOW,
+				NULL,
+				document_load_progress,
+				document,
+				NULL,
+				document_async_ready,
+				document);
+		} else {
+			document->file = NULL;
+		}
+		document->views = NULL;
+		handler->documents = g_list_append(handler->documents, document);
 	}
-	document->views = NULL;
-	handler->documents = g_list_append(handler->documents, document);
 	return document;
 }
 
@@ -207,13 +273,7 @@ void add_view_for_document(chandler *handler, cdocument *document)
 	gtk_widget_set_valign(GTK_WIDGET(view->label_tab), GTK_ALIGN_FILL);
 	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(view->label_tab))), GTK_STYLE_CLASS_DIM_LABEL);
 	gtk_label_set_use_markup(GTK_LABEL(view->label_tab), TRUE);
-	if (document->file) {
-		gchar *basename = g_file_get_basename(G_FILE(document->file));
-		gtk_label_set_markup(GTK_LABEL(view->label_tab), basename);
-		g_free(basename);
-	} else {
-		gtk_label_set_markup(GTK_LABEL(view->label_tab), "<i>Untitled</i>");
-	}
+	gtk_label_set_markup(GTK_LABEL(view->label_tab), "");
 	/* Button close */
 	view->button_close_tab = gtk_button_new_from_icon_name("window-close-symbolic", GTK_ICON_SIZE_BUTTON);
 	gtk_container_add(GTK_CONTAINER(view->box_tab), GTK_WIDGET(view->button_close_tab));
@@ -232,6 +292,7 @@ void add_view_for_document(chandler *handler, cdocument *document)
 	gtk_widget_show_all(GTK_WIDGET(view->box_tab));
 	/* Update document */
 	document->views = g_list_append(document->views, view);
+	update_document_views_status(document);
 	/* Show page */
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), page_index);
 }
