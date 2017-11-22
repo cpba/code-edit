@@ -152,6 +152,7 @@ void close_view(chandler *handler, cview *view)
 		gtk_widget_destroy(GTK_WIDGET(view->box));
 	}
 	if (g_list_length(view->document->views) == 0) {
+		handler->documents = g_list_remove(handler->documents, view->document);
 		free_document(view->document);
 	}
 	if (close) {
