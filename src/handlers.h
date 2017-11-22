@@ -133,6 +133,7 @@ struct chandler {
 };
 
 void update_statusbar(chandler *handler, cview *view);
+void update_document_views_status(cdocument *document);
 void free_document(cdocument *document);
 cdocument *new_document(chandler *handler, gchar *file_name);
 void close_view(chandler *handler, cview *view);
