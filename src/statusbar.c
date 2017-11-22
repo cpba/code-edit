@@ -49,6 +49,19 @@ void update_statusbar(chandler *handler, cview *view)
 void init_statusbar(chandler *handler)
 {
 	chandler_statusbar *handler_statusbar = &handler->handler_statusbar;
+	GtkWidget *popover = NULL;
+	GtkWidget *scrolled_window = NULL;
+	GtkWidget *box = NULL;
+	GtkWidget *tree_view = NULL;
+	GtkListStore *list_store = NULL;
+	GtkTreeIter tree_iter;
+	GtkWidget *entry = NULL;
+	GtkCellRenderer *cell_renderer = NULL;
+	GtkTreeViewColumn *tree_view_column = NULL;
+	GtkSourceLanguage *source_language = NULL;
+	GtkSourceLanguageManager *source_language_manager = gtk_source_language_manager_get_default();
+	const gchar *id = NULL;
+	const gchar * const *language_ids = gtk_source_language_manager_get_language_ids(GTK_SOURCE_LANGUAGE_MANAGER(source_language_manager));
 	/* Revealer status bar */
 	handler_statusbar->revealer_statusbar = gtk_revealer_new();
 	gtk_widget_set_name(GTK_WIDGET(handler_statusbar->revealer_statusbar), "revealer_statusbar");
@@ -76,6 +89,50 @@ void init_statusbar(chandler *handler)
 	gtk_widget_set_halign(GTK_WIDGET(handler_statusbar->button_language), GTK_ALIGN_FILL);
 	gtk_widget_set_valign(GTK_WIDGET(handler_statusbar->button_language), GTK_ALIGN_CENTER);
 	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_statusbar->button_language))), GTK_STYLE_CLASS_FLAT);
+	/* Popover language */
+	popover = gtk_popover_new(GTK_WIDGET(handler_statusbar->button_language));
+	gtk_menu_button_set_popover(GTK_MENU_BUTTON(handler_statusbar->button_language), GTK_WIDGET(popover));
+	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, MINOR_SPACING);
+	gtk_container_add(GTK_CONTAINER(popover), GTK_WIDGET(box));
+	gtk_widget_set_hexpand(GTK_WIDGET(box), TRUE);
+	gtk_widget_set_vexpand(GTK_WIDGET(box), FALSE);
+	gtk_widget_set_halign(GTK_WIDGET(box), GTK_ALIGN_FILL);
+	gtk_widget_set_valign(GTK_WIDGET(box), GTK_ALIGN_FILL);
+	gtk_container_set_border_width(GTK_CONTAINER(box), MEDIUM_SPACING);
+	entry = gtk_search_entry_new();
+	gtk_container_add(GTK_CONTAINER(box), GTK_WIDGET(entry));
+	gtk_widget_set_hexpand(GTK_WIDGET(box), TRUE);
+	gtk_widget_set_vexpand(GTK_WIDGET(box), FALSE);
+	gtk_widget_set_halign(GTK_WIDGET(box), GTK_ALIGN_FILL);
+	gtk_widget_set_valign(GTK_WIDGET(box), GTK_ALIGN_CENTER);
+	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
+	gtk_container_add(GTK_CONTAINER(box), GTK_WIDGET(scrolled_window));
+	gtk_widget_set_hexpand(GTK_WIDGET(box), TRUE);
+	gtk_widget_set_vexpand(GTK_WIDGET(box), FALSE);
+	gtk_widget_set_halign(GTK_WIDGET(box), GTK_ALIGN_FILL);
+	gtk_widget_set_valign(GTK_WIDGET(box), GTK_ALIGN_FILL);
+	gtk_widget_set_size_request(GTK_WIDGET(scrolled_window), -1, LIST_VIEW_LANGUAGE_MIN_HEIGHT);
+	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_window), GTK_SHADOW_IN);
+	list_store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
+	while (language_ids[0] != NULL) {
+		id = language_ids[0];
+		source_language = gtk_source_language_manager_get_language(GTK_SOURCE_LANGUAGE_MANAGER(source_language_manager), id);
+		gtk_list_store_append(GTK_LIST_STORE(list_store), &tree_iter);
+		gtk_list_store_set(GTK_LIST_STORE(list_store),
+			&tree_iter,
+			0, id,
+			1, gtk_source_language_get_name(GTK_SOURCE_LANGUAGE(source_language)),
+			-1);
+		language_ids++;
+	}
+	tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(list_store));
+	gtk_container_add(GTK_CONTAINER(scrolled_window), GTK_WIDGET(tree_view));
+	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tree_view), FALSE);
+	cell_renderer = gtk_cell_renderer_text_new();
+	tree_view_column = gtk_tree_view_column_new_with_attributes("Name", cell_renderer, "text", 1, NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), GTK_TREE_VIEW_COLUMN(tree_view_column));
+	gtk_tree_view_column_set_visible(GTK_TREE_VIEW_COLUMN(tree_view_column), TRUE);
+	gtk_widget_show_all(GTK_WIDGET(box));
 	/* Button encoding */
 	handler_statusbar->button_encoding = gtk_menu_button_new();
 	gtk_widget_set_name(GTK_WIDGET(handler_statusbar->button_encoding), "button_encoding");
