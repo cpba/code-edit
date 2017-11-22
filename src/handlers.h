@@ -132,13 +132,17 @@ struct chandler {
 	chandler_frame_tree_view handler_frame_tree_view;
 };
 
+/* Statusbar */
 void update_statusbar(chandler *handler, cview *view);
+
+/* Document */
 void update_document_views_status(cdocument *document);
 void free_document(cdocument *document);
 cdocument *new_document(chandler *handler, gchar *file_name);
 void close_view(chandler *handler, cview *view);
 void add_view_for_document(chandler *handler, cdocument *document);
 
+/* Initialization */
 void init_frame_tree_view(chandler *handler);
 void init_frame_view(chandler *handler);
 void init_header(chandler *handler);

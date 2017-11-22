@@ -22,26 +22,6 @@
 #include <gtk/gtk.h>
 #include "handlers.h"
 
-void update_statusbar(chandler *handler, cview *view)
-{
-	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook));
-	if (current_page > -1) {
-		GtkWidget *page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), current_page);
-		if (!view) {
-			view = g_object_get_data(G_OBJECT(page), "view");
-		}
-		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_statusbar.revealer_statusbar), TRUE);
-		if (view->document->encoding) {
-			gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.label_encoding),
-				gtk_source_encoding_get_charset(view->document->encoding));
-			gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_statusbar.revealer_encoding), TRUE);
-		}
-	} else {
-		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_statusbar.revealer_encoding), FALSE);
-		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_statusbar.revealer_statusbar), FALSE);
-	}
-}
-
 static void activate_show_about(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
 {
 	/* Show about frame */
