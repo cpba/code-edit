@@ -140,6 +140,9 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 		document = malloc(sizeof(cdocument));
 		document->handler = handler;
 		document->encoding = NULL;
+		document->views = NULL;
+		document->source_file_loader = NULL;
+		document->source_file_saver = NULL;
 		document->source_buffer = gtk_source_buffer_new(NULL);
 		g_object_set_data(G_OBJECT(document->source_buffer), "document", document);
 		g_signal_connect(document->source_buffer, "changed", G_CALLBACK(source_buffer_changed), handler);
@@ -162,8 +165,6 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 		} else {
 			document->file = NULL;
 		}
-		document->source_file_saver = NULL;
-		document->views = NULL;
 		handler->documents = g_list_append(handler->documents, document);
 	}
 	return document;
