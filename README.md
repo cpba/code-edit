@@ -10,7 +10,7 @@ This project follows the semantic versioning system and still hasn't reached its
 
 ## Contributing
 
-If you plan to contribute, check `DESIGN.md` and `CONTRIBUTING.md`.
+If you plan to contribute, check `CONTRIBUTING.md`.
 
 ## Notable Planned Features
 
