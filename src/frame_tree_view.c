@@ -32,7 +32,6 @@ void init_frame_tree_view(chandler *handler)
 	gtk_widget_set_vexpand(GTK_WIDGET(handler_frame_tree_view->revealer), TRUE);
 	gtk_widget_set_halign(GTK_WIDGET(handler_frame_tree_view->revealer), GTK_ALIGN_END);
 	gtk_widget_set_valign(GTK_WIDGET(handler_frame_tree_view->revealer), GTK_ALIGN_FILL);
-	gtk_revealer_set_reveal_child(GTK_REVEALER(handler_frame_tree_view->revealer), TRUE);
 	gtk_revealer_set_transition_type(GTK_REVEALER(handler_frame_tree_view->revealer), GTK_REVEALER_TRANSITION_TYPE_SLIDE_LEFT);
 	/* Scrolled window */
 	handler_frame_tree_view->scrolled_window = gtk_scrolled_window_new(NULL, NULL);
