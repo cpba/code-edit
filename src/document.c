@@ -185,7 +185,7 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 {
 	GtkSourceLanguageManager *source_language_manager = gtk_source_language_manager_get_default();
 	GtkSourceLanguage *source_language = NULL;
-	GFile *file = g_file_new_for_path(file_name);
+	GFile *file = NULL;
 	gboolean result_uncertain = FALSE;
 	gchar *content_type = NULL;
 	cdocument *document = get_document_by_file_name(handler, file_name);
@@ -202,6 +202,7 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 		g_signal_connect(document->source_buffer, "modified-changed", G_CALLBACK(source_buffer_changed), handler);
 		document->source_file = gtk_source_file_new();
 		if (file_name) {
+			file = g_file_new_for_path(file_name);
 			content_type = g_content_type_guess(file_name, NULL, 0, &result_uncertain);
 			if (result_uncertain) {
 				g_free(content_type);
