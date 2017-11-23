@@ -24,9 +24,10 @@ void notebook_switch_page(GtkWidget *widget, GtkWidget *page, guint page_num, gp
 {
 	chandler *handler = user_data;
 	cview *view = g_object_get_data(G_OBJECT(page), "view");
-	if (view->document->file) {
-		gchar *basename = g_file_get_basename(G_FILE(view->document->file));
-		gchar *path = g_file_get_path(G_FILE(view->document->file));
+	GFile *file = gtk_source_file_get_location(GTK_SOURCE_FILE(view->document->source_file));
+	if (file) {
+		gchar *basename = g_file_get_basename(G_FILE(file));
+		gchar *path = g_file_get_path(G_FILE(file));
 		gtk_header_bar_set_title(GTK_HEADER_BAR(handler->handler_header.header_bar), basename);
 		gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->handler_header.header_bar), path);
 		g_free(basename);

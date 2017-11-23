@@ -53,16 +53,57 @@ static void button_open_document_clicked(GtkWidget *widget, gpointer user_data)
 	gtk_widget_destroy(GTK_WIDGET(dialog));
 }
 
+static void button_save_as_document_clicked(GtkWidget *widget, gpointer user_data)
+{
+	chandler *handler = user_data;
+	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook));
+	GtkWidget *scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), current_page);
+	cview *view = g_object_get_data(G_OBJECT(scrolled_window), "view");
+	if (view) {
+		gint response = 0;
+		gchar *file_name = NULL;
+		GtkWidget *dialog = gtk_file_chooser_dialog_new("Save As",
+			GTK_WINDOW(handler->handler_window.window),
+			GTK_FILE_CHOOSER_ACTION_SAVE,
+			"Save As", GTK_RESPONSE_OK,
+			NULL);
+		response = gtk_dialog_run(GTK_DIALOG(dialog));
+		if (response == GTK_RESPONSE_OK) {
+			file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+			save_document(view->document, file_name);
+			g_free(file_name);
+		}
+		gtk_widget_destroy(GTK_WIDGET(dialog));
+	}
+}
+
 static void button_save_document_clicked(GtkWidget *widget, gpointer user_data)
 {
 	chandler *handler = user_data;
 	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook));
 	GtkWidget *scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), current_page);
 	cview *view = g_object_get_data(G_OBJECT(scrolled_window), "view");
-	if (view->document->file) {
-		g_print("Save existing file.\n");
-	} else {
-		g_print("Save file.\n");
+	GFile *file = NULL;
+	if (view) {
+		file = gtk_source_file_get_location(GTK_SOURCE_FILE(view->document->source_file));
+		if (!file) {
+			gint response = 0;
+			gchar *file_name = NULL;
+			GtkWidget *dialog = gtk_file_chooser_dialog_new("Save",
+				GTK_WINDOW(handler->handler_window.window),
+				GTK_FILE_CHOOSER_ACTION_SAVE,
+				"Save", GTK_RESPONSE_OK,
+				NULL);
+			response = gtk_dialog_run(GTK_DIALOG(dialog));
+			if (response == GTK_RESPONSE_OK) {
+				file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+				save_document(view->document, file_name);
+				g_free(file_name);
+			}
+			gtk_widget_destroy(GTK_WIDGET(dialog));
+		} else {
+			save_document(view->document, NULL);
+		}
 	}
 }
 
@@ -96,6 +137,11 @@ void init_header(chandler *handler)
 	gtk_header_bar_pack_start(GTK_HEADER_BAR(handler_header->header_bar), GTK_WIDGET(handler_header->button_save_document));
 	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_header->button_save_document))), "circular");
 	g_signal_connect(handler_header->button_save_document, "clicked", G_CALLBACK(button_save_document_clicked), handler);
+	/* Button save as document */
+	handler_header->button_save_as_document = gtk_button_new_from_icon_name("document-save-as-symbolic", GTK_ICON_SIZE_BUTTON);
+	gtk_header_bar_pack_start(GTK_HEADER_BAR(handler_header->header_bar), GTK_WIDGET(handler_header->button_save_as_document));
+	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_header->button_save_as_document))), "circular");
+	g_signal_connect(handler_header->button_save_as_document, "clicked", G_CALLBACK(button_save_as_document_clicked), handler);
 	/* Button preferences */
 	handler_header->button_preferences = gtk_button_new_from_icon_name("preferences-system-symbolic", GTK_ICON_SIZE_BUTTON);
 	gtk_header_bar_pack_end(GTK_HEADER_BAR(handler_header->header_bar), GTK_WIDGET(handler_header->button_preferences));

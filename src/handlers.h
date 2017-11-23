@@ -42,11 +42,10 @@ typedef struct chandler chandler;
 
 struct cdocument {
 	gboolean preview;
-	GFile *file;
 	GtkSourceFile *source_file;
 	GtkSourceFileLoader *source_file_loader;
 	GtkSourceFileSaver *source_file_saver;
-	GtkSourceEncoding *encoding;
+	const GtkSourceEncoding *encoding;
 	GtkSourceBuffer *source_buffer;
 	GList *views;
 	chandler *handler;
@@ -139,6 +138,7 @@ void update_statusbar(chandler *handler, cview *view);
 cview *get_current_view(chandler *handler);
 void update_document_views_status(cdocument *document);
 void free_document(cdocument *document);
+void save_document(cdocument *document, gchar *file_name);
 cdocument *new_document(chandler *handler, gchar *file_name);
 void close_view(chandler *handler, cview *view);
 void add_view_for_document(chandler *handler, cdocument *document);

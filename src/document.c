@@ -45,8 +45,8 @@ void update_document_views_status(cdocument *document)
 		} else {
 			text = g_string_new("");
 		}
-		if (document->file) {
-			basename = g_file_get_basename(G_FILE(document->file));
+		if (gtk_source_file_get_location(GTK_SOURCE_FILE(document->source_file))) {
+			basename = g_file_get_basename(G_FILE(gtk_source_file_get_location(GTK_SOURCE_FILE(document->source_file))));
 		} else {
 			basename = NULL;
 		}
@@ -82,16 +82,37 @@ static void document_load_progress(goffset current_num_bytes, goffset total_num_
 	}
 }
 
+static void document_save_progress(goffset current_num_bytes, goffset total_num_bytes, gpointer user_data)
+{
+	cdocument *document = user_data;
+	cview *view = NULL;
+	gdouble percentage = (gdouble)current_num_bytes / (gdouble)total_num_bytes;
+	GList *element = g_list_first(document->views);
+	while (element) {
+		view = element->data;
+		gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), TRUE);
+		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(view->progress_bar), percentage);
+		element = g_list_next(element);
+	}
+}
+
 static void document_async_ready(GObject *source_object, GAsyncResult *res, gpointer user_data)
 {
 	cdocument *document = user_data;
 	chandler *handler = document->handler;
 	cview *view = NULL;
 	GList *element = g_list_first(document->views);
-	gtk_source_file_loader_load_finish(GTK_SOURCE_FILE_LOADER(source_object), res, NULL);
 	document->encoding = gtk_source_file_get_encoding(GTK_SOURCE_FILE(document->source_file));
-	g_object_unref(G_OBJECT(document->source_file_loader));
-	document->source_file_loader = NULL;
+	if (document->source_file_loader) {
+		gtk_source_file_loader_load_finish(GTK_SOURCE_FILE_LOADER(source_object), res, NULL);
+		g_object_unref(G_OBJECT(document->source_file_loader));
+		document->source_file_loader = NULL;
+	}
+	if (document->source_file_saver) {
+		gtk_source_file_saver_save_finish(GTK_SOURCE_FILE_SAVER(source_object), res, NULL);
+		g_object_unref(G_OBJECT(document->source_file_saver));
+		document->source_file_saver = NULL;
+	}
 	while (element) {
 		view = element->data;
 		gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), FALSE);
@@ -109,7 +130,6 @@ static void source_buffer_changed(GtkTextBuffer *text_buffer, gpointer user_data
 
 static cdocument *get_document_by_file_name(chandler *handler, gchar *file_name)
 {
-	gint i = 0;
 	gchar *path = NULL;
 	cdocument *result = NULL;
 	cdocument *document = NULL;
@@ -117,8 +137,8 @@ static cdocument *get_document_by_file_name(chandler *handler, gchar *file_name)
 	while (document_iter && !result) {
 		document = document_iter->data;
 		path = NULL;
-		if (document->file) {
-			path = g_file_get_path(G_FILE(document->file));
+		if (gtk_source_file_get_location(GTK_SOURCE_FILE(document->source_file))) {
+			path = g_file_get_path(G_FILE(gtk_source_file_get_location(GTK_SOURCE_FILE(document->source_file))));
 		}
 		if (path) {
 			if (g_strcmp0(file_name, path) == 0) {
@@ -133,9 +153,6 @@ static cdocument *get_document_by_file_name(chandler *handler, gchar *file_name)
 
 void free_document(cdocument *document)
 {
-	if (document->file) {
-		g_object_unref(G_OBJECT(document->file));
-	}
 	if (document->source_file) {
 		g_object_unref(G_OBJECT(document->source_file));
 	}
@@ -143,10 +160,32 @@ void free_document(cdocument *document)
 	free(document);
 }
 
+void save_document(cdocument *document, gchar *file_name)
+{
+	GFile *file = NULL;
+	if (!document->source_file_saver && !document->source_file_loader) {
+		if (file_name) {
+			file = g_file_new_for_path(file_name);
+			gtk_source_file_set_location(GTK_SOURCE_FILE(document->source_file), G_FILE(file));
+		}
+		document->source_file_saver = gtk_source_file_saver_new(GTK_SOURCE_BUFFER(document->source_buffer), GTK_SOURCE_FILE(document->source_file));
+		gtk_source_file_saver_save_async(GTK_SOURCE_FILE_SAVER(document->source_file_saver),
+			G_PRIORITY_LOW,
+			NULL,
+			document_save_progress,
+			document,
+			NULL,
+			document_async_ready,
+			document);
+		gtk_text_buffer_set_modified(GTK_TEXT_BUFFER(document->source_buffer), FALSE);
+	}
+}
+
 cdocument *new_document(chandler *handler, gchar *file_name)
 {
 	GtkSourceLanguageManager *source_language_manager = gtk_source_language_manager_get_default();
 	GtkSourceLanguage *source_language = NULL;
+	GFile *file = g_file_new_for_path(file_name);
 	gboolean result_uncertain = FALSE;
 	gchar *content_type = NULL;
 	cdocument *document = get_document_by_file_name(handler, file_name);
@@ -173,8 +212,7 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 				g_free(content_type);
 			}
 			gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(document->source_buffer), source_language);
-			document->file = g_file_new_for_path(file_name);
-			gtk_source_file_set_location(GTK_SOURCE_FILE(document->source_file), G_FILE(document->file));
+			gtk_source_file_set_location(GTK_SOURCE_FILE(document->source_file), G_FILE(file));
 			document->source_file_loader = gtk_source_file_loader_new(GTK_SOURCE_BUFFER(document->source_buffer), GTK_SOURCE_FILE(document->source_file));
 			gtk_source_file_loader_load_async(GTK_SOURCE_FILE_LOADER(document->source_file_loader),
 				G_PRIORITY_LOW,
@@ -184,8 +222,6 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 				NULL,
 				document_async_ready,
 				document);
-		} else {
-			document->file = NULL;
 		}
 		handler->documents = g_list_append(handler->documents, document);
 	}
