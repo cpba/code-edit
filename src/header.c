@@ -50,7 +50,7 @@ static void button_open_document_clicked(GtkWidget *widget, gpointer user_data)
 		}
 		g_slist_free(file_names);
 	}
-	gtk_widget_destroy(GTK_WIDGET(dialog));
+	gtk_widget_destroy(dialog);
 }
 
 static void button_save_as_document_clicked(GtkWidget *widget, gpointer user_data)
@@ -74,7 +74,7 @@ static void button_save_as_document_clicked(GtkWidget *widget, gpointer user_dat
 			save_document(view->document, file_name);
 			g_free(file_name);
 		}
-		gtk_widget_destroy(GTK_WIDGET(dialog));
+		gtk_widget_destroy(dialog);
 	}
 }
 
@@ -86,7 +86,7 @@ static void button_save_document_clicked(GtkWidget *widget, gpointer user_data)
 	cview *view = g_object_get_data(G_OBJECT(scrolled_window), "view");
 	GFile *file = NULL;
 	if (view) {
-		file = gtk_source_file_get_location(GTK_SOURCE_FILE(view->document->source_file));
+		file = gtk_source_file_get_location(view->document->source_file);
 		if (!file) {
 			gint response = 0;
 			gchar *file_name = NULL;
@@ -102,7 +102,7 @@ static void button_save_document_clicked(GtkWidget *widget, gpointer user_data)
 				save_document(view->document, file_name);
 				g_free(file_name);
 			}
-			gtk_widget_destroy(GTK_WIDGET(dialog));
+			gtk_widget_destroy(dialog);
 		} else {
 			save_document(view->document, NULL);
 		}
@@ -121,31 +121,31 @@ void init_header(chandler *handler)
 	chandler_header *handler_header = &handler->handler_header;
 	/* Header bar */
 	handler_header->header_bar = gtk_header_bar_new();
-	gtk_window_set_titlebar(GTK_WINDOW(handler_window->window), GTK_WIDGET(handler_header->header_bar));
+	gtk_window_set_titlebar(GTK_WINDOW(handler_window->window), handler_header->header_bar);
 	gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(handler_header->header_bar), TRUE);
 	gtk_header_bar_set_title(GTK_HEADER_BAR(handler_header->header_bar), PROGRAM_NAME);
 	/* Button new document */
 	handler_header->button_new_document = gtk_button_new_from_icon_name("tab-new-symbolic", GTK_ICON_SIZE_BUTTON);
-	gtk_header_bar_pack_start(GTK_HEADER_BAR(handler_header->header_bar), GTK_WIDGET(handler_header->button_new_document));
-	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_header->button_new_document))), "circular");
+	gtk_header_bar_pack_start(GTK_HEADER_BAR(handler_header->header_bar), handler_header->button_new_document);
+	gtk_style_context_add_class(gtk_widget_get_style_context(handler_header->button_new_document), "circular");
 	g_signal_connect(handler_header->button_new_document, "clicked", G_CALLBACK(button_new_document_clicked), handler);
 	/* Button open document */
 	handler_header->button_open_document = gtk_button_new_from_icon_name("document-open-symbolic", GTK_ICON_SIZE_BUTTON);
-	gtk_header_bar_pack_start(GTK_HEADER_BAR(handler_header->header_bar), GTK_WIDGET(handler_header->button_open_document));
-	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_header->button_open_document))), "circular");
+	gtk_header_bar_pack_start(GTK_HEADER_BAR(handler_header->header_bar), handler_header->button_open_document);
+	gtk_style_context_add_class(gtk_widget_get_style_context(handler_header->button_open_document), "circular");
 	g_signal_connect(handler_header->button_open_document, "clicked", G_CALLBACK(button_open_document_clicked), handler);
 	/* Button save document */
 	handler_header->button_save_document = gtk_button_new_from_icon_name("document-save-symbolic", GTK_ICON_SIZE_BUTTON);
-	gtk_header_bar_pack_start(GTK_HEADER_BAR(handler_header->header_bar), GTK_WIDGET(handler_header->button_save_document));
-	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_header->button_save_document))), "circular");
+	gtk_header_bar_pack_start(GTK_HEADER_BAR(handler_header->header_bar), handler_header->button_save_document);
+	gtk_style_context_add_class(gtk_widget_get_style_context(handler_header->button_save_document), "circular");
 	g_signal_connect(handler_header->button_save_document, "clicked", G_CALLBACK(button_save_document_clicked), handler);
 	/* Button save as document */
 	handler_header->button_save_as_document = gtk_button_new_from_icon_name("document-save-as-symbolic", GTK_ICON_SIZE_BUTTON);
-	gtk_header_bar_pack_start(GTK_HEADER_BAR(handler_header->header_bar), GTK_WIDGET(handler_header->button_save_as_document));
-	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_header->button_save_as_document))), "circular");
+	gtk_header_bar_pack_start(GTK_HEADER_BAR(handler_header->header_bar), handler_header->button_save_as_document);
+	gtk_style_context_add_class(gtk_widget_get_style_context(handler_header->button_save_as_document), "circular");
 	g_signal_connect(handler_header->button_save_as_document, "clicked", G_CALLBACK(button_save_as_document_clicked), handler);
 	/* Button preferences */
 	handler_header->button_preferences = gtk_button_new_from_icon_name("preferences-system-symbolic", GTK_ICON_SIZE_BUTTON);
-	gtk_header_bar_pack_end(GTK_HEADER_BAR(handler_header->header_bar), GTK_WIDGET(handler_header->button_preferences));
-	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(GTK_WIDGET(handler_header->button_preferences))), "circular");
+	gtk_header_bar_pack_end(GTK_HEADER_BAR(handler_header->header_bar), handler_header->button_preferences);
+	gtk_style_context_add_class(gtk_widget_get_style_context(handler_header->button_preferences), "circular");
 }

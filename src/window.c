@@ -28,19 +28,19 @@ void init_window(chandler *handler)
 	gtk_window_set_icon_name(GTK_WINDOW(handler_window->window), "text-editor");
 	/* Box main */
 	handler_window->box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_widget_set_name(GTK_WIDGET(handler_window->box), "box");
-	gtk_container_add(GTK_CONTAINER(handler_window->window), GTK_WIDGET(handler_window->box));
-	gtk_widget_set_hexpand(GTK_WIDGET(handler_window->box), TRUE);
-	gtk_widget_set_vexpand(GTK_WIDGET(handler_window->box), TRUE);
-	gtk_widget_set_halign(GTK_WIDGET(handler_window->box), GTK_ALIGN_FILL);
-	gtk_widget_set_valign(GTK_WIDGET(handler_window->box), GTK_ALIGN_FILL);
-	gtk_widget_set_size_request(GTK_WIDGET(handler_window->box), 400, 400);
+	gtk_widget_set_name(handler_window->box, "box");
+	gtk_container_add(GTK_CONTAINER(handler_window->window), handler_window->box);
+	gtk_widget_set_hexpand(handler_window->box, TRUE);
+	gtk_widget_set_vexpand(handler_window->box, TRUE);
+	gtk_widget_set_halign(handler_window->box, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler_window->box, GTK_ALIGN_FILL);
+	gtk_widget_set_size_request(handler_window->box, 400, 400);
 	/* Box frames */
 	handler_window->box_frames = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-	gtk_widget_set_name(GTK_WIDGET(handler_window->box_frames), "box_frames");
-	gtk_container_add(GTK_CONTAINER(handler_window->box), GTK_WIDGET(handler_window->box_frames));
-	gtk_widget_set_hexpand(GTK_WIDGET(handler_window->box_frames), TRUE);
-	gtk_widget_set_vexpand(GTK_WIDGET(handler_window->box_frames), TRUE);
-	gtk_widget_set_halign(GTK_WIDGET(handler_window->box_frames), GTK_ALIGN_FILL);
-	gtk_widget_set_valign(GTK_WIDGET(handler_window->box_frames), GTK_ALIGN_FILL);
+	gtk_widget_set_name(handler_window->box_frames, "box_frames");
+	gtk_container_add(GTK_CONTAINER(handler_window->box), handler_window->box_frames);
+	gtk_widget_set_hexpand(handler_window->box_frames, TRUE);
+	gtk_widget_set_vexpand(handler_window->box_frames, TRUE);
+	gtk_widget_set_halign(handler_window->box_frames, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler_window->box_frames, GTK_ALIGN_FILL);
 }

@@ -132,6 +132,8 @@ struct chandler {
 };
 
 /* Statusbar */
+void update_statusbar_encoding(chandler *handler, cview *view);
+void update_statusbar_language(chandler *handler, cview *view);
 void update_statusbar(chandler *handler, cview *view);
 
 /* Document */

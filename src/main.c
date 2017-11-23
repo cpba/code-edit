@@ -47,7 +47,7 @@ static void application_activate(GtkApplication *application, gpointer user_data
 	init_frame_view(handler);
 	init_frame_tree_view(handler);
 	init_statusbar(handler);
-	gtk_widget_insert_action_group(GTK_WIDGET(handler->handler_window.window), "default", G_ACTION_GROUP(action_group));
+	gtk_widget_insert_action_group(handler->handler_window.window, "default", G_ACTION_GROUP(action_group));
 	/* Menu */
 	menu = g_menu_new();
 	g_menu_append(menu, "About", "about");
@@ -57,7 +57,7 @@ static void application_activate(GtkApplication *application, gpointer user_data
 	handler->documents = NULL;
 	/* Show */
 	gtk_window_present(GTK_WINDOW(handler->handler_window.window));
-	gtk_widget_show_all(GTK_WIDGET(handler->handler_window.window));
+	gtk_widget_show_all(handler->handler_window.window);
 }
 
 static void application_shutdown(GtkApplication *application, gpointer user_data)
