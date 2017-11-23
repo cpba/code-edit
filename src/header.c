@@ -67,6 +67,7 @@ static void button_save_as_document_clicked(GtkWidget *widget, gpointer user_dat
 			GTK_FILE_CHOOSER_ACTION_SAVE,
 			"Save As", GTK_RESPONSE_OK,
 			NULL);
+		gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
 		response = gtk_dialog_run(GTK_DIALOG(dialog));
 		if (response == GTK_RESPONSE_OK) {
 			file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
@@ -94,6 +95,7 @@ static void button_save_document_clicked(GtkWidget *widget, gpointer user_data)
 				GTK_FILE_CHOOSER_ACTION_SAVE,
 				"Save", GTK_RESPONSE_OK,
 				NULL);
+			gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
 			response = gtk_dialog_run(GTK_DIALOG(dialog));
 			if (response == GTK_RESPONSE_OK) {
 				file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
