@@ -130,6 +130,33 @@ static void tree_view_source_language_activated(GtkWidget *widget, GtkTreePath *
 	gtk_widget_hide(popover);
 }
 
+static void tree_view_source_encoding_activated(GtkWidget *widget, GtkTreePath *path, GtkTreeViewColumn *column, gpointer user_data)
+{
+	chandler *handler = user_data;
+	GtkTreeIter tree_iter;
+	GtkWidget *popover = NULL;
+	gchar *charset = NULL;
+	const GtkSourceEncoding *encoding = NULL;
+	gchar *name = NULL;
+	cview *view = get_current_view(handler);
+	if (gtk_tree_model_get_iter(GTK_TREE_MODEL(gtk_tree_view_get_model(GTK_TREE_VIEW(widget))), &tree_iter, path)) {
+		gtk_tree_model_get (GTK_TREE_MODEL(gtk_tree_view_get_model(GTK_TREE_VIEW(widget))),
+			&tree_iter,
+			0, &charset,
+			-1);
+		if (charset) {
+			encoding = gtk_source_encoding_get_from_charset(charset);
+		}
+		if (encoding) {
+			view->document->encoding = encoding;
+		}
+		gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.button_encoding), charset);
+		g_free(charset);
+	}
+	popover = GTK_WIDGET(gtk_menu_button_get_popover(GTK_MENU_BUTTON(handler->handler_statusbar.button_encoding)));
+	gtk_widget_hide(popover);
+}
+
 void init_statusbar(chandler *handler)
 {
 	chandler_statusbar *handler_statusbar = &handler->handler_statusbar;
@@ -141,6 +168,8 @@ void init_statusbar(chandler *handler)
 	GtkListStore *list_store = NULL;
 	GtkTreeIter tree_iter;
 	GtkWidget *entry = NULL;
+	GSList *encodings = NULL;
+	GSList *encoding_iter = NULL;
 	GtkCellRenderer *cell_renderer = NULL;
 	GtkTreeViewColumn *tree_view_column = NULL;
 	GtkSourceLanguage *source_language = NULL;
@@ -174,6 +203,53 @@ void init_statusbar(chandler *handler)
 	gtk_widget_set_halign(handler_statusbar->button_encoding, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler_statusbar->button_encoding, GTK_ALIGN_CENTER);
 	gtk_style_context_add_class(gtk_widget_get_style_context(handler_statusbar->button_encoding), GTK_STYLE_CLASS_FLAT);
+	/* Popover encoding */
+	popover = gtk_popover_new(handler_statusbar->button_encoding);
+	gtk_menu_button_set_popover(GTK_MENU_BUTTON(handler_statusbar->button_encoding), popover);
+	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, MINOR_SPACING);
+	gtk_container_add(GTK_CONTAINER(popover), box);
+	gtk_widget_set_hexpand(box, TRUE);
+	gtk_widget_set_vexpand(box, FALSE);
+	gtk_widget_set_halign(box, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(box, GTK_ALIGN_FILL);
+	gtk_container_set_border_width(GTK_CONTAINER(box), MEDIUM_SPACING);
+	entry = gtk_search_entry_new();
+	gtk_container_add(GTK_CONTAINER(box), entry);
+	gtk_widget_set_hexpand(box, TRUE);
+	gtk_widget_set_vexpand(box, FALSE);
+	gtk_widget_set_halign(box, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
+	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
+	gtk_container_add(GTK_CONTAINER(box), scrolled_window);
+	gtk_widget_set_hexpand(box, TRUE);
+	gtk_widget_set_vexpand(box, FALSE);
+	gtk_widget_set_halign(box, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(box, GTK_ALIGN_FILL);
+	gtk_widget_set_size_request(scrolled_window, -1, LIST_VIEW_MIN_HEIGHT);
+	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_window), GTK_SHADOW_IN);
+	list_store = gtk_list_store_new(1, G_TYPE_STRING);
+	encodings = gtk_source_encoding_get_all();
+	encoding_iter = encodings;
+	while (encoding_iter) {
+		gtk_list_store_append(GTK_LIST_STORE(list_store), &tree_iter);
+		gtk_list_store_set(GTK_LIST_STORE(list_store),
+			&tree_iter,
+			0, gtk_source_encoding_get_charset(encoding_iter->data),
+			-1);
+		encoding_iter = encoding_iter->next;
+	}
+	g_slist_free(encodings);
+	tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(list_store));
+	gtk_container_add(GTK_CONTAINER(scrolled_window), tree_view);
+	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tree_view), FALSE);
+	gtk_tree_view_set_activate_on_single_click(GTK_TREE_VIEW(tree_view), TRUE);
+	gtk_tree_view_set_search_entry(GTK_TREE_VIEW(tree_view), GTK_ENTRY(entry));
+	g_signal_connect(tree_view, "row-activated", G_CALLBACK(tree_view_source_encoding_activated), handler);
+	cell_renderer = gtk_cell_renderer_text_new();
+	tree_view_column = gtk_tree_view_column_new_with_attributes("Name", cell_renderer, "text", 0, NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), GTK_TREE_VIEW_COLUMN(tree_view_column));
+	gtk_tree_view_column_set_visible(GTK_TREE_VIEW_COLUMN(tree_view_column), TRUE);
+	gtk_widget_show_all(box);
 	/* Button language */
 	handler_statusbar->button_language = gtk_menu_button_new();
 	gtk_widget_set_name(handler_statusbar->button_language, "button_language");
@@ -205,7 +281,7 @@ void init_statusbar(chandler *handler)
 	gtk_widget_set_vexpand(box, FALSE);
 	gtk_widget_set_halign(box, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(box, GTK_ALIGN_FILL);
-	gtk_widget_set_size_request(scrolled_window, -1, LIST_VIEW_LANGUAGE_MIN_HEIGHT);
+	gtk_widget_set_size_request(scrolled_window, -1, LIST_VIEW_MIN_HEIGHT);
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_window), GTK_SHADOW_IN);
 	list_store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
 	gtk_list_store_append(GTK_LIST_STORE(list_store), &tree_iter);

@@ -186,6 +186,7 @@ void save_document(cdocument *document, gchar *file_name)
 			gtk_source_file_set_location(document->source_file, file);
 		}
 		document->source_file_saver = gtk_source_file_saver_new(document->source_buffer, document->source_file);
+		gtk_source_file_saver_set_encoding(document->source_file_saver, document->encoding);
 		gtk_source_file_saver_save_async(document->source_file_saver,
 			G_PRIORITY_LOW,
 			NULL,
