@@ -119,7 +119,6 @@ static void document_async_ready(GObject *source_object, GAsyncResult *res, gpoi
 	chandler *handler = document->handler;
 	cview *view = NULL;
 	GList *element = g_list_first(document->views);
-	document->encoding = gtk_source_file_get_encoding(document->source_file);
 	if (document->source_file_loader) {
 		gtk_source_file_loader_load_finish(GTK_SOURCE_FILE_LOADER(source_object), res, NULL);
 		g_object_unref(document->source_file_loader);
@@ -214,6 +213,7 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 		document->views = NULL;
 		document->source_file_loader = NULL;
 		document->source_file_saver = NULL;
+		document->encoding = gtk_source_encoding_get_utf8();
 		document->source_buffer = gtk_source_buffer_new(NULL);
 		g_object_set_data(G_OBJECT(document->source_buffer), "document", document);
 		g_signal_connect(document->source_buffer, "changed", G_CALLBACK(source_buffer_changed), handler);

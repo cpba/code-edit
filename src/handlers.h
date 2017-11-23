@@ -112,7 +112,6 @@ struct chandler_statusbar {
 	GtkWidget *action_bar;
 	GtkWidget *button_encoding;
 	GtkWidget *button_language;
-	GtkWidget *revealer_repo_branch;
 	GtkWidget *button_repo_branch;
 };
 
