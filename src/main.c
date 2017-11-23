@@ -18,7 +18,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <glib/gprintf.h>
 #include <gtk/gtk.h>
 #include "handlers.h"
 
