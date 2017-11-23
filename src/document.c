@@ -304,4 +304,5 @@ void add_view_for_document(chandler *handler, cdocument *document)
 	update_document_views_status(document);
 	/* Show page */
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), page_index);
+	update_statusbar(handler, NULL);
 }
