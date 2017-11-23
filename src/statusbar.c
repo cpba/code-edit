@@ -46,6 +46,33 @@ void update_statusbar(chandler *handler, cview *view)
 	}
 }
 
+static void tree_view_source_langauge_activated(GtkWidget *widget, GtkTreePath *path, GtkTreeViewColumn *column, gpointer user_data)
+{
+	chandler *handler = user_data;
+	GtkTreeIter tree_iter;
+	gchar *id = NULL;
+	gchar *name = NULL;
+	GtkSourceLanguageManager *source_language_manager = gtk_source_language_manager_get_default();
+	GtkSourceLanguage *source_language = NULL;
+	cview *view = get_current_view(handler);
+	if (gtk_tree_model_get_iter(GTK_TREE_MODEL(gtk_tree_view_get_model(GTK_TREE_VIEW(widget))), &tree_iter, path)) {
+		gtk_tree_model_get (GTK_TREE_MODEL(gtk_tree_view_get_model(GTK_TREE_VIEW(widget))),
+			&tree_iter,
+			0, &id,
+			1, &name,
+			-1);
+		if (g_strcmp0(id, "plain-text") == 0) {
+			gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(view->document->source_buffer), NULL);
+		} else {
+			source_language = gtk_source_language_manager_get_language(GTK_SOURCE_LANGUAGE_MANAGER(source_language_manager), id);
+			gtk_source_buffer_set_language(GTK_SOURCE_BUFFER(view->document->source_buffer), GTK_SOURCE_LANGUAGE(source_language));
+		}
+		gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.button_language), name);
+		g_free(id);
+		g_free(name);
+	}
+}
+
 void init_statusbar(chandler *handler)
 {
 	chandler_statusbar *handler_statusbar = &handler->handler_statusbar;
@@ -114,6 +141,12 @@ void init_statusbar(chandler *handler)
 	gtk_widget_set_size_request(GTK_WIDGET(scrolled_window), -1, LIST_VIEW_LANGUAGE_MIN_HEIGHT);
 	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_window), GTK_SHADOW_IN);
 	list_store = gtk_list_store_new(2, G_TYPE_STRING, G_TYPE_STRING);
+	gtk_list_store_append(GTK_LIST_STORE(list_store), &tree_iter);
+	gtk_list_store_set(GTK_LIST_STORE(list_store),
+		&tree_iter,
+		0, "plain-text",
+		1, "Plain Text",
+		-1);
 	while (language_ids[0] != NULL) {
 		id = language_ids[0];
 		source_language = gtk_source_language_manager_get_language(GTK_SOURCE_LANGUAGE_MANAGER(source_language_manager), id);
@@ -128,6 +161,8 @@ void init_statusbar(chandler *handler)
 	tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(list_store));
 	gtk_container_add(GTK_CONTAINER(scrolled_window), GTK_WIDGET(tree_view));
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tree_view), FALSE);
+	gtk_tree_view_set_activate_on_single_click(GTK_TREE_VIEW(tree_view), TRUE);
+	g_signal_connect(tree_view, "row-activated", G_CALLBACK(tree_view_source_langauge_activated), handler);
 	cell_renderer = gtk_cell_renderer_text_new();
 	tree_view_column = gtk_tree_view_column_new_with_attributes("Name", cell_renderer, "text", 1, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), GTK_TREE_VIEW_COLUMN(tree_view_column));
