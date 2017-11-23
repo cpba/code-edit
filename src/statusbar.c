@@ -149,19 +149,22 @@ void init_statusbar(chandler *handler)
 		-1);
 	while (language_ids[0] != NULL) {
 		id = language_ids[0];
-		source_language = gtk_source_language_manager_get_language(GTK_SOURCE_LANGUAGE_MANAGER(source_language_manager), id);
-		gtk_list_store_append(GTK_LIST_STORE(list_store), &tree_iter);
-		gtk_list_store_set(GTK_LIST_STORE(list_store),
-			&tree_iter,
-			0, id,
-			1, gtk_source_language_get_name(GTK_SOURCE_LANGUAGE(source_language)),
-			-1);
+		if (g_strcmp0(id, "def") != 0) {
+			source_language = gtk_source_language_manager_get_language(GTK_SOURCE_LANGUAGE_MANAGER(source_language_manager), id);
+			gtk_list_store_append(GTK_LIST_STORE(list_store), &tree_iter);
+			gtk_list_store_set(GTK_LIST_STORE(list_store),
+				&tree_iter,
+				0, id,
+				1, gtk_source_language_get_name(GTK_SOURCE_LANGUAGE(source_language)),
+				-1);
+		}
 		language_ids++;
 	}
 	tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(list_store));
 	gtk_container_add(GTK_CONTAINER(scrolled_window), GTK_WIDGET(tree_view));
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tree_view), FALSE);
 	gtk_tree_view_set_activate_on_single_click(GTK_TREE_VIEW(tree_view), TRUE);
+	gtk_tree_view_set_search_entry(GTK_TREE_VIEW(tree_view), GTK_ENTRY(entry));
 	g_signal_connect(tree_view, "row-activated", G_CALLBACK(tree_view_source_langauge_activated), handler);
 	cell_renderer = gtk_cell_renderer_text_new();
 	tree_view_column = gtk_tree_view_column_new_with_attributes("Name", cell_renderer, "text", 1, NULL);
