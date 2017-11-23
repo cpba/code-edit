@@ -31,12 +31,14 @@ cview *get_current_view(chandler *handler)
 	return view;
 }
 
-void update_document_views_status(cdocument *document)
+void update_document_views_status(chandler *handler, cdocument *document)
 {
 	cview *view = NULL;
 	GList *view_iter = document->views;
 	GString *text = NULL;
+	GFile *file = NULL;
 	gchar *basename = NULL;
+	gchar *path = NULL;
 	while (view_iter) {
 		view = view_iter->data;
 		/* Update tab label */
@@ -65,6 +67,21 @@ void update_document_views_status(cdocument *document)
 			gtk_text_view_set_editable(GTK_TEXT_VIEW(view->source_view), TRUE);
 		}
 		view_iter = view_iter->next;
+	}
+	view = get_current_view(handler);
+	if (view) {
+		file = gtk_source_file_get_location(GTK_SOURCE_FILE(view->document->source_file));
+		if (file) {
+			basename = g_file_get_basename(G_FILE(file));
+			path = g_file_get_path(G_FILE(file));
+			gtk_header_bar_set_title(GTK_HEADER_BAR(handler->handler_header.header_bar), basename);
+			gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->handler_header.header_bar), path);
+			g_free(basename);
+			g_free(path);
+		} else {
+			gtk_header_bar_set_title(GTK_HEADER_BAR(handler->handler_header.header_bar), "Untitled");
+			gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->handler_header.header_bar), NULL);
+		}
 	}
 }
 
@@ -118,14 +135,15 @@ static void document_async_ready(GObject *source_object, GAsyncResult *res, gpoi
 		gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), FALSE);
 		element = g_list_next(element);
 	}
-	update_document_views_status(document);
+	update_document_views_status(handler, document);
 	update_statusbar(handler, NULL);
 }
 
 static void source_buffer_changed(GtkTextBuffer *text_buffer, gpointer user_data)
 {
+	chandler *handler = user_data;
 	cdocument *document = g_object_get_data(G_OBJECT(text_buffer), "document");
-	update_document_views_status(document);
+	update_document_views_status(handler, document);
 }
 
 static cdocument *get_document_by_file_name(chandler *handler, gchar *file_name)
@@ -338,7 +356,7 @@ void add_view_for_document(chandler *handler, cdocument *document)
 	gtk_widget_show_all(GTK_WIDGET(view->box_tab));
 	/* Update document */
 	document->views = g_list_append(document->views, view);
-	update_document_views_status(document);
+	update_document_views_status(handler, document);
 	/* Show page */
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), page_index);
 	update_statusbar(handler, NULL);

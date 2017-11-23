@@ -136,7 +136,7 @@ void update_statusbar(chandler *handler, cview *view);
 
 /* Document */
 cview *get_current_view(chandler *handler);
-void update_document_views_status(cdocument *document);
+void update_document_views_status(chandler *handler, cdocument *document);
 void free_document(cdocument *document);
 void save_document(cdocument *document, gchar *file_name);
 cdocument *new_document(chandler *handler, gchar *file_name);
