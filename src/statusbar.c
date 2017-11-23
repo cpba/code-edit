@@ -43,6 +43,10 @@ void update_statusbar(chandler *handler, cview *view)
 {
 	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook));
 	if (current_page > -1) {
+		GtkWidget *page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), current_page);
+		if (!view) {
+			view = g_object_get_data(G_OBJECT(page), "view");
+		}
 		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_statusbar.revealer_statusbar), TRUE);
 		update_statusbar_encoding(handler, view);
 		update_statusbar_language(handler, view);
