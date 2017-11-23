@@ -18,6 +18,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <gtk/gtk.h>
+#include <libgit2-glib/ggit.h>
 #include "handlers.h"
 
 void update_statusbar_encoding(chandler *handler, cview *view)
@@ -39,6 +40,37 @@ void update_statusbar_language(chandler *handler, cview *view)
 	}
 }
 
+void update_statusbar_repository_branch(chandler *handler, cview *view)
+{
+	GgitRepository *repo = NULL;
+	GgitBranch *branch = NULL;
+	GError *error = NULL;
+	const gchar *branch_name = NULL;
+	GFile *file_repo = NULL;
+	GFile *file = gtk_source_file_get_location(view->document->source_file);
+	if (file) {
+		file_repo = ggit_repository_discover(file, &error);
+		if (file_repo && !error) {
+			repo = ggit_repository_open(file_repo, &error);
+		}
+	}
+	if (repo && !error) {
+		GgitRef *ref = ggit_repository_get_head(repo, &error);
+		if (ref && !error) {
+			if (ggit_ref_is_branch(ref)) {
+				branch = GGIT_BRANCH(ref);
+				branch_name = ggit_branch_get_name(branch, &error);
+			}
+		}
+	}
+	if (branch_name && !error) {
+		gtk_widget_show_all(handler->handler_statusbar.button_repo_branch);
+		gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.button_repo_branch), branch_name);
+	} else {
+		gtk_widget_hide(handler->handler_statusbar.button_repo_branch);
+	}
+}
+
 void update_statusbar(chandler *handler, cview *view)
 {
 	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook));
@@ -50,6 +82,7 @@ void update_statusbar(chandler *handler, cview *view)
 		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_statusbar.revealer_statusbar), TRUE);
 		update_statusbar_encoding(handler, view);
 		update_statusbar_language(handler, view);
+		update_statusbar_repository_branch(handler, view);
 	} else {
 		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_statusbar.revealer_statusbar), FALSE);
 	}
@@ -88,6 +121,7 @@ void init_statusbar(chandler *handler)
 	GtkWidget *popover = NULL;
 	GtkWidget *scrolled_window = NULL;
 	GtkWidget *box = NULL;
+	GtkWidget *image = NULL;
 	GtkWidget *tree_view = NULL;
 	GtkListStore *list_store = NULL;
 	GtkTreeIter tree_iter;
@@ -189,4 +223,17 @@ void init_statusbar(chandler *handler)
 	gtk_widget_set_halign(handler_statusbar->button_encoding, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler_statusbar->button_encoding, GTK_ALIGN_CENTER);
 	gtk_style_context_add_class(gtk_widget_get_style_context(handler_statusbar->button_encoding), GTK_STYLE_CLASS_FLAT);
+	/* Button repository branch */
+	handler_statusbar->button_repo_branch = gtk_menu_button_new();
+	gtk_widget_set_name(handler_statusbar->button_repo_branch, "button_repo_branch");
+	gtk_action_bar_pack_end(GTK_ACTION_BAR(handler_statusbar->action_bar), handler_statusbar->button_repo_branch);
+	gtk_widget_set_hexpand(handler_statusbar->button_repo_branch, FALSE);
+	gtk_widget_set_vexpand(handler_statusbar->button_repo_branch, FALSE);
+	gtk_widget_set_halign(handler_statusbar->button_repo_branch, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler_statusbar->button_repo_branch, GTK_ALIGN_CENTER);
+	gtk_style_context_add_class(gtk_widget_get_style_context(handler_statusbar->button_repo_branch), GTK_STYLE_CLASS_FLAT);
+	gtk_button_set_label(GTK_BUTTON(handler_statusbar->button_repo_branch), "");
+	gtk_button_set_always_show_image(GTK_BUTTON(handler_statusbar->button_repo_branch), TRUE);
+	image = gtk_image_new_from_icon_name("gitg-symbolic", GTK_ICON_SIZE_BUTTON);
+	gtk_button_set_image(GTK_BUTTON(handler_statusbar->button_repo_branch), image);
 }

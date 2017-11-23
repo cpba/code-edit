@@ -1,8 +1,8 @@
 CC ?= gcc
 CFLAGS ?= -g -m64 -Wall -Wshadow -Wstrict-prototypes
 
-LDLIBS += `pkg-config --libs gtk+-3.0 gtksourceview-3.0` -ldl -lrt -lm
-CFLAGS += `pkg-config --cflags gtk+-3.0 gtksourceview-3.0`
+LDLIBS += `pkg-config --libs gtk+-3.0 gtksourceview-3.0 libgit2-glib-1.0` -ldl -lrt -lm
+CFLAGS += `pkg-config --cflags gtk+-3.0 gtksourceview-3.0 libgit2-glib-1.0`
 
 build:
 	$(MAKE) clear

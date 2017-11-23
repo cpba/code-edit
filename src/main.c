@@ -19,6 +19,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <gtk/gtk.h>
+#include <libgit2-glib/ggit.h>
 #include "handlers.h"
 
 static void activate_show_about(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
@@ -71,6 +72,7 @@ int main(void)
 	chandler *handler = malloc(sizeof(chandler));
 	memset(handler, 0, sizeof(chandler));
 	gtk_init(NULL, NULL);
+	ggit_init();
 	handler->application = gtk_application_new("app.code", G_APPLICATION_FLAGS_NONE);
 	g_signal_connect(handler->application, "activate", G_CALLBACK(application_activate), handler);
 	g_signal_connect(handler->application, "shutdown", G_CALLBACK(application_shutdown), handler);
