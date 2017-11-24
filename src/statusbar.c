@@ -65,7 +65,6 @@ void update_statusbar_repository_branch(chandler *handler, cview *view)
 		gtk_widget_show_all(handler->handler_statusbar.button_repo_branch);
 		gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.button_repo_branch), branch_name);
 	} else {
-		gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.button_repo_branch), "master");
 		gtk_widget_hide(handler->handler_statusbar.button_repo_branch);
 	}
 }
@@ -156,6 +155,7 @@ void init_statusbar(chandler *handler)
 	gtk_widget_set_halign(handler_statusbar->button_language, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler_statusbar->button_language, GTK_ALIGN_CENTER);
 	gtk_style_context_add_class(gtk_widget_get_style_context(handler_statusbar->button_language), GTK_STYLE_CLASS_FLAT);
+	gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.button_language), "Plain Text");
 	/* Popover language */
 	popover = gtk_popover_new(handler_statusbar->button_language);
 	gtk_menu_button_set_popover(GTK_MENU_BUTTON(handler_statusbar->button_language), popover);
@@ -220,10 +220,8 @@ void init_statusbar(chandler *handler)
 	gtk_widget_set_halign(handler_statusbar->button_repo_branch, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler_statusbar->button_repo_branch, GTK_ALIGN_CENTER);
 	gtk_style_context_add_class(gtk_widget_get_style_context(handler_statusbar->button_repo_branch), GTK_STYLE_CLASS_FLAT);
-	gtk_button_set_label(GTK_BUTTON(handler_statusbar->button_repo_branch), "");
+	gtk_button_set_label(GTK_BUTTON(handler_statusbar->button_repo_branch), "Branch");
 	gtk_button_set_always_show_image(GTK_BUTTON(handler_statusbar->button_repo_branch), TRUE);
 	image = gtk_image_new_from_icon_name("gitg-symbolic", GTK_ICON_SIZE_BUTTON);
 	gtk_button_set_image(GTK_BUTTON(handler_statusbar->button_repo_branch), image);
-	update_statusbar_language(handler, NULL);
-	update_statusbar_repository_branch(handler, NULL);
 }
