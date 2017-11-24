@@ -85,7 +85,7 @@ static void document_load_progress(goffset current_num_bytes, goffset total_num_
 	if (document->operation_start) {
 		GDateTime *now = g_date_time_new_now_local();
 		GTimeSpan time_span = g_date_time_difference(now, document->operation_start);
-		if ((gdouble)time_span / (gdouble)G_TIME_SPAN_SECOND > 0.5) {
+		if ((gdouble)time_span / (gdouble)G_TIME_SPAN_SECOND > SHOW_PROGRESS_BAR_AFTER) {
 			show_progress_bar = TRUE;
 		}
 		g_date_time_unref(now);
@@ -109,7 +109,7 @@ static void document_save_progress(goffset current_num_bytes, goffset total_num_
 	if (document->operation_start) {
 		GDateTime *now = g_date_time_new_now_local();
 		GTimeSpan time_span = g_date_time_difference(now, document->operation_start);
-		if ((gdouble)time_span / (gdouble)G_TIME_SPAN_SECOND > 0.5) {
+		if ((gdouble)time_span / (gdouble)G_TIME_SPAN_SECOND > SHOW_PROGRESS_BAR_AFTER) {
 			show_progress_bar = TRUE;
 		}
 		g_date_time_unref(now);
