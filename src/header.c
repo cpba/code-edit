@@ -28,12 +28,47 @@ void update_headerbar(chandler *handler, cview *view)
 	if (view) {
 		GFile *file = gtk_source_file_get_location(view->document->source_file);
 		if (file) {
+			GString *subtitle = NULL;
+			GFile *home = NULL;
+			GFile *parent = g_file_get_parent(file);
 			gchar *basename = g_file_get_basename(file);
-			gchar *path = g_file_get_path(file);
+			gchar *path = NULL;
+			const gchar *home_dir = g_get_home_dir();
+			home = g_file_new_for_path(home_dir);
+			if (home && parent) {
+				path = g_file_get_relative_path(home, parent);
+			}
+			if (path) {
+				subtitle = g_string_new("~/");
+				subtitle = g_string_append(subtitle, path);
+			} else {
+				path = g_file_get_path(parent);
+			}
+			if (!subtitle && path) {
+				subtitle = g_string_new(path);
+			} else {
+				path = g_file_get_path(file);
+			}
+			if (!subtitle && path) {
+				subtitle = g_string_new(path);
+			}
 			gtk_header_bar_set_title(GTK_HEADER_BAR(handler->handler_header.header_bar), basename);
-			gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->handler_header.header_bar), path);
+			if (subtitle) {
+				gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->handler_header.header_bar), subtitle->str);
+			} else {
+				gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->handler_header.header_bar), NULL);
+			}
 			g_free(basename);
 			g_free(path);
+			if (subtitle) {
+				g_string_free(subtitle, TRUE);
+			}
+			if (parent) {
+				g_object_unref(G_OBJECT(parent));
+			}
+			if (home) {
+				g_object_unref(G_OBJECT(home));
+			}
 		} else {
 			gtk_header_bar_set_title(GTK_HEADER_BAR(handler->handler_header.header_bar), "Untitled");
 			gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->handler_header.header_bar), NULL);
