@@ -31,9 +31,9 @@ cview *get_current_view(chandler *handler)
 	return view;
 }
 
-void update_view_status(chandler *handler)
+void update_view_status(chandler *handler, cview *view)
 {
-	cview *view = get_current_view(handler);
+	update_headerbar(handler, view);
 	update_statusbar(handler, view);
 }
 
@@ -74,21 +74,7 @@ void update_document_views_status(chandler *handler, cdocument *document)
 		}
 		view_iter = view_iter->next;
 	}
-	view = get_current_view(handler);
-	if (view) {
-		file = gtk_source_file_get_location(view->document->source_file);
-		if (file) {
-			basename = g_file_get_basename(file);
-			path = g_file_get_path(file);
-			gtk_header_bar_set_title(GTK_HEADER_BAR(handler->handler_header.header_bar), basename);
-			gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->handler_header.header_bar), path);
-			g_free(basename);
-			g_free(path);
-		} else {
-			gtk_header_bar_set_title(GTK_HEADER_BAR(handler->handler_header.header_bar), "Untitled");
-			gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->handler_header.header_bar), NULL);
-		}
-	}
+	update_view_status(handler, NULL);
 }
 
 static void document_load_progress(goffset current_num_bytes, goffset total_num_bytes, gpointer user_data)
@@ -366,5 +352,5 @@ void add_view_for_document(chandler *handler, cdocument *document)
 	update_document_views_status(handler, document);
 	/* Show page */
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), page_index);
-	update_statusbar(handler, NULL);
+	update_view_status(handler, view);
 }

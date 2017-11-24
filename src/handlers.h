@@ -140,6 +140,9 @@ struct chandler {
 	chandler_dialog_save handler_dialog_save_as;
 };
 
+/* Header */
+void update_headerbar(chandler *handler, cview *view);
+
 /* Statusbar */
 void update_statusbar_language(chandler *handler, cview *view);
 void update_statusbar_repository_branch(chandler *handler, cview *view);
@@ -147,6 +150,7 @@ void update_statusbar(chandler *handler, cview *view);
 
 /* Document */
 cview *get_current_view(chandler *handler);
+void update_view_status(chandler *handler, cview *view);
 void update_document_views_status(chandler *handler, cdocument *document);
 void free_document(cdocument *document);
 void save_document(cdocument *document, gchar *file_name);

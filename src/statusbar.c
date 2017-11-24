@@ -71,7 +71,9 @@ void update_statusbar_repository_branch(chandler *handler, cview *view)
 
 void update_statusbar(chandler *handler, cview *view)
 {
-	view = get_current_view(handler);
+	if (!view) {
+		view = get_current_view(handler);
+	}
 	if (view) {
 		update_statusbar_language(handler, view);
 		update_statusbar_repository_branch(handler, view);

@@ -54,14 +54,14 @@ static void file_chooser_dialog_save_show(GtkWidget *widget, gpointer user_data)
 	if (view) {
 		if (view->document->encoding) {
 			gtk_button_set_label(GTK_BUTTON(handler->handler_dialog_save.button_encoding),
-					gtk_source_encoding_get_charset(view->document->encoding));
+				gtk_source_encoding_get_charset(view->document->encoding));
 		} else {
 			gtk_button_set_label(GTK_BUTTON(handler->handler_dialog_save.button_encoding),
 				gtk_source_encoding_get_charset(gtk_source_encoding_get_utf8()));
 		}
 	} else {
 		gtk_button_set_label(GTK_BUTTON(handler->handler_dialog_save.button_encoding),
-				gtk_source_encoding_get_charset(gtk_source_encoding_get_utf8()));
+			gtk_source_encoding_get_charset(gtk_source_encoding_get_utf8()));
 	}
 }
 

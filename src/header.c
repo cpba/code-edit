@@ -20,6 +20,30 @@
 #include <gtk/gtk.h>
 #include "handlers.h"
 
+void update_headerbar(chandler *handler, cview *view)
+{
+	if (!view) {
+		view = get_current_view(handler);
+	}
+	if (view) {
+		GFile *file = gtk_source_file_get_location(view->document->source_file);
+		if (file) {
+			gchar *basename = g_file_get_basename(file);
+			gchar *path = g_file_get_path(file);
+			gtk_header_bar_set_title(GTK_HEADER_BAR(handler->handler_header.header_bar), basename);
+			gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->handler_header.header_bar), path);
+			g_free(basename);
+			g_free(path);
+		} else {
+			gtk_header_bar_set_title(GTK_HEADER_BAR(handler->handler_header.header_bar), "Untitled");
+			gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->handler_header.header_bar), NULL);
+		}
+	} else {
+		gtk_header_bar_set_title(GTK_HEADER_BAR(handler->handler_header.header_bar), PROGRAM_NAME);
+		gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->handler_header.header_bar), NULL);
+	}
+}
+
 static void button_new_document_clicked(GtkWidget *widget, gpointer user_data)
 {
 	chandler *handler = user_data;
