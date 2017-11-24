@@ -79,11 +79,21 @@ static void document_load_progress(goffset current_num_bytes, goffset total_num_
 {
 	cdocument *document = user_data;
 	cview *view = NULL;
+	gboolean show_progress_bar = FALSE;
 	gdouble percentage = (gdouble)current_num_bytes / (gdouble)total_num_bytes;
-	GList *element = g_list_first(document->views);
+	GList *element = NULL;
+	if (document->operation_start) {
+		GDateTime *now = g_date_time_new_now_local();
+		GTimeSpan time_span = g_date_time_difference(now, document->operation_start);
+		if ((gdouble)time_span / (gdouble)G_TIME_SPAN_SECOND > 0.5) {
+			show_progress_bar = TRUE;
+		}
+		g_date_time_unref(now);
+	}
+	element = g_list_first(document->views);
 	while (element) {
 		view = element->data;
-		gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), TRUE);
+		gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), show_progress_bar);
 		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(view->progress_bar), percentage);
 		element = g_list_next(element);
 	}
@@ -93,11 +103,21 @@ static void document_save_progress(goffset current_num_bytes, goffset total_num_
 {
 	cdocument *document = user_data;
 	cview *view = NULL;
+	gboolean show_progress_bar = FALSE;
 	gdouble percentage = (gdouble)current_num_bytes / (gdouble)total_num_bytes;
-	GList *element = g_list_first(document->views);
+	GList *element = NULL;
+	if (document->operation_start) {
+		GDateTime *now = g_date_time_new_now_local();
+		GTimeSpan time_span = g_date_time_difference(now, document->operation_start);
+		if ((gdouble)time_span / (gdouble)G_TIME_SPAN_SECOND > 0.5) {
+			show_progress_bar = TRUE;
+		}
+		g_date_time_unref(now);
+	}
+	element = g_list_first(document->views);
 	while (element) {
 		view = element->data;
-		gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), TRUE);
+		gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), show_progress_bar);
 		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(view->progress_bar), percentage);
 		element = g_list_next(element);
 	}
@@ -118,6 +138,10 @@ static void document_async_ready(GObject *source_object, GAsyncResult *res, gpoi
 		gtk_source_file_saver_save_finish(GTK_SOURCE_FILE_SAVER(source_object), res, NULL);
 		g_object_unref(document->source_file_saver);
 		document->source_file_saver = NULL;
+	}
+	if (document->operation_start) {
+		g_date_time_unref(document->operation_start);
+		document->operation_start = NULL;
 	}
 	while (element) {
 		view = element->data;
@@ -175,6 +199,7 @@ void save_document(cdocument *document, gchar *file_name)
 			file = g_file_new_for_path(file_name);
 			gtk_source_file_set_location(document->source_file, file);
 		}
+		document->operation_start = g_date_time_new_now_local();
 		document->source_file_saver = gtk_source_file_saver_new(document->source_buffer, document->source_file);
 		gtk_source_file_saver_set_encoding(document->source_file_saver, document->encoding);
 		gtk_source_file_saver_save_async(document->source_file_saver,
@@ -206,6 +231,7 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 		document->source_file_saver = NULL;
 		document->encoding = gtk_source_encoding_get_utf8();
 		document->source_buffer = gtk_source_buffer_new(NULL);
+		document->operation_start = g_date_time_new_now_local();
 		g_object_set_data(G_OBJECT(document->source_buffer), "document", document);
 		g_signal_connect(document->source_buffer, "changed", G_CALLBACK(source_buffer_changed), handler);
 		g_signal_connect(document->source_buffer, "modified-changed", G_CALLBACK(source_buffer_changed), handler);
