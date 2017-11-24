@@ -24,6 +24,8 @@
 #include <gtksourceview/gtksource.h>
 
 #define PROGRAM_NAME "Code"
+#define WINDOW_VIEW_MIN_WIDTH 320
+#define WINDOW_VIEW_MIN_HEIGHT 320
 #define SIDEBAR_TREE_VIEW_MIN_WIDTH 160
 #define LIST_VIEW_MIN_HEIGHT 260
 #define SHOW_PROGRESS_BAR_AFTER 0.5

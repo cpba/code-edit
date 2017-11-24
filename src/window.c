@@ -34,7 +34,7 @@ void init_window(chandler *handler)
 	gtk_widget_set_vexpand(handler_window->box, TRUE);
 	gtk_widget_set_halign(handler_window->box, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler_window->box, GTK_ALIGN_FILL);
-	gtk_widget_set_size_request(handler_window->box, 400, 400);
+	gtk_widget_set_size_request(handler_window->box, WINDOW_VIEW_MIN_WIDTH, WINDOW_VIEW_MIN_HEIGHT);
 	/* Box frames */
 	handler_window->box_frames = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	gtk_widget_set_name(handler_window->box_frames, "box_frames");
