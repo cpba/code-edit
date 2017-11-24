@@ -32,6 +32,7 @@
 
 typedef struct cdocument cdocument;
 typedef struct cview cview;
+typedef struct chandler_dialog_save chandler_dialog_save;
 typedef struct chandler_header chandler_header;
 typedef struct chandler_frame_tree_view chandler_frame_tree_view;
 typedef struct chandler_frame_view chandler_frame_view;
@@ -61,6 +62,12 @@ struct cview {
 	GtkWidget *box_tab;
 	GtkWidget *label_tab;
 	GtkWidget *button_close_tab;
+};
+
+struct chandler_dialog_save {
+	GtkWidget *dialog;
+	GtkWidget *button_encoding;
+	GtkWidget *button_newline;
 };
 
 struct chandler_header {
@@ -110,7 +117,6 @@ struct chandler_frame_preferences {
 struct chandler_statusbar {
 	GtkWidget *revealer_statusbar;
 	GtkWidget *action_bar;
-	GtkWidget *button_encoding;
 	GtkWidget *button_language;
 	GtkWidget *button_repo_branch;
 };
@@ -130,6 +136,8 @@ struct chandler {
 	chandler_frame_preferences handler_frame_preferences;
 	chandler_frame_view handler_frame_view;
 	chandler_frame_tree_view handler_frame_tree_view;
+	chandler_dialog_save handler_dialog_save;
+	chandler_dialog_save handler_dialog_save_as;
 };
 
 /* Statusbar */
@@ -151,6 +159,7 @@ void init_frame_tree_view(chandler *handler);
 void init_frame_view(chandler *handler);
 void init_header(chandler *handler);
 void init_statusbar(chandler *handler);
+void init_file_chooser_save(chandler *handler, gchar *title, gchar *button);
 void init_window(chandler *handler);
 
 #endif

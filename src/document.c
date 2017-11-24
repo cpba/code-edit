@@ -31,6 +31,12 @@ cview *get_current_view(chandler *handler)
 	return view;
 }
 
+void update_view_status(chandler *handler)
+{
+	cview *view = get_current_view(handler);
+	update_statusbar(handler, view);
+}
+
 void update_document_views_status(chandler *handler, cdocument *document)
 {
 	cview *view = NULL;

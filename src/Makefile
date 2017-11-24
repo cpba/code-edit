@@ -11,6 +11,7 @@ build:
 	$(CC) -Wall $(CFLAGS) -c frame_tree_view.c
 	$(CC) -Wall $(CFLAGS) -c header.c
 	$(CC) -Wall $(CFLAGS) -c statusbar.c
+	$(CC) -Wall $(CFLAGS) -c file_chooser_save.c
 	$(CC) -Wall $(CFLAGS) -c window.c
 	$(CC) -Wall $(CFLAGS) -c main.c
 	$(CC) -Wall -g -o ./code *.o $(LDLIBS)

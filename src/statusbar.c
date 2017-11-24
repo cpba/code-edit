@@ -21,17 +21,6 @@
 #include <libgit2-glib/ggit.h>
 #include "handlers.h"
 
-void update_statusbar_encoding(chandler *handler, cview *view)
-{
-	if (view) {
-		gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.button_encoding),
-				gtk_source_encoding_get_charset(view->document->encoding));
-	} else {
-		gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.button_encoding),
-				gtk_source_encoding_get_charset(gtk_source_encoding_get_utf8()));
-	}
-}
-
 void update_statusbar_language(chandler *handler, cview *view)
 {
 	GtkSourceLanguage *source_language = NULL;
@@ -83,15 +72,8 @@ void update_statusbar_repository_branch(chandler *handler, cview *view)
 
 void update_statusbar(chandler *handler, cview *view)
 {
-	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook));
-	if (current_page > -1) {
-		GtkWidget *page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), current_page);
-		if (!view) {
-			view = g_object_get_data(G_OBJECT(page), "view");
-		}
-	}
+	view = get_current_view(handler);
 	if (view) {
-		update_statusbar_encoding(handler, view);
 		update_statusbar_language(handler, view);
 		update_statusbar_repository_branch(handler, view);
 		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_statusbar.revealer_statusbar), TRUE);
@@ -130,33 +112,6 @@ static void tree_view_source_language_activated(GtkWidget *widget, GtkTreePath *
 	gtk_widget_hide(popover);
 }
 
-static void tree_view_source_encoding_activated(GtkWidget *widget, GtkTreePath *path, GtkTreeViewColumn *column, gpointer user_data)
-{
-	chandler *handler = user_data;
-	GtkTreeIter tree_iter;
-	GtkWidget *popover = NULL;
-	gchar *charset = NULL;
-	const GtkSourceEncoding *encoding = NULL;
-	gchar *name = NULL;
-	cview *view = get_current_view(handler);
-	if (gtk_tree_model_get_iter(GTK_TREE_MODEL(gtk_tree_view_get_model(GTK_TREE_VIEW(widget))), &tree_iter, path)) {
-		gtk_tree_model_get (GTK_TREE_MODEL(gtk_tree_view_get_model(GTK_TREE_VIEW(widget))),
-			&tree_iter,
-			0, &charset,
-			-1);
-		if (charset) {
-			encoding = gtk_source_encoding_get_from_charset(charset);
-		}
-		if (encoding) {
-			view->document->encoding = encoding;
-		}
-		gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.button_encoding), charset);
-		g_free(charset);
-	}
-	popover = GTK_WIDGET(gtk_menu_button_get_popover(GTK_MENU_BUTTON(handler->handler_statusbar.button_encoding)));
-	gtk_widget_hide(popover);
-}
-
 void init_statusbar(chandler *handler)
 {
 	chandler_statusbar *handler_statusbar = &handler->handler_statusbar;
@@ -168,8 +123,6 @@ void init_statusbar(chandler *handler)
 	GtkListStore *list_store = NULL;
 	GtkTreeIter tree_iter;
 	GtkWidget *entry = NULL;
-	GSList *encodings = NULL;
-	GSList *encoding_iter = NULL;
 	GtkCellRenderer *cell_renderer = NULL;
 	GtkTreeViewColumn *tree_view_column = NULL;
 	GtkSourceLanguage *source_language = NULL;
@@ -194,62 +147,6 @@ void init_statusbar(chandler *handler)
 	gtk_widget_set_halign(handler_statusbar->action_bar, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler_statusbar->action_bar, GTK_ALIGN_FILL);
 	gtk_style_context_add_class(gtk_widget_get_style_context(handler_statusbar->action_bar), GTK_STYLE_CLASS_FLAT);
-	/* Button encoding */
-	handler_statusbar->button_encoding = gtk_menu_button_new();
-	gtk_widget_set_name(handler_statusbar->button_encoding, "button_encoding");
-	gtk_action_bar_pack_end(GTK_ACTION_BAR(handler_statusbar->action_bar), handler_statusbar->button_encoding);
-	gtk_widget_set_hexpand(handler_statusbar->button_encoding, FALSE);
-	gtk_widget_set_vexpand(handler_statusbar->button_encoding, FALSE);
-	gtk_widget_set_halign(handler_statusbar->button_encoding, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(handler_statusbar->button_encoding, GTK_ALIGN_CENTER);
-	gtk_style_context_add_class(gtk_widget_get_style_context(handler_statusbar->button_encoding), GTK_STYLE_CLASS_FLAT);
-	/* Popover encoding */
-	popover = gtk_popover_new(handler_statusbar->button_encoding);
-	gtk_menu_button_set_popover(GTK_MENU_BUTTON(handler_statusbar->button_encoding), popover);
-	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, MINOR_SPACING);
-	gtk_container_add(GTK_CONTAINER(popover), box);
-	gtk_widget_set_hexpand(box, TRUE);
-	gtk_widget_set_vexpand(box, FALSE);
-	gtk_widget_set_halign(box, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(box, GTK_ALIGN_FILL);
-	gtk_container_set_border_width(GTK_CONTAINER(box), MEDIUM_SPACING);
-	entry = gtk_search_entry_new();
-	gtk_container_add(GTK_CONTAINER(box), entry);
-	gtk_widget_set_hexpand(box, TRUE);
-	gtk_widget_set_vexpand(box, FALSE);
-	gtk_widget_set_halign(box, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(box, GTK_ALIGN_CENTER);
-	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-	gtk_container_add(GTK_CONTAINER(box), scrolled_window);
-	gtk_widget_set_hexpand(box, TRUE);
-	gtk_widget_set_vexpand(box, FALSE);
-	gtk_widget_set_halign(box, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(box, GTK_ALIGN_FILL);
-	gtk_widget_set_size_request(scrolled_window, -1, LIST_VIEW_MIN_HEIGHT);
-	gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_window), GTK_SHADOW_IN);
-	list_store = gtk_list_store_new(1, G_TYPE_STRING);
-	encodings = gtk_source_encoding_get_all();
-	encoding_iter = encodings;
-	while (encoding_iter) {
-		gtk_list_store_append(GTK_LIST_STORE(list_store), &tree_iter);
-		gtk_list_store_set(GTK_LIST_STORE(list_store),
-			&tree_iter,
-			0, gtk_source_encoding_get_charset(encoding_iter->data),
-			-1);
-		encoding_iter = encoding_iter->next;
-	}
-	g_slist_free(encodings);
-	tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(list_store));
-	gtk_container_add(GTK_CONTAINER(scrolled_window), tree_view);
-	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(tree_view), FALSE);
-	gtk_tree_view_set_activate_on_single_click(GTK_TREE_VIEW(tree_view), TRUE);
-	gtk_tree_view_set_search_entry(GTK_TREE_VIEW(tree_view), GTK_ENTRY(entry));
-	g_signal_connect(tree_view, "row-activated", G_CALLBACK(tree_view_source_encoding_activated), handler);
-	cell_renderer = gtk_cell_renderer_text_new();
-	tree_view_column = gtk_tree_view_column_new_with_attributes("Name", cell_renderer, "text", 0, NULL);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(tree_view), GTK_TREE_VIEW_COLUMN(tree_view_column));
-	gtk_tree_view_column_set_visible(GTK_TREE_VIEW_COLUMN(tree_view_column), TRUE);
-	gtk_widget_show_all(box);
 	/* Button language */
 	handler_statusbar->button_language = gtk_menu_button_new();
 	gtk_widget_set_name(handler_statusbar->button_language, "button_language");
@@ -327,7 +224,6 @@ void init_statusbar(chandler *handler)
 	gtk_button_set_always_show_image(GTK_BUTTON(handler_statusbar->button_repo_branch), TRUE);
 	image = gtk_image_new_from_icon_name("gitg-symbolic", GTK_ICON_SIZE_BUTTON);
 	gtk_button_set_image(GTK_BUTTON(handler_statusbar->button_repo_branch), image);
-	update_statusbar_encoding(handler, NULL);
 	update_statusbar_language(handler, NULL);
 	update_statusbar_repository_branch(handler, NULL);
 }

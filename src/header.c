@@ -62,19 +62,14 @@ static void button_save_as_document_clicked(GtkWidget *widget, gpointer user_dat
 	if (view) {
 		gint response = 0;
 		gchar *file_name = NULL;
-		GtkWidget *dialog = gtk_file_chooser_dialog_new("Save As",
-			GTK_WINDOW(handler->handler_window.window),
-			GTK_FILE_CHOOSER_ACTION_SAVE,
-			"Save As", GTK_RESPONSE_OK,
-			NULL);
-		gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
-		response = gtk_dialog_run(GTK_DIALOG(dialog));
+		init_file_chooser_save(handler, "Save As", "Save");
+		response = gtk_dialog_run(GTK_DIALOG(handler->handler_dialog_save.dialog));
 		if (response == GTK_RESPONSE_OK) {
-			file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+			file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(handler->handler_dialog_save.dialog));
 			save_document(view->document, file_name);
 			g_free(file_name);
 		}
-		gtk_widget_destroy(dialog);
+		gtk_widget_destroy(handler->handler_dialog_save.dialog);
 	}
 }
 
@@ -90,19 +85,14 @@ static void button_save_document_clicked(GtkWidget *widget, gpointer user_data)
 		if (!file) {
 			gint response = 0;
 			gchar *file_name = NULL;
-			GtkWidget *dialog = gtk_file_chooser_dialog_new("Save",
-				GTK_WINDOW(handler->handler_window.window),
-				GTK_FILE_CHOOSER_ACTION_SAVE,
-				"Save", GTK_RESPONSE_OK,
-				NULL);
-			gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
-			response = gtk_dialog_run(GTK_DIALOG(dialog));
+			init_file_chooser_save(handler, "Save", "Save");
+			response = gtk_dialog_run(GTK_DIALOG(handler->handler_dialog_save.dialog));
 			if (response == GTK_RESPONSE_OK) {
-				file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+				file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(handler->handler_dialog_save.dialog));
 				save_document(view->document, file_name);
 				g_free(file_name);
 			}
-			gtk_widget_destroy(dialog);
+			gtk_widget_destroy(handler->handler_dialog_save.dialog);
 		} else {
 			save_document(view->document, NULL);
 		}
