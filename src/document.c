@@ -42,9 +42,7 @@ void update_document_views_status(chandler *handler, cdocument *document)
 	cview *view = NULL;
 	GList *view_iter = document->views;
 	GString *text = NULL;
-	GFile *file = NULL;
 	gchar *basename = NULL;
-	gchar *path = NULL;
 	while (view_iter) {
 		view = view_iter->data;
 		/* Update tab label */

@@ -20,6 +20,12 @@
 #include <gtk/gtk.h>
 #include "handlers.h"
 
+void notebook_page_removed(GtkWidget *widget, GtkWidget *child, gint page_num, gpointer user_data)
+{
+	chandler *handler = user_data;
+	update_view_status(handler, NULL);
+}
+
 void notebook_switch_page(GtkWidget *widget, GtkWidget *page, guint page_num, gpointer user_data)
 {
 	chandler *handler = user_data;
@@ -53,6 +59,7 @@ void init_frame_view(chandler *handler)
 	gtk_notebook_set_show_border(GTK_NOTEBOOK(handler_frame_view->notebook), FALSE);
 	gtk_notebook_set_scrollable(GTK_NOTEBOOK(handler_frame_view->notebook), TRUE);
 	g_signal_connect(handler_frame_view->notebook, "switch-page", G_CALLBACK(notebook_switch_page), handler);
+	g_signal_connect(handler_frame_view->notebook, "page-removed", G_CALLBACK(notebook_page_removed), handler);
 	/* Revealer search and replace */
 	handler_frame_view->revealer_search_and_replace = gtk_revealer_new();
 	gtk_container_add(GTK_CONTAINER(handler_frame_view->box), handler_frame_view->revealer_search_and_replace);

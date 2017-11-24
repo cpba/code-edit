@@ -59,6 +59,7 @@ static void application_activate(GtkApplication *application, gpointer user_data
 	/* Show */
 	gtk_window_present(GTK_WINDOW(handler->handler_window.window));
 	gtk_widget_show_all(handler->handler_window.window);
+	update_view_status(handler, NULL);
 }
 
 static void application_shutdown(GtkApplication *application, gpointer user_data)
