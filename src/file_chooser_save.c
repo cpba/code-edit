@@ -99,6 +99,7 @@ void init_file_chooser_save(chandler *handler, gchar *title, gchar *button)
 	gtk_widget_set_halign(handler_dialog_save->button_encoding, GTK_ALIGN_START);
 	gtk_widget_set_valign(handler_dialog_save->button_encoding, GTK_ALIGN_CENTER);
 	gtk_style_context_add_class(gtk_widget_get_style_context(handler_dialog_save->button_encoding), GTK_STYLE_CLASS_FLAT);
+	gtk_button_set_label(GTK_BUTTON(handler_dialog_save->button_encoding), "Encoding");
 	/* Popover encoding */
 	popover = gtk_popover_new(handler_dialog_save->button_encoding);
 	gtk_menu_button_set_popover(GTK_MENU_BUTTON(handler_dialog_save->button_encoding), popover);
