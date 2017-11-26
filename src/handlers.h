@@ -24,6 +24,7 @@
 #include <gtksourceview/gtksource.h>
 
 #define PROGRAM_NAME "Code"
+#define TEMPORARY_FILE_TEMPLATE "srcfile"
 #define WINDOW_VIEW_MIN_WIDTH 320
 #define WINDOW_VIEW_MIN_HEIGHT 320
 #define SIDEBAR_TREE_VIEW_MIN_WIDTH 160
@@ -161,6 +162,14 @@ void save_document(cdocument *document, gchar *file_name);
 cdocument *new_document(chandler *handler, gchar *file_name);
 void close_view(chandler *handler, cview *view);
 void add_view_for_document(chandler *handler, cdocument *document);
+
+/* Actions */
+void window_new(gpointer user_data);
+void window_open(gpointer user_data);
+void window_save_as(gpointer user_data);
+void window_save(gpointer user_data);
+void window_toggle_search_bar(gpointer user_data);
+void window_toggle_search_and_replace_bar(gpointer user_data);
 
 /* Initialization */
 void init_frame_tree_view(chandler *handler);

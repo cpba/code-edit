@@ -20,6 +20,17 @@
 #include <gtk/gtk.h>
 #include "handlers.h"
 
+cview *get_nth_view(chandler *handler, gint index)
+{
+	cview *view = NULL;
+	GtkWidget *page = NULL;
+	page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), index);
+	if (page) {
+		view = g_object_get_data(G_OBJECT(page), "view");
+	}
+	return view;
+}
+
 cview *get_current_view(chandler *handler)
 {
 	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook));

@@ -85,81 +85,22 @@ void update_headerbar(chandler *handler, cview *view)
 
 static void button_new_document_clicked(GtkWidget *widget, gpointer user_data)
 {
-	chandler *handler = user_data;
-	cdocument *document = new_document(handler, NULL);
-	add_view_for_document(handler, document);
+	window_new(user_data);
 }
 
 static void button_open_document_clicked(GtkWidget *widget, gpointer user_data)
 {
-	chandler *handler = user_data;
-	gint response = 0;
-	GtkWidget *dialog = gtk_file_chooser_dialog_new("Open",
-		GTK_WINDOW(handler->handler_window.window),
-		GTK_FILE_CHOOSER_ACTION_OPEN,
-		"Open", GTK_RESPONSE_OK,
-		NULL);
-	gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), TRUE);
-	response = gtk_dialog_run(GTK_DIALOG(dialog));
-	if (response == GTK_RESPONSE_OK) {
-		GSList *file_names = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
-		GSList *file_name_iter = file_names;
-		while (file_name_iter) {
-			gchar *file_name = file_name_iter->data;
-			cdocument *document = new_document(handler, file_name);
-			add_view_for_document(handler, document);
-			g_free(file_name);
-			file_name_iter = file_name_iter->next;
-		}
-		g_slist_free(file_names);
-	}
-	gtk_widget_destroy(dialog);
+	window_open(user_data);
 }
 
 static void button_save_as_document_clicked(GtkWidget *widget, gpointer user_data)
 {
-	chandler *handler = user_data;
-	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook));
-	GtkWidget *scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), current_page);
-	cview *view = g_object_get_data(G_OBJECT(scrolled_window), "view");
-	if (view) {
-		gint response = 0;
-		gchar *file_name = NULL;
-		init_file_chooser_save(handler, "Save As", "Save");
-		response = gtk_dialog_run(GTK_DIALOG(handler->handler_dialog_save.dialog));
-		if (response == GTK_RESPONSE_OK) {
-			file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(handler->handler_dialog_save.dialog));
-			save_document(view->document, file_name);
-			g_free(file_name);
-		}
-		gtk_widget_destroy(handler->handler_dialog_save.dialog);
-	}
+	window_save_as(user_data);
 }
 
 static void button_save_document_clicked(GtkWidget *widget, gpointer user_data)
 {
-	chandler *handler = user_data;
-	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook));
-	GtkWidget *scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), current_page);
-	cview *view = g_object_get_data(G_OBJECT(scrolled_window), "view");
-	GFile *file = NULL;
-	if (view) {
-		file = gtk_source_file_get_location(view->document->source_file);
-		if (!file) {
-			gint response = 0;
-			gchar *file_name = NULL;
-			init_file_chooser_save(handler, "Save", "Save");
-			response = gtk_dialog_run(GTK_DIALOG(handler->handler_dialog_save.dialog));
-			if (response == GTK_RESPONSE_OK) {
-				file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(handler->handler_dialog_save.dialog));
-				save_document(view->document, file_name);
-				g_free(file_name);
-			}
-			gtk_widget_destroy(handler->handler_dialog_save.dialog);
-		} else {
-			save_document(view->document, NULL);
-		}
-	}
+	window_save(user_data);
 }
 
 static void button_preferences_toggled(GtkWidget *widget, gpointer user_data)

@@ -22,6 +22,135 @@
 #include <libgit2-glib/ggit.h>
 #include "handlers.h"
 
+void window_new(gpointer user_data)
+{
+	chandler *handler = user_data;
+	cdocument *document = new_document(handler, NULL);
+	add_view_for_document(handler, document);
+}
+
+void window_open(gpointer user_data)
+{
+	chandler *handler = user_data;
+	gint response = 0;
+	GtkWidget *dialog = gtk_file_chooser_dialog_new("Open",
+		GTK_WINDOW(handler->handler_window.window),
+		GTK_FILE_CHOOSER_ACTION_OPEN,
+		"Open", GTK_RESPONSE_OK,
+		NULL);
+	gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), TRUE);
+	response = gtk_dialog_run(GTK_DIALOG(dialog));
+	if (response == GTK_RESPONSE_OK) {
+		GSList *file_names = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
+		GSList *file_name_iter = file_names;
+		while (file_name_iter) {
+			gchar *file_name = file_name_iter->data;
+			cdocument *document = new_document(handler, file_name);
+			add_view_for_document(handler, document);
+			g_free(file_name);
+			file_name_iter = file_name_iter->next;
+		}
+		g_slist_free(file_names);
+	}
+	gtk_widget_destroy(dialog);
+}
+
+void window_save_as(gpointer user_data)
+{
+	chandler *handler = user_data;
+	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook));
+	GtkWidget *scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), current_page);
+	cview *view = g_object_get_data(G_OBJECT(scrolled_window), "view");
+	if (view) {
+		gint response = 0;
+		gchar *file_name = NULL;
+		init_file_chooser_save(handler, "Save As", "Save");
+		response = gtk_dialog_run(GTK_DIALOG(handler->handler_dialog_save.dialog));
+		if (response == GTK_RESPONSE_OK) {
+			file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(handler->handler_dialog_save.dialog));
+			save_document(view->document, file_name);
+			g_free(file_name);
+		}
+		gtk_widget_destroy(handler->handler_dialog_save.dialog);
+	}
+}
+
+void window_save(gpointer user_data)
+{
+	chandler *handler = user_data;
+	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook));
+	GtkWidget *scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), current_page);
+	cview *view = g_object_get_data(G_OBJECT(scrolled_window), "view");
+	GFile *file = NULL;
+	if (view) {
+		file = gtk_source_file_get_location(view->document->source_file);
+		if (!file) {
+			gint response = 0;
+			gchar *file_name = NULL;
+			init_file_chooser_save(handler, "Save", "Save");
+			response = gtk_dialog_run(GTK_DIALOG(handler->handler_dialog_save.dialog));
+			if (response == GTK_RESPONSE_OK) {
+				file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(handler->handler_dialog_save.dialog));
+				save_document(view->document, file_name);
+				g_free(file_name);
+			}
+			gtk_widget_destroy(handler->handler_dialog_save.dialog);
+		} else {
+			save_document(view->document, NULL);
+		}
+	}
+}
+
+void window_toggle_search_bar(gpointer user_data)
+{
+	chandler *handler = user_data;
+	if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace))) {
+		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace), TRUE);
+		gtk_widget_grab_focus(handler->handler_frame_view.entry_search);
+	}
+}
+
+void window_toggle_search_and_replace_bar(gpointer user_data)
+{
+	chandler *handler = user_data;
+	if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace))) {
+		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace), TRUE);
+		gtk_widget_grab_focus(handler->handler_frame_view.entry_search);
+	}
+}
+
+static void init_accels(chandler *handler)
+{
+	GtkAccelGroup *accel_group = gtk_accel_group_new();
+	gtk_window_add_accel_group(GTK_WINDOW(handler->handler_window.window), GTK_ACCEL_GROUP(accel_group));
+	gtk_accel_group_connect(GTK_ACCEL_GROUP(accel_group),
+		GDK_KEY_N,
+		GDK_CONTROL_MASK,
+		0,
+		g_cclosure_new_swap(G_CALLBACK(window_new), handler, NULL));
+	gtk_accel_group_connect(GTK_ACCEL_GROUP(accel_group),
+		GDK_KEY_O,
+		GDK_CONTROL_MASK,
+		0,
+		g_cclosure_new_swap(G_CALLBACK(window_open), handler, NULL));
+	gtk_accel_group_connect(GTK_ACCEL_GROUP(accel_group),
+		GDK_KEY_S,
+		GDK_CONTROL_MASK,
+		0,
+		g_cclosure_new_swap(G_CALLBACK(window_save), handler, NULL));
+	gtk_accel_group_connect(GTK_ACCEL_GROUP(accel_group),
+		GDK_KEY_F,
+		GDK_CONTROL_MASK,
+		0,
+		g_cclosure_new_swap(G_CALLBACK(window_toggle_search_bar), handler, NULL));
+	gtk_accel_group_connect(GTK_ACCEL_GROUP(accel_group),
+		GDK_KEY_R,
+		GDK_CONTROL_MASK,
+		0,
+		g_cclosure_new_swap(G_CALLBACK(window_toggle_search_and_replace_bar), handler, NULL));
+	
+}
+
 static void activate_show_about(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
 {
 	/* Show about frame */
@@ -48,6 +177,7 @@ static void application_activate(GtkApplication *application, gpointer user_data
 	init_frame_view(handler);
 	init_frame_tree_view(handler);
 	init_statusbar(handler);
+	init_accels(handler);
 	gtk_widget_insert_action_group(handler->handler_window.window, "default", G_ACTION_GROUP(action_group));
 	/* Menu */
 	menu = g_menu_new();
@@ -65,7 +195,7 @@ static void application_activate(GtkApplication *application, gpointer user_data
 static void application_shutdown(GtkApplication *application, gpointer user_data)
 {
 	chandler *handler = user_data;
-	/* Save session */
+	//save_config(handler);
 }
 
 int main(void)
