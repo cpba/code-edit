@@ -196,6 +196,10 @@ static cdocument *get_document_by_file_name(chandler *handler, gchar *file_name)
 void free_document(cdocument *document)
 {
 	if (document->source_file) {
+		GFile *file = gtk_source_file_get_location(document->source_file);
+		if (file) {
+			g_object_unref(G_OBJECT(file));
+		}
 		g_object_unref(G_OBJECT(document->source_file));
 	}
 	g_object_unref(G_OBJECT(document->source_buffer));

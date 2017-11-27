@@ -73,9 +73,7 @@ void window_open(gpointer user_data)
 void window_save_as(gpointer user_data)
 {
 	chandler *handler = user_data;
-	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook));
-	GtkWidget *scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), current_page);
-	cview *view = g_object_get_data(G_OBJECT(scrolled_window), "view");
+	cview *view = get_current_view(handler);
 	if (view) {
 		gint response = 0;
 		gchar *file_name = NULL;
@@ -113,6 +111,15 @@ void window_save(gpointer user_data)
 		} else {
 			save_document(view->document, NULL);
 		}
+	}
+}
+
+void window_close(gpointer user_data)
+{
+	chandler *handler = user_data;
+	cview *view = get_current_view(handler);
+	if (view) {
+		close_view(handler, view);
 	}
 }
 
@@ -155,6 +162,11 @@ static void init_accels(chandler *handler)
 		GDK_CONTROL_MASK,
 		0,
 		g_cclosure_new_swap(G_CALLBACK(window_save), handler, NULL));
+	gtk_accel_group_connect(GTK_ACCEL_GROUP(accel_group),
+		GDK_KEY_W,
+		GDK_CONTROL_MASK,
+		0,
+		g_cclosure_new_swap(G_CALLBACK(window_close), handler, NULL));
 	gtk_accel_group_connect(GTK_ACCEL_GROUP(accel_group),
 		GDK_KEY_F,
 		GDK_CONTROL_MASK,
