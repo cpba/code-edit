@@ -20,6 +20,12 @@
 #include <gtk/gtk.h>
 #include "handlers.h"
 
+void entry_search_search_changed(GtkWidget *widget, gpointer user_data)
+{
+	chandler *handler = user_data;
+	gtk_source_search_settings_set_search_text(handler->handler_frame_view.source_search_settings, gtk_entry_get_text(GTK_ENTRY(widget)));
+}
+
 void notebook_page_removed(GtkWidget *widget, GtkWidget *child, gint page_num, gpointer user_data)
 {
 	chandler *handler = user_data;
@@ -110,6 +116,7 @@ void init_frame_view(chandler *handler)
 	gtk_widget_set_vexpand(handler_frame_view->entry_search, FALSE);
 	gtk_widget_set_halign(handler_frame_view->entry_search, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler_frame_view->entry_search, GTK_ALIGN_CENTER);
+	g_signal_connect(handler_frame_view->entry_search, "search-changed", G_CALLBACK(entry_search_search_changed), handler);
 	/* Button search */
 	handler_frame_view->button_search = gtk_button_new_with_label("Search");
 	gtk_widget_set_name(handler_frame_view->button_search, "button_search");
@@ -162,4 +169,6 @@ void init_frame_view(chandler *handler)
 	gtk_widget_set_halign(handler_frame_view->button_replace_all, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler_frame_view->button_replace_all, GTK_ALIGN_CENTER);
 	gtk_size_group_add_widget(GTK_SIZE_GROUP(size_group), handler_frame_view->button_replace_all);
+	/* Search settings */
+	handler_frame_view->source_search_settings = gtk_source_search_settings_new();
 }

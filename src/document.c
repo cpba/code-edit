@@ -246,6 +246,7 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 		document->source_file_saver = NULL;
 		document->encoding = gtk_source_encoding_get_utf8();
 		document->source_buffer = gtk_source_buffer_new(NULL);
+		document->source_search_context = gtk_source_search_context_new(document->source_buffer, handler->handler_frame_view.source_search_settings);
 		document->operation_start = g_date_time_new_now_local();
 		g_object_set_data(G_OBJECT(document->source_buffer), "document", document);
 		g_signal_connect(document->source_buffer, "changed", G_CALLBACK(source_buffer_changed), handler);

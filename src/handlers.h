@@ -53,6 +53,7 @@ struct cdocument {
 	GtkSourceFileSaver *source_file_saver;
 	const GtkSourceEncoding *encoding;
 	GtkSourceBuffer *source_buffer;
+	GtkSourceSearchContext *source_search_context;
 	GList *views;
 	chandler *handler;
 };
@@ -111,6 +112,8 @@ struct chandler_frame_view {
 	GtkWidget *entry_replace;
 	GtkWidget *button_replace;
 	GtkWidget *button_replace_all;
+	GtkSourceSearchSettings *source_search_settings;
+	gint iter_search_offset;
 };
 
 struct chandler_frame_preferences {

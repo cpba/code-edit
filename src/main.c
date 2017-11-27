@@ -123,14 +123,80 @@ void window_close(gpointer user_data)
 	}
 }
 
+void window_search_next(gpointer user_data)
+{
+	chandler *handler = user_data;
+	cview *view = get_current_view(handler);
+	if (view) {
+		gboolean found = FALSE;
+		GtkTextIter iter_beginning;
+		GtkTextIter iter_start;
+		GtkTextIter iter_end;
+		GtkTextMark *text_mark = NULL;
+		if (gtk_text_buffer_get_has_selection(GTK_TEXT_BUFFER(view->document->source_buffer))) {
+			text_mark = gtk_text_buffer_get_selection_bound(GTK_TEXT_BUFFER(view->document->source_buffer));
+		} else {
+			text_mark = gtk_text_buffer_get_insert(GTK_TEXT_BUFFER(view->document->source_buffer));
+		}
+		gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(view->document->source_buffer), &iter_beginning, text_mark);
+		found = gtk_source_search_context_forward2(view->document->source_search_context,
+			&iter_beginning,
+			&iter_start,
+			&iter_end,
+			NULL);
+		if (found) {
+			gtk_text_buffer_select_range(GTK_TEXT_BUFFER(view->document->source_buffer),
+				&iter_start,
+				&iter_end);
+			gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(view->source_view),
+				&iter_start,
+				0.25,
+				TRUE,
+				0.5,
+				0.5);
+		}
+	}
+}
+
+void window_search_previous(gpointer user_data)
+{
+	chandler *handler = user_data;
+	cview *view = get_current_view(handler);
+	if (view) {
+		gboolean found = FALSE;
+		GtkTextIter iter_beginning;
+		GtkTextIter iter_start;
+		GtkTextIter iter_end;
+		GtkTextMark *text_mark = NULL;
+		text_mark = gtk_text_buffer_get_insert(GTK_TEXT_BUFFER(view->document->source_buffer));
+		gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(view->document->source_buffer), &iter_beginning, text_mark);
+		found = gtk_source_search_context_backward2(view->document->source_search_context,
+			&iter_beginning,
+			&iter_start,
+			&iter_end,
+			NULL);
+		if (found) {
+			gtk_text_buffer_select_range(GTK_TEXT_BUFFER(view->document->source_buffer),
+				&iter_start,
+				&iter_end);
+			gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(view->source_view),
+				&iter_start,
+				0.25,
+				TRUE,
+				0.5,
+				0.5);
+		}
+	}
+}
+
 void window_toggle_search_bar(gpointer user_data)
 {
 	chandler *handler = user_data;
 	gtk_widget_hide(GTK_WIDGET(handler->handler_frame_view.box_replace));
 	if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace))) {
 		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace), TRUE);
-		gtk_widget_grab_focus(handler->handler_frame_view.entry_search);
 	}
+	gtk_widget_grab_focus(handler->handler_frame_view.entry_search);
 }
 
 void window_toggle_search_and_replace_bar(gpointer user_data)
@@ -139,8 +205,8 @@ void window_toggle_search_and_replace_bar(gpointer user_data)
 	gtk_widget_show_all(GTK_WIDGET(handler->handler_frame_view.box_replace));
 	if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace))) {
 		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace), TRUE);
-		gtk_widget_grab_focus(handler->handler_frame_view.entry_search);
 	}
+	gtk_widget_grab_focus(handler->handler_frame_view.entry_search);
 }
 
 static void init_accels(chandler *handler)
@@ -167,6 +233,16 @@ static void init_accels(chandler *handler)
 		GDK_CONTROL_MASK,
 		0,
 		g_cclosure_new_swap(G_CALLBACK(window_close), handler, NULL));
+	gtk_accel_group_connect(GTK_ACCEL_GROUP(accel_group),
+		GDK_KEY_F3,
+		0,
+		0,
+		g_cclosure_new_swap(G_CALLBACK(window_search_next), handler, NULL));
+	gtk_accel_group_connect(GTK_ACCEL_GROUP(accel_group),
+		GDK_KEY_F3,
+		GDK_SHIFT_MASK,
+		0,
+		g_cclosure_new_swap(G_CALLBACK(window_search_previous), handler, NULL));
 	gtk_accel_group_connect(GTK_ACCEL_GROUP(accel_group),
 		GDK_KEY_F,
 		GDK_CONTROL_MASK,
