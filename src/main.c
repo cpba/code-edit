@@ -119,6 +119,7 @@ void window_save(gpointer user_data)
 void window_toggle_search_bar(gpointer user_data)
 {
 	chandler *handler = user_data;
+	gtk_widget_hide(GTK_WIDGET(handler->handler_frame_view.box_replace));
 	if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace))) {
 		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace), TRUE);
 		gtk_widget_grab_focus(handler->handler_frame_view.entry_search);
@@ -128,6 +129,7 @@ void window_toggle_search_bar(gpointer user_data)
 void window_toggle_search_and_replace_bar(gpointer user_data)
 {
 	chandler *handler = user_data;
+	gtk_widget_show_all(GTK_WIDGET(handler->handler_frame_view.box_replace));
 	if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace))) {
 		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace), TRUE);
 		gtk_widget_grab_focus(handler->handler_frame_view.entry_search);

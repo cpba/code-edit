@@ -101,13 +101,14 @@ struct chandler_frame_view {
 	GtkWidget *revealer_search_and_replace;
 	GtkWidget *box_search_and_replace;
 	GtkWidget *entry_search;
-	GtkWidget *entry_replace;
 	GtkWidget *entry_file_pattern;
 	GtkWidget *button_use_regex;
 	GtkWidget *button_match_case;
 	GtkWidget *button_only_in_selection;
 	GtkWidget *button_search;
 	GtkWidget *button_search_all;
+	GtkWidget *box_replace;
+	GtkWidget *entry_replace;
 	GtkWidget *button_replace;
 	GtkWidget *button_replace_all;
 };

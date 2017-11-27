@@ -103,7 +103,7 @@ void init_frame_view(chandler *handler)
 	gtk_widget_set_halign(box, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(box, GTK_ALIGN_FILL);
 	/* Entry search */
-	handler_frame_view->entry_search = gtk_entry_new();
+	handler_frame_view->entry_search = gtk_search_entry_new();
 	gtk_widget_set_name(handler_frame_view->entry_search, "entry_search");
 	gtk_container_add(GTK_CONTAINER(box), handler_frame_view->entry_search);
 	gtk_widget_set_hexpand(handler_frame_view->entry_search, TRUE);
@@ -129,17 +129,17 @@ void init_frame_view(chandler *handler)
 	gtk_widget_set_valign(handler_frame_view->button_search_all, GTK_ALIGN_CENTER);
 	gtk_size_group_add_widget(GTK_SIZE_GROUP(size_group), handler_frame_view->button_search_all);
 	/* Box replace */
-	box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MINOR_SPACING);
+	handler_frame_view->box_replace = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MINOR_SPACING);
 	gtk_widget_set_name(box, "box_replace");
-	gtk_container_add(GTK_CONTAINER(handler_frame_view->box_search_and_replace), box);
-	gtk_widget_set_hexpand(box, TRUE);
-	gtk_widget_set_vexpand(box, FALSE);
-	gtk_widget_set_halign(box, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(box, GTK_ALIGN_FILL);
+	gtk_container_add(GTK_CONTAINER(handler_frame_view->box_search_and_replace), handler_frame_view->box_replace);
+	gtk_widget_set_hexpand(handler_frame_view->box_replace, TRUE);
+	gtk_widget_set_vexpand(handler_frame_view->box_replace, FALSE);
+	gtk_widget_set_halign(handler_frame_view->box_replace, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler_frame_view->box_replace, GTK_ALIGN_FILL);
 	/* Entry replace */
 	handler_frame_view->entry_replace = gtk_entry_new();
 	gtk_widget_set_name(handler_frame_view->entry_replace, "entry_replace");
-	gtk_container_add(GTK_CONTAINER(box), handler_frame_view->entry_replace);
+	gtk_container_add(GTK_CONTAINER(handler_frame_view->box_replace), handler_frame_view->entry_replace);
 	gtk_widget_set_hexpand(handler_frame_view->entry_replace, TRUE);
 	gtk_widget_set_vexpand(handler_frame_view->entry_replace, FALSE);
 	gtk_widget_set_halign(handler_frame_view->entry_replace, GTK_ALIGN_FILL);
@@ -147,7 +147,7 @@ void init_frame_view(chandler *handler)
 	/* Button replace */
 	handler_frame_view->button_replace = gtk_button_new_with_label("Replace");
 	gtk_widget_set_name(handler_frame_view->button_replace, "button_replace");
-	gtk_container_add(GTK_CONTAINER(box), handler_frame_view->button_replace);
+	gtk_container_add(GTK_CONTAINER(handler_frame_view->box_replace), handler_frame_view->button_replace);
 	gtk_widget_set_hexpand(handler_frame_view->button_replace, FALSE);
 	gtk_widget_set_vexpand(handler_frame_view->button_replace, FALSE);
 	gtk_widget_set_halign(handler_frame_view->button_replace, GTK_ALIGN_FILL);
@@ -156,7 +156,7 @@ void init_frame_view(chandler *handler)
 	/* Button replace all */
 	handler_frame_view->button_replace_all = gtk_button_new_with_label("Replace All");
 	gtk_widget_set_name(handler_frame_view->button_replace_all, "button_replace_all");
-	gtk_container_add(GTK_CONTAINER(box), handler_frame_view->button_replace_all);
+	gtk_container_add(GTK_CONTAINER(handler_frame_view->box_replace), handler_frame_view->button_replace_all);
 	gtk_widget_set_hexpand(handler_frame_view->button_replace_all, FALSE);
 	gtk_widget_set_vexpand(handler_frame_view->button_replace_all, FALSE);
 	gtk_widget_set_halign(handler_frame_view->button_replace_all, GTK_ALIGN_FILL);
