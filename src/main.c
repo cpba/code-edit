@@ -32,6 +32,7 @@ void window_new(gpointer user_data)
 void window_open(gpointer user_data)
 {
 	chandler *handler = user_data;
+	cview *view = NULL;
 	gint response = 0;
 	GtkWidget *dialog = gtk_file_chooser_dialog_new("Open",
 		GTK_WINDOW(handler->handler_window.window),
@@ -39,6 +40,20 @@ void window_open(gpointer user_data)
 		"Open", GTK_RESPONSE_OK,
 		NULL);
 	gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), TRUE);
+	view = get_current_view(handler);
+	if (view) {
+		GFile *file = gtk_source_file_get_location(view->document->source_file);
+		if (file) {
+			GFile *parent = g_file_get_parent(file);
+			if (parent) {
+				gchar *current_folder = g_file_get_path(parent);
+				if (current_folder) {
+					gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), current_folder);
+					g_free(current_folder);
+				}
+			}
+		}
+	}
 	response = gtk_dialog_run(GTK_DIALOG(dialog));
 	if (response == GTK_RESPONSE_OK) {
 		GSList *file_names = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
@@ -195,7 +210,6 @@ static void application_activate(GtkApplication *application, gpointer user_data
 static void application_shutdown(GtkApplication *application, gpointer user_data)
 {
 	chandler *handler = user_data;
-	//save_config(handler);
 }
 
 int main(void)
