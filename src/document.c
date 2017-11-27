@@ -51,7 +51,7 @@ void update_view_status(chandler *handler, cview *view)
 void update_document_views_status(chandler *handler, cdocument *document)
 {
 	cview *view = NULL;
-	GList *view_iter = document->views;
+	GList *view_iter = g_list_first(document->views);
 	GString *text = NULL;
 	gchar *basename = NULL;
 	while (view_iter) {
@@ -81,7 +81,7 @@ void update_document_views_status(chandler *handler, cdocument *document)
 		} else {
 			gtk_text_view_set_editable(GTK_TEXT_VIEW(view->source_view), TRUE);
 		}
-		view_iter = view_iter->next;
+		view_iter = g_list_next(view_iter);
 	}
 	update_view_status(handler, NULL);
 }
@@ -92,7 +92,7 @@ static void document_load_progress(goffset current_num_bytes, goffset total_num_
 	cview *view = NULL;
 	gboolean show_progress_bar = FALSE;
 	gdouble percentage = (gdouble)current_num_bytes / (gdouble)total_num_bytes;
-	GList *element = NULL;
+	GList *view_iter = NULL;
 	if (document->operation_start) {
 		GDateTime *now = g_date_time_new_now_local();
 		GTimeSpan time_span = g_date_time_difference(now, document->operation_start);
@@ -101,12 +101,12 @@ static void document_load_progress(goffset current_num_bytes, goffset total_num_
 		}
 		g_date_time_unref(now);
 	}
-	element = g_list_first(document->views);
-	while (element) {
-		view = element->data;
+	view_iter = g_list_first(document->views);
+	while (view_iter) {
+		view = view_iter->data;
 		gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), show_progress_bar);
 		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(view->progress_bar), percentage);
-		element = g_list_next(element);
+		view_iter = g_list_next(view_iter);
 	}
 }
 
@@ -116,7 +116,7 @@ static void document_save_progress(goffset current_num_bytes, goffset total_num_
 	cview *view = NULL;
 	gboolean show_progress_bar = FALSE;
 	gdouble percentage = (gdouble)current_num_bytes / (gdouble)total_num_bytes;
-	GList *element = NULL;
+	GList *view_iter = NULL;
 	if (document->operation_start) {
 		GDateTime *now = g_date_time_new_now_local();
 		GTimeSpan time_span = g_date_time_difference(now, document->operation_start);
@@ -125,12 +125,12 @@ static void document_save_progress(goffset current_num_bytes, goffset total_num_
 		}
 		g_date_time_unref(now);
 	}
-	element = g_list_first(document->views);
-	while (element) {
-		view = element->data;
+	view_iter = g_list_first(document->views);
+	while (view_iter) {
+		view = view_iter->data;
 		gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), show_progress_bar);
 		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(view->progress_bar), percentage);
-		element = g_list_next(element);
+		view_iter = g_list_next(view_iter);
 	}
 }
 
@@ -159,15 +159,15 @@ static void document_async_ready(GObject *source_object, GAsyncResult *res, gpoi
 		document->cancellable = NULL;
 	}
 	if (document->cancelled) {
-		view_iter = document->views;
+		view_iter = g_list_first(document->views);
 		while (view_iter) {
 			view = view_iter->data;
 			close_view(handler, view);
-			view_iter = document->views;
+			view_iter = g_list_first(document->views);
 		}
 		update_view_status(handler, NULL);
 	} else {
-		view_iter = document->views;
+		view_iter = g_list_first(document->views);
 		while (view_iter) {
 			view = view_iter->data;
 			gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), FALSE);
