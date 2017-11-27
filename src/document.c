@@ -139,7 +139,7 @@ static void document_async_ready(GObject *source_object, GAsyncResult *res, gpoi
 	cdocument *document = user_data;
 	chandler *handler = document->handler;
 	cview *view = NULL;
-	GList *element = g_list_first(document->views);
+	GList *view_iter = NULL;
 	if (document->source_file_loader) {
 		gtk_source_file_loader_load_finish(GTK_SOURCE_FILE_LOADER(source_object), res, NULL);
 		g_object_unref(document->source_file_loader);
@@ -154,13 +154,28 @@ static void document_async_ready(GObject *source_object, GAsyncResult *res, gpoi
 		g_date_time_unref(document->operation_start);
 		document->operation_start = NULL;
 	}
-	while (element) {
-		view = element->data;
-		gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), FALSE);
-		element = g_list_next(element);
+	if (document->cancellable) {
+		g_object_unref(G_OBJECT(document->cancellable));
+		document->cancellable = NULL;
 	}
-	update_document_views_status(handler, document);
-	update_statusbar(handler, NULL);
+	if (document->cancelled) {
+		view_iter = document->views;
+		while (view_iter) {
+			view = view_iter->data;
+			close_view(handler, view);
+			view_iter = document->views;
+		}
+		update_view_status(handler, NULL);
+	} else {
+		view_iter = document->views;
+		while (view_iter) {
+			view = view_iter->data;
+			gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), FALSE);
+			view_iter = g_list_next(view_iter);
+		}
+		update_document_views_status(handler, document);
+		update_view_status(handler, NULL);
+	}
 }
 
 static void source_buffer_changed(GtkTextBuffer *text_buffer, gpointer user_data)
@@ -244,6 +259,8 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 		document->views = NULL;
 		document->source_file_loader = NULL;
 		document->source_file_saver = NULL;
+		document->cancellable = NULL;
+		document->cancelled = FALSE;
 		document->encoding = gtk_source_encoding_get_utf8();
 		document->source_buffer = gtk_source_buffer_new(NULL);
 		document->source_search_context = gtk_source_search_context_new(document->source_buffer, handler->handler_frame_view.source_search_settings);
@@ -264,11 +281,12 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 				g_free(content_type);
 			}
 			gtk_source_buffer_set_language(document->source_buffer, source_language);
+			document->cancellable = g_cancellable_new();
 			gtk_source_file_set_location(document->source_file, file);
 			document->source_file_loader = gtk_source_file_loader_new(document->source_buffer, document->source_file);
 			gtk_source_file_loader_load_async(document->source_file_loader,
 				G_PRIORITY_LOW,
-				NULL,
+				document->cancellable,
 				document_load_progress,
 				document,
 				NULL,
@@ -284,8 +302,13 @@ static void button_close_tab_clicked(GtkWidget *widget, gpointer user_data)
 {
 	chandler *handler = user_data;
 	cview *view = g_object_get_data(G_OBJECT(widget), "view");
-	close_view(handler, view);
-	update_statusbar(handler, NULL);
+	if (view->document->cancellable && g_list_length(view->document->views) == 1) {
+		view->document->cancelled = TRUE;
+		g_cancellable_cancel(view->document->cancellable);
+	} else {
+		close_view(handler, view);
+		update_view_status(handler, NULL);
+	}
 }
 
 void close_view(chandler *handler, cview *view)
@@ -295,7 +318,7 @@ void close_view(chandler *handler, cview *view)
 	if (views_count > 1) {
 		close = TRUE;
 	} else {
-		if (gtk_text_buffer_get_modified(GTK_TEXT_BUFFER(view->document->source_buffer))) {
+		if (!view->document->cancelled && gtk_text_buffer_get_modified(GTK_TEXT_BUFFER(view->document->source_buffer))) {
 			gint response = 0;
 			GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(handler->handler_window.window),
 				GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR,
