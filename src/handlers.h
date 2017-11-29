@@ -27,7 +27,7 @@
 #define TEMPORARY_FILE_TEMPLATE "srcfile"
 #define WINDOW_VIEW_MIN_WIDTH 320
 #define WINDOW_VIEW_MIN_HEIGHT 320
-#define SIDEBAR_TREE_VIEW_MIN_WIDTH 160
+#define SIDEBAR_TREE_VIEW_MIN_WIDTH 200
 #define LIST_VIEW_MIN_HEIGHT 260
 #define SHOW_PROGRESS_BAR_AFTER 0.5
 #define MINOR_SPACING 6
@@ -191,6 +191,7 @@ void window_search_next(gpointer user_data);
 void window_search_previous(gpointer user_data);
 void window_toggle_search_bar(gpointer user_data);
 void window_toggle_search_and_replace_bar(gpointer user_data);
+void window_toggle_tree_view(gpointer user_data);
 
 /* Initialization */
 void init_frame_tree_view(chandler *handler);

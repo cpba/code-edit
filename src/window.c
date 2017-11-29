@@ -226,6 +226,16 @@ void window_toggle_search_and_replace_bar(gpointer user_data)
 	gtk_widget_grab_focus(handler->handler_frame_view.entry_search);
 }
 
+void window_toggle_tree_view(gpointer user_data)
+{
+	chandler *handler = user_data;
+	if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->handler_frame_tree_view.revealer))) {
+		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_frame_tree_view.revealer), TRUE);
+	} else if (gtk_revealer_get_child_revealed(GTK_REVEALER(handler->handler_frame_tree_view.revealer))) {
+		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_frame_tree_view.revealer), FALSE);
+	}
+}
+
 void init_window(chandler *handler)
 {
 	chandler_window *handler_window = &handler->handler_window;
