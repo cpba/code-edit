@@ -33,6 +33,7 @@
 #define MINOR_SPACING 6
 #define MEDIUM_SPACING 12
 #define MAJOR_SPACING 18
+#define HEADER_BAR_TEXT_SELECT_SESSION "Select Session"
 
 typedef struct cdocument cdocument;
 typedef struct cview cview;
@@ -81,6 +82,9 @@ struct chandler_dialog_save {
 struct chandler_header {
 	chandler *handler;
 	GtkWidget *header_bar;
+	GtkWidget *revealer_session;
+	GtkWidget *stack_extra;
+	GtkWidget *button_open_menu;
 	GtkWidget *button_new_document;
 	GtkWidget *button_open_document;
 	GtkWidget *button_save_document;
@@ -134,7 +138,13 @@ struct chandler_statusbar {
 
 struct chandler_window {
 	GtkWidget *window;
-	GtkWidget *box;
+	GtkWidget *stack;
+	/* Select session */
+	GtkWidget *box_select_session;
+	GtkWidget *search_entry_session;
+	GtkWidget *list_box_sessions;
+	/* Session */
+	GtkWidget *box_session;
 	GtkWidget *box_frames;
 };
 
@@ -170,10 +180,15 @@ void close_view(chandler *handler, cview *view);
 void add_view_for_document(chandler *handler, cdocument *document);
 
 /* Actions */
+void window_go_to_select_session(gpointer user_data);
+void window_go_to_session(gpointer user_data);
 void window_new(gpointer user_data);
 void window_open(gpointer user_data);
 void window_save_as(gpointer user_data);
 void window_save(gpointer user_data);
+void window_close(gpointer user_data);
+void window_search_next(gpointer user_data);
+void window_search_previous(gpointer user_data);
 void window_toggle_search_bar(gpointer user_data);
 void window_toggle_search_and_replace_bar(gpointer user_data);
 

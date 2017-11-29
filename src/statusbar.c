@@ -133,12 +133,12 @@ void init_statusbar(chandler *handler)
 	/* Revealer status bar */
 	handler_statusbar->revealer_statusbar = gtk_revealer_new();
 	gtk_widget_set_name(handler_statusbar->revealer_statusbar, "revealer_statusbar");
-	gtk_container_add(GTK_CONTAINER(handler->handler_window.box), handler_statusbar->revealer_statusbar);
+	gtk_container_add(GTK_CONTAINER(handler->handler_window.box_session), handler_statusbar->revealer_statusbar);
 	gtk_widget_set_hexpand(handler_statusbar->revealer_statusbar, TRUE);
 	gtk_widget_set_vexpand(handler_statusbar->revealer_statusbar, FALSE);
 	gtk_widget_set_halign(handler_statusbar->revealer_statusbar, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler_statusbar->revealer_statusbar, GTK_ALIGN_FILL);
-	gtk_revealer_set_transition_type(GTK_REVEALER(handler_statusbar->revealer_statusbar), GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP);
+	gtk_revealer_set_transition_type(GTK_REVEALER(handler_statusbar->revealer_statusbar), GTK_REVEALER_TRANSITION_TYPE_NONE);
 	/* Statusbar */
 	handler_statusbar->action_bar = gtk_action_bar_new();
 	gtk_widget_set_name(handler_statusbar->action_bar, "action_bar");
