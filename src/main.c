@@ -87,6 +87,8 @@ static void application_activate(GtkApplication *application, gpointer user_data
 {
 	chandler *handler = user_data;
 	GMenu *menu = NULL;
+	gchar *config_dir = NULL;
+	GString *key_file_path = NULL;
 	/* Action group */
 	const GActionEntry action_entries[] = {
 		{"about", activate_show_about},
@@ -108,6 +110,19 @@ static void application_activate(GtkApplication *application, gpointer user_data
 	gtk_application_set_app_menu(application, G_MENU_MODEL(menu));
 	/* Document list */
 	handler->documents = NULL;
+	/* Key-file config */
+	handler->session_name = g_string_new("");
+	handler->key_file_config = g_key_file_new();
+	config_dir = g_get_user_config_dir();
+	if (config_dir) {
+		key_file_path = g_string_new(config_dir);
+		key_file_path = g_string_append(key_file_path, CONFIGURATION_FILE_NAME);
+	}
+	if (key_file_path) {
+		g_key_file_load_from_file(handler->key_file_config, key_file_path->str, G_KEY_FILE_NONE, NULL);
+		g_string_free(key_file_path, TRUE);
+	}
+	load_session(handler, "default");
 	/* Show */
 	gtk_window_present(GTK_WINDOW(handler->handler_window.window));
 	gtk_widget_show_all(handler->handler_window.window);
@@ -120,6 +135,8 @@ static void application_activate(GtkApplication *application, gpointer user_data
 static void application_shutdown(GtkApplication *application, gpointer user_data)
 {
 	chandler *handler = user_data;
+	g_key_file_free(handler->key_file_config);
+	g_string_free(handler->session_name, TRUE);
 }
 
 int main(void)

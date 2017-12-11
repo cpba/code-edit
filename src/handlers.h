@@ -24,7 +24,7 @@
 #include <gtksourceview/gtksource.h>
 
 #define PROGRAM_NAME "Code"
-#define TEMPORARY_FILE_TEMPLATE "srcfile"
+#define CONFIGURATION_FILE_NAME "/code.conf"
 #define WINDOW_VIEW_MIN_WIDTH 320
 #define WINDOW_VIEW_MIN_HEIGHT 320
 #define SIDEBAR_TREE_VIEW_MIN_WIDTH 200
@@ -151,6 +151,8 @@ struct chandler_window {
 struct chandler {
 	GtkApplication *application;
 	GList *documents;
+	GKeyFile *key_file_config;
+	GString *session_name;
 	chandler_window handler_window;
 	chandler_header handler_header;
 	chandler_statusbar handler_statusbar;
@@ -161,6 +163,9 @@ struct chandler {
 	chandler_dialog_save handler_dialog_save_as;
 };
 
+void load_session(chandler *handler, gchar *name);
+void save_session(chandler *handler);
+
 /* Header */
 void update_headerbar(chandler *handler, cview *view);
 
@@ -170,6 +175,7 @@ void update_statusbar_repository_branch(chandler *handler, cview *view);
 void update_statusbar(chandler *handler, cview *view);
 
 /* Document */
+cview *get_nth_view(chandler *handler, gint index);
 cview *get_current_view(chandler *handler);
 void update_view_status(chandler *handler, cview *view);
 void update_document_views_status(chandler *handler, cdocument *document);

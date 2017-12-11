@@ -6,6 +6,7 @@ CFLAGS += `pkg-config --cflags gtk+-3.0 gtksourceview-3.0 libgit2-glib-1.0`
 
 build:
 	$(MAKE) clear
+	$(CC) -Wall $(CFLAGS) -c session.c
 	$(CC) -Wall $(CFLAGS) -c document.c
 	$(CC) -Wall $(CFLAGS) -c frame_view.c
 	$(CC) -Wall $(CFLAGS) -c frame_tree_view.c

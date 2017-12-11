@@ -236,6 +236,12 @@ void window_toggle_tree_view(gpointer user_data)
 	}
 }
 
+static void window_destroy(GtkWidget *widget, gpointer user_data)
+{
+	chandler *handler = user_data;
+	save_session(handler);
+}
+
 void init_window(chandler *handler)
 {
 	chandler_window *handler_window = &handler->handler_window;
@@ -245,6 +251,7 @@ void init_window(chandler *handler)
 	/* Window */
 	handler_window->window = gtk_application_window_new(handler->application);
 	gtk_window_set_icon_name(GTK_WINDOW(handler_window->window), "text-editor");
+	g_signal_connect(handler_window->window, "destroy", G_CALLBACK(window_destroy), handler);
 	/* Stack main */
 	handler_window->stack = gtk_stack_new();
 	gtk_widget_set_name(handler_window->stack, "stack");
