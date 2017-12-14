@@ -2,40 +2,6 @@
 
 Code is a simple code editor for GNU/Linux.
 
-![](screenshot.png)
-
-## Version
-
-This project follows the semantic versioning system and still hasn't reached its first major release.
-
-## Contributing
-
-If you plan to contribute, check `CONTRIBUTING.md`.
-
-## Notable Planned Features
-
-Some of these features are more likely to happen than others. This list
-
-- Tree view:
-  - Add or remove folders from tree view (bookmark behavior).
-  - Integration with `git`.
-- Session manager:
-  - Store session when closing and restoring when starting.
-  - Part of a session: open tabs and tree view.
-- Graphical integration with `git`:
-  - Make commits and create or delete branches.
-  - Add tags.
-  - Checkout and rebase.
-  - Push and pull from remote repositories.
-  - Log graph.
-- Editor:
-  - Word completion (with words from the same file and other open files).
-  - Search and replace (in same file, files open or all files in the tree view) with support for regular expressions.
-- Preferences:
-  - Select highlight theme.
-  - Built-in hightlight theme editor.
-  - Backup system (simple and with `git`).
-
 ## License
 
 This program is licensed under GPL version 3:
