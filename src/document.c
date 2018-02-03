@@ -208,7 +208,7 @@ static cdocument *get_document_by_file_name(chandler *handler, gchar *file_name)
 	return result;
 }
 
-void free_document(cdocument *document)
+void free_document(chandler *handler, cdocument *document)
 {
 	if (document->source_file) {
 		GFile *file = gtk_source_file_get_location(document->source_file);
@@ -217,6 +217,7 @@ void free_document(cdocument *document)
 		}
 		g_object_unref(G_OBJECT(document->source_file));
 	}
+	gtk_source_completion_words_unregister(handler->handler_frame_view.source_completion_words, GTK_TEXT_BUFFER(document->source_buffer));
 	g_object_unref(G_OBJECT(document->source_buffer));
 	free(document);
 }
@@ -276,11 +277,13 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 				g_free(content_type);
 				content_type = NULL;
 			}
-			source_language = gtk_source_language_manager_guess_language(source_language_manager, file_name, content_type);
+			if (file_name && content_type) {
+				source_language = gtk_source_language_manager_guess_language(source_language_manager, file_name, content_type);
+				gtk_source_buffer_set_language(document->source_buffer, source_language);
+			}
 			if (content_type) {
 				g_free(content_type);
 			}
-			gtk_source_buffer_set_language(document->source_buffer, source_language);
 			document->cancellable = g_cancellable_new();
 			gtk_source_file_set_location(document->source_file, file);
 			document->source_file_loader = gtk_source_file_loader_new(document->source_buffer, document->source_file);
@@ -293,6 +296,7 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 				document_async_ready,
 				document);
 		}
+		gtk_source_completion_words_register(handler->handler_frame_view.source_completion_words, GTK_TEXT_BUFFER(document->source_buffer));
 		handler->documents = g_list_append(handler->documents, document);
 	}
 	return document;
@@ -307,7 +311,6 @@ static void button_close_tab_clicked(GtkWidget *widget, gpointer user_data)
 		g_cancellable_cancel(view->document->cancellable);
 	} else {
 		close_view(handler, view);
-		update_view_status(handler, NULL);
 	}
 }
 
@@ -340,16 +343,22 @@ void close_view(chandler *handler, cview *view)
 	}
 	if (g_list_length(view->document->views) == 0) {
 		handler->documents = g_list_remove(handler->documents, view->document);
-		free_document(view->document);
+		free_document(handler, view->document);
 	}
 	if (close) {
 		free(view);
+	}
+	update_view_status(handler, NULL);
+	/* Session */
+	if (handler->current_session) {
+		window_save_session(handler, handler->current_session);
 	}
 }
 
 void add_view_for_document(chandler *handler, cdocument *document)
 {
 	cview *view = malloc(sizeof(cview));
+	GtkSourceCompletion *source_completion = NULL;
 	gint page_index = 0;
 	view->document = document;
 	view->box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -416,4 +425,12 @@ void add_view_for_document(chandler *handler, cdocument *document)
 	/* Show page */
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), page_index);
 	update_view_status(handler, view);
+	/* Session */
+	if (handler->current_session) {
+		window_save_session(handler, handler->current_session);
+	}
+	/* Add source completion */
+	source_completion = gtk_source_view_get_completion(GTK_SOURCE_VIEW(view->source_view));
+	gtk_source_completion_add_provider(source_completion, GTK_SOURCE_COMPLETION_PROVIDER(handler->handler_frame_view.source_completion_words), NULL);
 }
+

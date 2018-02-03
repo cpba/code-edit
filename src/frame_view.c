@@ -171,4 +171,5 @@ void init_frame_view(chandler *handler)
 	gtk_size_group_add_widget(GTK_SIZE_GROUP(size_group), handler_frame_view->button_replace_all);
 	/* Search settings */
 	handler_frame_view->source_search_settings = gtk_source_search_settings_new();
+	handler_frame_view->source_completion_words = gtk_source_completion_words_new(NULL, NULL);
 }

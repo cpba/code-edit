@@ -110,8 +110,12 @@ static void button_save_document_clicked(GtkWidget *widget, gpointer user_data)
 
 static void button_preferences_toggled(GtkWidget *widget, gpointer user_data)
 {
+}
+
+static void button_session_selection_mode_clicked(GtkWidget *widget, gpointer user_data)
+{
 	chandler *handler = user_data;
-	/* Show preferences frame */
+	gtk_list_box_set_selection_mode(GTK_LIST_BOX(handler->handler_window.list_box_sessions), TRUE);
 }
 
 void init_header(chandler *handler)
@@ -171,6 +175,12 @@ void init_header(chandler *handler)
 	/* Box select-session */
 	box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
 	gtk_stack_add_named(GTK_STACK(handler_header->stack_extra), box, "select-session");
+	/* Button selection-mode */
+	handler_header->button_session_selection_mode = gtk_button_new_from_icon_name("object-select-symbolic", GTK_ICON_SIZE_BUTTON);
+	gtk_widget_set_name(handler_header->button_session_selection_mode, "button_session_selection_mode");
+	gtk_container_add(GTK_CONTAINER(box), handler_header->button_session_selection_mode);
+	gtk_style_context_add_class(gtk_widget_get_style_context(handler_header->button_session_selection_mode), "circular");
+	g_signal_connect(handler_header->button_session_selection_mode, "clicked", G_CALLBACK(button_session_selection_mode_clicked), handler);
 	/* Box session */
 	box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
 	gtk_stack_add_named(GTK_STACK(handler_header->stack_extra), box, "session");
@@ -180,5 +190,4 @@ void init_header(chandler *handler)
 	gtk_container_add(GTK_CONTAINER(box), handler_header->button_preferences);
 	gtk_style_context_add_class(gtk_widget_get_style_context(handler_header->button_preferences), "circular");
 	g_signal_connect(handler_header->button_preferences, "clicked", G_CALLBACK(button_preferences_toggled), handler);
-	
 }

@@ -25,10 +25,13 @@
 
 #define PROGRAM_NAME "Code"
 #define CONFIGURATION_FILE_NAME "/code.conf"
+#define SESSIONS_FILE_NAME "/code-sessions.conf"
+#define DEFAULT_SESSION_NAME "Default"
 #define WINDOW_VIEW_MIN_WIDTH 320
 #define WINDOW_VIEW_MIN_HEIGHT 320
 #define SIDEBAR_TREE_VIEW_MIN_WIDTH 200
 #define LIST_VIEW_MIN_HEIGHT 260
+#define LIST_BOX_SESSIONS_MIN_WIDTH 600
 #define SHOW_PROGRESS_BAR_AFTER 0.5
 #define MINOR_SPACING 6
 #define MEDIUM_SPACING 12
@@ -37,6 +40,7 @@
 
 typedef struct cdocument cdocument;
 typedef struct cview cview;
+typedef struct csession csession;
 typedef struct chandler_dialog_save chandler_dialog_save;
 typedef struct chandler_header chandler_header;
 typedef struct chandler_frame_tree_view chandler_frame_tree_view;
@@ -73,6 +77,12 @@ struct cview {
 	GtkWidget *button_close_tab;
 };
 
+struct csession {
+	GString *name;
+	GtkWidget *box;
+	GtkWidget *label;
+};
+
 struct chandler_dialog_save {
 	GtkWidget *dialog;
 	GtkWidget *button_encoding;
@@ -90,6 +100,7 @@ struct chandler_header {
 	GtkWidget *button_save_document;
 	GtkWidget *button_save_as_document;
 	GtkWidget *button_preferences;
+	GtkWidget *button_session_selection_mode;
 };
 
 struct chandler_frame_tree_view {
@@ -119,6 +130,7 @@ struct chandler_frame_view {
 	GtkWidget *button_replace;
 	GtkWidget *button_replace_all;
 	GtkSourceSearchSettings *source_search_settings;
+	GtkSourceCompletionWords *source_completion_words;
 	gint iter_search_offset;
 };
 
@@ -152,7 +164,8 @@ struct chandler {
 	GtkApplication *application;
 	GList *documents;
 	GKeyFile *key_file_config;
-	GString *session_name;
+	GKeyFile *key_file_sessions;
+	csession *current_session;
 	chandler_window handler_window;
 	chandler_header handler_header;
 	chandler_statusbar handler_statusbar;
@@ -163,8 +176,10 @@ struct chandler {
 	chandler_dialog_save handler_dialog_save_as;
 };
 
-void load_session(chandler *handler, gchar *name);
-void save_session(chandler *handler);
+void window_update_sessions(chandler *handler);
+void window_open_session(chandler *handler, csession *session);
+void window_save_session(chandler *handler, csession *session);
+csession *window_new_session(chandler *handler, gchar *name);
 
 /* Header */
 void update_headerbar(chandler *handler, cview *view);
@@ -179,7 +194,7 @@ cview *get_nth_view(chandler *handler, gint index);
 cview *get_current_view(chandler *handler);
 void update_view_status(chandler *handler, cview *view);
 void update_document_views_status(chandler *handler, cdocument *document);
-void free_document(cdocument *document);
+void free_document(chandler *handler, cdocument *document);
 void save_document(cdocument *document, gchar *file_name);
 cdocument *new_document(chandler *handler, gchar *file_name);
 void close_view(chandler *handler, cview *view);

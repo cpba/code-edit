@@ -87,7 +87,6 @@ static void application_activate(GtkApplication *application, gpointer user_data
 {
 	chandler *handler = user_data;
 	GMenu *menu = NULL;
-	gchar *config_dir = NULL;
 	GString *key_file_path = NULL;
 	/* Action group */
 	const GActionEntry action_entries[] = {
@@ -111,23 +110,21 @@ static void application_activate(GtkApplication *application, gpointer user_data
 	/* Document list */
 	handler->documents = NULL;
 	/* Key-file config */
-	handler->session_name = g_string_new("");
-	handler->key_file_config = g_key_file_new();
-	config_dir = g_get_user_config_dir();
-	if (config_dir) {
-		key_file_path = g_string_new(config_dir);
-		key_file_path = g_string_append(key_file_path, CONFIGURATION_FILE_NAME);
+	handler->key_file_sessions = g_key_file_new();
+	if (g_get_user_config_dir()) {
+		key_file_path = g_string_new(g_get_user_config_dir());
+		key_file_path = g_string_append(key_file_path, SESSIONS_FILE_NAME);
 	}
 	if (key_file_path) {
-		g_key_file_load_from_file(handler->key_file_config, key_file_path->str, G_KEY_FILE_NONE, NULL);
+		g_key_file_load_from_file(handler->key_file_sessions, key_file_path->str, G_KEY_FILE_NONE, NULL);
 		g_string_free(key_file_path, TRUE);
 	}
-	load_session(handler, "default");
+	window_update_sessions(handler);
 	/* Show */
 	gtk_window_present(GTK_WINDOW(handler->handler_window.window));
 	gtk_widget_show_all(handler->handler_window.window);
 	update_view_status(handler, NULL);
-	window_go_to_session(handler);
+	window_go_to_select_session(handler);
 	gtk_stack_set_transition_type(GTK_STACK(handler->handler_window.stack), GTK_STACK_TRANSITION_TYPE_CROSSFADE);
 	gtk_revealer_set_transition_type(GTK_REVEALER(handler->handler_statusbar.revealer_statusbar), GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP);
 }
@@ -135,8 +132,7 @@ static void application_activate(GtkApplication *application, gpointer user_data
 static void application_shutdown(GtkApplication *application, gpointer user_data)
 {
 	chandler *handler = user_data;
-	g_key_file_free(handler->key_file_config);
-	g_string_free(handler->session_name, TRUE);
+	g_key_file_free(handler->key_file_sessions);
 }
 
 int main(void)

@@ -20,9 +20,175 @@
 #include <gtk/gtk.h>
 #include "handlers.h"
 
+void window_open_session(chandler *handler, csession *session)
+{
+	gchar **strings = NULL;
+	gint i = 0;
+	gsize length = 0;
+	cdocument *document = NULL;
+	/* Add pages */
+	strings = g_key_file_get_string_list(handler->key_file_sessions,
+		session->name->str,
+		"views",
+		&length,
+		NULL);
+	if (strings && length > 0) {
+		i = 0;
+		while (i < length) {
+			if (strings[i]) {
+				document = new_document(handler, strings[i]);
+				add_view_for_document(handler, document);
+			}
+			i++;
+		}
+		g_strfreev(strings);
+	}
+	handler->current_session = session;
+}
+
+void window_save_session(chandler *handler, csession *session)
+{
+	GString *key_file_path = NULL;
+	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->handler_frame_view.notebook));
+	gint page_index = 0;
+	cview *view = NULL;
+	GFile *file = NULL;
+	const gchar **strings = NULL;
+	if (page_count > 0) {
+		strings = malloc(page_count * sizeof(gchar *));
+	}
+	while (page_index < page_count) {
+		view = get_nth_view(handler, page_index);
+		file = gtk_source_file_get_location(view->document->source_file);
+		if (file) {
+			strings[page_index] = g_file_get_path(file);
+		} else {
+			strings[page_index] = NULL;
+		}
+		page_index++;
+	}
+	g_key_file_set_string_list(handler->key_file_sessions,
+		session->name->str,
+		"views",
+		strings,
+		page_count);
+	if (g_get_user_config_dir()) {
+		key_file_path = g_string_new(g_get_user_config_dir());
+		key_file_path = g_string_append(key_file_path, SESSIONS_FILE_NAME);
+	}
+	if (key_file_path) {
+		g_key_file_save_to_file(handler->key_file_sessions, key_file_path->str, NULL);
+		g_string_free(key_file_path, TRUE);
+	}
+}
+
+void window_remove_session(chandler *handler, csession *session)
+{
+	GList *children = NULL;
+	GtkWidget *row = NULL;
+	g_key_file_remove_group(handler->key_file_sessions, session->name->str, NULL);
+	row = gtk_widget_get_parent(session->box);
+	gtk_widget_destroy(row);
+	g_string_free(session->name, TRUE);
+	free(session);
+	children = gtk_container_get_children(GTK_CONTAINER(handler->handler_window.list_box_sessions));
+	if (g_list_length(children) < 1) {
+		window_new_session(handler, DEFAULT_SESSION_NAME);
+	}
+	g_list_free(children);
+}
+
+csession *window_new_session(chandler *handler, gchar *name)
+{
+	csession *session = malloc(sizeof(csession));
+	GString *label_string = NULL;
+	session->name = g_string_new(name);
+	session->box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
+	gtk_container_set_border_width(GTK_CONTAINER(session->box), MEDIUM_SPACING);
+	g_object_set_data(G_OBJECT(session->box), "session", session);
+	/* Label */
+	session->label = gtk_label_new(name);
+	gtk_container_add(GTK_CONTAINER(session->box), session->label);
+	gtk_widget_set_hexpand(session->label, TRUE);
+	gtk_widget_set_vexpand(session->label, FALSE);
+	gtk_widget_set_halign(session->label, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(session->label, GTK_ALIGN_CENTER);
+	gtk_label_set_xalign(GTK_LABEL(session->label), 0.0f);
+	gtk_label_set_ellipsize(GTK_LABEL(session->label), PANGO_ELLIPSIZE_END);
+	label_string = g_string_new("<b>");
+	label_string = g_string_append(label_string, name);
+	label_string = g_string_append(label_string, "</b>");
+	gtk_label_set_use_markup(GTK_LABEL(session->label), TRUE);
+	gtk_label_set_markup(GTK_LABEL(session->label), label_string->str);
+	g_string_free(label_string, TRUE);
+	/* List box */
+	gtk_list_box_insert(GTK_LIST_BOX(handler->handler_window.list_box_sessions), session->box, -1);
+	gtk_widget_show_all(handler->handler_window.list_box_sessions);
+	return session;
+}
+
+void window_update_sessions(chandler *handler)
+{
+	csession *session = NULL;
+	gint i = 0;
+	gsize length = 0;
+	gchar **strings = NULL;
+	GList *children = NULL;
+	GList *children_iter = NULL;
+	GtkWidget *session_box = NULL;
+	GtkWidget *row = NULL;
+	GtkWidget *icon = NULL;
+	/* Clear list box */
+	children = gtk_container_get_children(GTK_CONTAINER(handler->handler_window.list_box_sessions));
+	children_iter = children;
+	while (children_iter) {
+		row = children_iter->data;
+		session_box = gtk_bin_get_child(GTK_BIN(row));
+		session = g_object_get_data(G_OBJECT(session_box), "session");
+		if (session) {
+			g_string_free(session->name, TRUE);
+			free(session);
+		}
+		gtk_widget_destroy(row);
+		children_iter = g_list_next(children_iter);
+	}
+	/* Add sessions */
+	strings = g_key_file_get_groups(handler->key_file_sessions, &length);
+	while (i < length) {
+		session = window_new_session(handler, strings[i]);
+		i++;
+	}
+	g_strfreev(strings);
+	/* Default session */
+	children = gtk_container_get_children(GTK_CONTAINER(handler->handler_window.list_box_sessions));
+	if (g_list_length(children) < 1) {
+		window_new_session(handler, DEFAULT_SESSION_NAME);
+	}
+	/* Add session button */
+	icon = gtk_image_new_from_icon_name("list-add-symbolic", GTK_ICON_SIZE_BUTTON);
+	gtk_list_box_insert(GTK_LIST_BOX(handler->handler_window.list_box_sessions), icon, -1);
+	gtk_widget_set_margin_top(icon, MEDIUM_SPACING);
+	gtk_widget_set_margin_bottom(icon, MEDIUM_SPACING);
+	gtk_widget_set_margin_start(icon, MEDIUM_SPACING);
+	gtk_widget_set_margin_end(icon, MEDIUM_SPACING);
+	row = gtk_widget_get_parent(icon);
+	gtk_list_box_row_set_selectable(GTK_LIST_BOX_ROW(row), FALSE);
+	gtk_widget_show_all(icon);
+	g_list_free(children);
+}
+
 void window_go_to_select_session(gpointer user_data)
 {
 	chandler *handler = user_data;
+	cview *view = NULL;
+	handler->current_session = NULL;
+	gtk_list_box_unselect_all(GTK_LIST_BOX(handler->handler_window.list_box_sessions));
+	/* Remove current notebook pages */
+	while (gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->handler_frame_view.notebook)) > 0) {
+		view = get_nth_view(handler, 0);
+		close_view(handler, view);
+	}
+	window_update_sessions(handler);
 	gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_header.revealer_session), FALSE);
 	gtk_stack_set_visible_child_name(GTK_STACK(handler->handler_header.stack_extra), "select-session");
 	gtk_stack_set_visible_child_name(GTK_STACK(handler->handler_window.stack), "select-session");
@@ -140,6 +306,13 @@ void window_close(gpointer user_data)
 	}
 }
 
+static void button_remove_session_clicked(GtkWidget *widget, gpointer user_data)
+{
+	chandler *handler = user_data;
+	csession *session = g_object_get_data(G_OBJECT(widget), "session");
+	window_remove_session(handler, session);
+}
+
 void window_search_next(gpointer user_data)
 {
 	chandler *handler = user_data;
@@ -236,10 +409,26 @@ void window_toggle_tree_view(gpointer user_data)
 	}
 }
 
+static void list_box_sessions_row_activated(GtkWidget *widget, GtkListBoxRow *row, gpointer user_data)
+{
+	chandler *handler = user_data;
+	GList *children = gtk_container_get_children(GTK_CONTAINER(widget));
+	GtkWidget *child = gtk_bin_get_child(GTK_BIN(row));
+	csession *session = g_object_get_data(G_OBJECT(child), "session");
+	gint index = gtk_list_box_row_get_index(row);
+	if (index < g_list_length(children) - 1) {
+		window_open_session(handler, session);
+		window_go_to_session(handler);
+	}
+	g_list_free(children);
+}
+
 static void window_destroy(GtkWidget *widget, gpointer user_data)
 {
 	chandler *handler = user_data;
-	save_session(handler);
+	if (handler->current_session) {
+		window_save_session(handler, handler->current_session);
+	}
 }
 
 void init_window(chandler *handler)
@@ -279,7 +468,7 @@ void init_window(chandler *handler)
 	gtk_widget_set_halign(handler_window->box_select_session, GTK_ALIGN_CENTER);
 	gtk_widget_set_margin_start(handler_window->box_select_session, MAJOR_SPACING);
 	gtk_widget_set_margin_end(handler_window->box_select_session, MAJOR_SPACING);
-	gtk_widget_set_size_request(handler_window->box_select_session, 400, -1);
+	gtk_widget_set_size_request(handler_window->box_select_session, LIST_BOX_SESSIONS_MIN_WIDTH, -1);
 	/* Entry search session */
 	handler_window->search_entry_session = gtk_search_entry_new();
 	gtk_widget_set_name(handler_window->search_entry_session, "search_entry_session");
@@ -305,6 +494,8 @@ void init_window(chandler *handler)
 	gtk_widget_set_vexpand(handler_window->list_box_sessions, TRUE);
 	gtk_widget_set_halign(handler_window->list_box_sessions, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler_window->list_box_sessions, GTK_ALIGN_FILL);
+	gtk_list_box_set_activate_on_single_click(GTK_LIST_BOX(handler_window->list_box_sessions), FALSE);
+	g_signal_connect(handler_window->list_box_sessions, "row-activated", G_CALLBACK(list_box_sessions_row_activated), handler);
 	/* Box session */
 	handler_window->box_session = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	gtk_widget_set_name(handler_window->box_session, "box_session");
