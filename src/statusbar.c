@@ -15,8 +15,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <gtk/gtk.h>
 #include <libgit2-glib/ggit.h>
 #include "handlers.h"
@@ -28,10 +26,10 @@ void update_statusbar_language(chandler *handler, cview *view)
 		source_language = gtk_source_buffer_get_language(view->document->source_buffer);
 	}
 	if (source_language) {
-		gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.button_language),
+		gtk_button_set_label(GTK_BUTTON(handler->statusbar.button_language),
 			gtk_source_language_get_name(source_language));
 	} else {
-		gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.button_language), "Plain Text");
+		gtk_button_set_label(GTK_BUTTON(handler->statusbar.button_language), "Plain Text");
 	}
 }
 
@@ -62,10 +60,10 @@ void update_statusbar_repository_branch(chandler *handler, cview *view)
 		}
 	}
 	if (branch_name && !error) {
-		gtk_widget_show_all(handler->handler_statusbar.button_repo_branch);
-		gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.button_repo_branch), branch_name);
+		gtk_widget_show_all(handler->statusbar.button_repo_branch);
+		gtk_button_set_label(GTK_BUTTON(handler->statusbar.button_repo_branch), branch_name);
 	} else {
-		gtk_widget_hide(handler->handler_statusbar.button_repo_branch);
+		gtk_widget_hide(handler->statusbar.button_repo_branch);
 	}
 }
 
@@ -77,9 +75,9 @@ void update_statusbar(chandler *handler, cview *view)
 	if (view) {
 		update_statusbar_language(handler, view);
 		update_statusbar_repository_branch(handler, view);
-		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_statusbar.revealer_statusbar), TRUE);
+		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->statusbar.revealer), TRUE);
 	} else {
-		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_statusbar.revealer_statusbar), FALSE);
+		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->statusbar.revealer), FALSE);
 	}
 }
 
@@ -105,11 +103,11 @@ static void tree_view_source_language_activated(GtkWidget *widget, GtkTreePath *
 			source_language = gtk_source_language_manager_get_language(source_language_manager, id);
 			gtk_source_buffer_set_language(view->document->source_buffer, source_language);
 		}
-		gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.button_language), name);
+		gtk_button_set_label(GTK_BUTTON(handler->statusbar.button_language), name);
 		g_free(id);
 		g_free(name);
 	}
-	popover = GTK_WIDGET(gtk_menu_button_get_popover(GTK_MENU_BUTTON(handler->handler_statusbar.button_language)));
+	popover = GTK_WIDGET(gtk_menu_button_get_popover(GTK_MENU_BUTTON(handler->statusbar.button_language)));
 	gtk_widget_hide(popover);
 }
 
@@ -130,36 +128,36 @@ void init_statusbar(chandler *handler)
 	const gchar *id = NULL;
 	const gchar * const *language_ids = gtk_source_language_manager_get_language_ids(source_language_manager);
 	/* Revealer status bar */
-	handler->handler_statusbar.revealer_statusbar = gtk_revealer_new();
-	gtk_widget_set_name(handler->handler_statusbar.revealer_statusbar, "revealer_statusbar");
-	gtk_container_add(GTK_CONTAINER(handler->handler_window.box_session), handler->handler_statusbar.revealer_statusbar);
-	gtk_widget_set_hexpand(handler->handler_statusbar.revealer_statusbar, TRUE);
-	gtk_widget_set_vexpand(handler->handler_statusbar.revealer_statusbar, FALSE);
-	gtk_widget_set_halign(handler->handler_statusbar.revealer_statusbar, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(handler->handler_statusbar.revealer_statusbar, GTK_ALIGN_FILL);
-	gtk_revealer_set_transition_type(GTK_REVEALER(handler->handler_statusbar.revealer_statusbar), GTK_REVEALER_TRANSITION_TYPE_NONE);
+	handler->statusbar.revealer = gtk_revealer_new();
+	gtk_widget_set_name(handler->statusbar.revealer, "revealer");
+	gtk_container_add(GTK_CONTAINER(handler->session.box), handler->statusbar.revealer);
+	gtk_widget_set_hexpand(handler->statusbar.revealer, TRUE);
+	gtk_widget_set_vexpand(handler->statusbar.revealer, FALSE);
+	gtk_widget_set_halign(handler->statusbar.revealer, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->statusbar.revealer, GTK_ALIGN_FILL);
+	gtk_revealer_set_transition_type(GTK_REVEALER(handler->statusbar.revealer), GTK_REVEALER_TRANSITION_TYPE_NONE);
 	/* Statusbar */
-	handler->handler_statusbar.action_bar = gtk_action_bar_new();
-	gtk_widget_set_name(handler->handler_statusbar.action_bar, "action_bar");
-	gtk_container_add(GTK_CONTAINER(handler->handler_statusbar.revealer_statusbar), handler->handler_statusbar.action_bar);
-	gtk_widget_set_hexpand(handler->handler_statusbar.action_bar, TRUE);
-	gtk_widget_set_vexpand(handler->handler_statusbar.action_bar, FALSE);
-	gtk_widget_set_halign(handler->handler_statusbar.action_bar, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(handler->handler_statusbar.action_bar, GTK_ALIGN_FILL);
-	gtk_style_context_add_class(gtk_widget_get_style_context(handler->handler_statusbar.action_bar), GTK_STYLE_CLASS_FLAT);
+	handler->statusbar.action_bar = gtk_action_bar_new();
+	gtk_widget_set_name(handler->statusbar.action_bar, "action_bar");
+	gtk_container_add(GTK_CONTAINER(handler->statusbar.revealer), handler->statusbar.action_bar);
+	gtk_widget_set_hexpand(handler->statusbar.action_bar, TRUE);
+	gtk_widget_set_vexpand(handler->statusbar.action_bar, FALSE);
+	gtk_widget_set_halign(handler->statusbar.action_bar, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->statusbar.action_bar, GTK_ALIGN_FILL);
+	gtk_style_context_add_class(gtk_widget_get_style_context(handler->statusbar.action_bar), GTK_STYLE_CLASS_FLAT);
 	/* Button language */
-	handler->handler_statusbar.button_language = gtk_menu_button_new();
-	gtk_widget_set_name(handler->handler_statusbar.button_language, "button_language");
-	gtk_action_bar_pack_end(GTK_ACTION_BAR(handler->handler_statusbar.action_bar), handler->handler_statusbar.button_language);
-	gtk_widget_set_hexpand(handler->handler_statusbar.button_language, FALSE);
-	gtk_widget_set_vexpand(handler->handler_statusbar.button_language, FALSE);
-	gtk_widget_set_halign(handler->handler_statusbar.button_language, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(handler->handler_statusbar.button_language, GTK_ALIGN_CENTER);
-	gtk_style_context_add_class(gtk_widget_get_style_context(handler->handler_statusbar.button_language), GTK_STYLE_CLASS_FLAT);
-	gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.button_language), "Plain Text");
+	handler->statusbar.button_language = gtk_menu_button_new();
+	gtk_widget_set_name(handler->statusbar.button_language, "button_language");
+	gtk_action_bar_pack_end(GTK_ACTION_BAR(handler->statusbar.action_bar), handler->statusbar.button_language);
+	gtk_widget_set_hexpand(handler->statusbar.button_language, FALSE);
+	gtk_widget_set_vexpand(handler->statusbar.button_language, FALSE);
+	gtk_widget_set_halign(handler->statusbar.button_language, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->statusbar.button_language, GTK_ALIGN_CENTER);
+	gtk_style_context_add_class(gtk_widget_get_style_context(handler->statusbar.button_language), GTK_STYLE_CLASS_FLAT);
+	gtk_button_set_label(GTK_BUTTON(handler->statusbar.button_language), "Plain Text");
 	/* Popover language */
-	popover = gtk_popover_new(handler->handler_statusbar.button_language);
-	gtk_menu_button_set_popover(GTK_MENU_BUTTON(handler->handler_statusbar.button_language), popover);
+	popover = gtk_popover_new(handler->statusbar.button_language);
+	gtk_menu_button_set_popover(GTK_MENU_BUTTON(handler->statusbar.button_language), popover);
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, MINOR_SPACING);
 	gtk_container_add(GTK_CONTAINER(popover), box);
 	gtk_widget_set_hexpand(box, TRUE);
@@ -213,16 +211,16 @@ void init_statusbar(chandler *handler)
 	gtk_tree_view_column_set_visible(GTK_TREE_VIEW_COLUMN(tree_view_column), TRUE);
 	gtk_widget_show_all(box);
 	/* Button repository branch */
-	handler->handler_statusbar.button_repo_branch = gtk_menu_button_new();
-	gtk_widget_set_name(handler->handler_statusbar.button_repo_branch, "button_repo_branch");
-	gtk_action_bar_pack_end(GTK_ACTION_BAR(handler->handler_statusbar.action_bar), handler->handler_statusbar.button_repo_branch);
-	gtk_widget_set_hexpand(handler->handler_statusbar.button_repo_branch, FALSE);
-	gtk_widget_set_vexpand(handler->handler_statusbar.button_repo_branch, FALSE);
-	gtk_widget_set_halign(handler->handler_statusbar.button_repo_branch, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(handler->handler_statusbar.button_repo_branch, GTK_ALIGN_CENTER);
-	gtk_style_context_add_class(gtk_widget_get_style_context(handler->handler_statusbar.button_repo_branch), GTK_STYLE_CLASS_FLAT);
-	gtk_button_set_label(GTK_BUTTON(handler->handler_statusbar.button_repo_branch), "Branch");
-	gtk_button_set_always_show_image(GTK_BUTTON(handler->handler_statusbar.button_repo_branch), TRUE);
+	handler->statusbar.button_repo_branch = gtk_menu_button_new();
+	gtk_widget_set_name(handler->statusbar.button_repo_branch, "button_repo_branch");
+	gtk_action_bar_pack_end(GTK_ACTION_BAR(handler->statusbar.action_bar), handler->statusbar.button_repo_branch);
+	gtk_widget_set_hexpand(handler->statusbar.button_repo_branch, FALSE);
+	gtk_widget_set_vexpand(handler->statusbar.button_repo_branch, FALSE);
+	gtk_widget_set_halign(handler->statusbar.button_repo_branch, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->statusbar.button_repo_branch, GTK_ALIGN_CENTER);
+	gtk_style_context_add_class(gtk_widget_get_style_context(handler->statusbar.button_repo_branch), GTK_STYLE_CLASS_FLAT);
+	gtk_button_set_label(GTK_BUTTON(handler->statusbar.button_repo_branch), "Branch");
+	gtk_button_set_always_show_image(GTK_BUTTON(handler->statusbar.button_repo_branch), TRUE);
 	image = gtk_image_new_from_icon_name("gitg-symbolic", GTK_ICON_SIZE_BUTTON);
-	gtk_button_set_image(GTK_BUTTON(handler->handler_statusbar.button_repo_branch), image);
+	gtk_button_set_image(GTK_BUTTON(handler->statusbar.button_repo_branch), image);
 }

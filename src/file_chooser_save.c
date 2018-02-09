@@ -15,8 +15,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <gtk/gtk.h>
 #include <gtksourceview/gtksource.h>
 #include "handlers.h"
@@ -40,10 +38,10 @@ static void tree_view_source_encoding_activated(GtkWidget *widget, GtkTreePath *
 		if (encoding) {
 			view->document->encoding = encoding;
 		}
-		gtk_button_set_label(GTK_BUTTON(handler->handler_dialog_save.button_encoding), charset);
+		gtk_button_set_label(GTK_BUTTON(handler->save.button_encoding), charset);
 		g_free(charset);
 	}
-	popover = GTK_WIDGET(gtk_menu_button_get_popover(GTK_MENU_BUTTON(handler->handler_dialog_save.button_encoding)));
+	popover = GTK_WIDGET(gtk_menu_button_get_popover(GTK_MENU_BUTTON(handler->save.button_encoding)));
 	gtk_widget_hide(popover);
 }
 
@@ -53,14 +51,14 @@ static void file_chooser_dialog_save_show(GtkWidget *widget, gpointer user_data)
 	cview *view = get_current_view(handler);
 	if (view) {
 		if (view->document->encoding) {
-			gtk_button_set_label(GTK_BUTTON(handler->handler_dialog_save.button_encoding),
+			gtk_button_set_label(GTK_BUTTON(handler->save.button_encoding),
 				gtk_source_encoding_get_charset(view->document->encoding));
 		} else {
-			gtk_button_set_label(GTK_BUTTON(handler->handler_dialog_save.button_encoding),
+			gtk_button_set_label(GTK_BUTTON(handler->save.button_encoding),
 				gtk_source_encoding_get_charset(gtk_source_encoding_get_utf8()));
 		}
 	} else {
-		gtk_button_set_label(GTK_BUTTON(handler->handler_dialog_save.button_encoding),
+		gtk_button_set_label(GTK_BUTTON(handler->save.button_encoding),
 			gtk_source_encoding_get_charset(gtk_source_encoding_get_utf8()));
 	}
 }
@@ -79,29 +77,29 @@ void init_file_chooser_save(chandler *handler, gchar *title, gchar *button)
 	GSList *encoding_iter = NULL;
 	GtkCellRenderer *cell_renderer = NULL;
 	GtkTreeViewColumn *tree_view_column = NULL;
-	handler->handler_dialog_save.dialog = gtk_file_chooser_dialog_new(title,
-		GTK_WINDOW(handler->handler_window.window),
+	handler->save.dialog = gtk_file_chooser_dialog_new(title,
+		GTK_WINDOW(handler->window.window),
 		GTK_FILE_CHOOSER_ACTION_SAVE,
 		button, GTK_RESPONSE_OK,
 		NULL);
-	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(handler->handler_dialog_save.dialog), TRUE);
-	g_signal_connect(handler->handler_dialog_save.dialog, "show", G_CALLBACK(file_chooser_dialog_save_show), handler);
+	gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(handler->save.dialog), TRUE);
+	g_signal_connect(handler->save.dialog, "show", G_CALLBACK(file_chooser_dialog_save_show), handler);
 	extra_widget = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
 	gtk_widget_set_name(extra_widget, "extra_widget");
-	gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(handler->handler_dialog_save.dialog), extra_widget);
+	gtk_file_chooser_set_extra_widget(GTK_FILE_CHOOSER(handler->save.dialog), extra_widget);
 	/* Button encoding */
-	handler->handler_dialog_save.button_encoding = gtk_menu_button_new();
-	gtk_widget_set_name(handler->handler_dialog_save.button_encoding, "button_encoding");
-	gtk_container_add(GTK_CONTAINER(extra_widget), handler->handler_dialog_save.button_encoding);
-	gtk_widget_set_hexpand(handler->handler_dialog_save.button_encoding, FALSE);
-	gtk_widget_set_vexpand(handler->handler_dialog_save.button_encoding, FALSE);
-	gtk_widget_set_halign(handler->handler_dialog_save.button_encoding, GTK_ALIGN_START);
-	gtk_widget_set_valign(handler->handler_dialog_save.button_encoding, GTK_ALIGN_CENTER);
-	gtk_style_context_add_class(gtk_widget_get_style_context(handler->handler_dialog_save.button_encoding), GTK_STYLE_CLASS_FLAT);
-	gtk_button_set_label(GTK_BUTTON(handler->handler_dialog_save.button_encoding), "Encoding");
+	handler->save.button_encoding = gtk_menu_button_new();
+	gtk_widget_set_name(handler->save.button_encoding, "button_encoding");
+	gtk_container_add(GTK_CONTAINER(extra_widget), handler->save.button_encoding);
+	gtk_widget_set_hexpand(handler->save.button_encoding, FALSE);
+	gtk_widget_set_vexpand(handler->save.button_encoding, FALSE);
+	gtk_widget_set_halign(handler->save.button_encoding, GTK_ALIGN_START);
+	gtk_widget_set_valign(handler->save.button_encoding, GTK_ALIGN_CENTER);
+	gtk_style_context_add_class(gtk_widget_get_style_context(handler->save.button_encoding), GTK_STYLE_CLASS_FLAT);
+	gtk_button_set_label(GTK_BUTTON(handler->save.button_encoding), "Encoding");
 	/* Popover encoding */
-	popover = gtk_popover_new(handler->handler_dialog_save.button_encoding);
-	gtk_menu_button_set_popover(GTK_MENU_BUTTON(handler->handler_dialog_save.button_encoding), popover);
+	popover = gtk_popover_new(handler->save.button_encoding);
+	gtk_menu_button_set_popover(GTK_MENU_BUTTON(handler->save.button_encoding), popover);
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, MINOR_SPACING);
 	gtk_container_add(GTK_CONTAINER(popover), box);
 	gtk_widget_set_hexpand(box, TRUE);

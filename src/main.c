@@ -15,8 +15,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <gtk/gtk.h>
 #include <libgit2-glib/ggit.h>
@@ -25,7 +23,7 @@
 static void init_accels(chandler *handler)
 {
 	GtkAccelGroup *accel_group = gtk_accel_group_new();
-	gtk_window_add_accel_group(GTK_WINDOW(handler->handler_window.window), GTK_ACCEL_GROUP(accel_group));
+	gtk_window_add_accel_group(GTK_WINDOW(handler->window.window), GTK_ACCEL_GROUP(accel_group));
 	gtk_accel_group_connect(GTK_ACCEL_GROUP(accel_group),
 		GDK_KEY_N,
 		GDK_CONTROL_MASK,
@@ -46,6 +44,11 @@ static void init_accels(chandler *handler)
 		GDK_CONTROL_MASK,
 		0,
 		g_cclosure_new_swap(G_CALLBACK(window_close), handler, NULL));
+	gtk_accel_group_connect(GTK_ACCEL_GROUP(accel_group),
+		GDK_KEY_Q,
+		GDK_CONTROL_MASK,
+		0,
+		g_cclosure_new_swap(G_CALLBACK(window_quit), handler, NULL));
 	gtk_accel_group_connect(GTK_ACCEL_GROUP(accel_group),
 		GDK_KEY_F3,
 		0,
@@ -97,15 +100,18 @@ static void application_activate(GtkApplication *application, gpointer user_data
 	/* Initialize handlers */
 	init_window(handler);
 	init_header(handler);
-	init_frame_view(handler);
-	init_frame_tree_view(handler);
+	init_select_session(handler);
+	init_session(handler);
+	init_search_and_replace(handler);
 	init_statusbar(handler);
+	init_sidebar_files(handler);
+	init_preferences(handler);
 	init_accels(handler);
-	gtk_widget_insert_action_group(handler->handler_window.window, "default", G_ACTION_GROUP(action_group));
+	gtk_widget_insert_action_group(handler->window.window, "default", G_ACTION_GROUP(action_group));
 	/* Menu */
 	menu = g_menu_new();
-	g_menu_append(menu, "About", "about");
-	g_menu_append(menu, "Quit", "quit");
+	g_menu_append(menu, TEXT_ABOUT, "about");
+	g_menu_append(menu, TEXT_QUIT, "quit");
 	gtk_application_set_app_menu(application, G_MENU_MODEL(menu));
 	/* Document list */
 	handler->documents = NULL;
@@ -121,30 +127,30 @@ static void application_activate(GtkApplication *application, gpointer user_data
 	}
 	window_update_sessions(handler);
 	/* Show */
-	gtk_window_present(GTK_WINDOW(handler->handler_window.window));
-	gtk_widget_show_all(handler->handler_window.window);
+	gtk_window_present(GTK_WINDOW(handler->window.window));
+	gtk_widget_show_all(handler->window.window);
 	update_view_status(handler, NULL);
 	window_go_to_select_session(handler);
-	gtk_stack_set_transition_type(GTK_STACK(handler->handler_window.stack), GTK_STACK_TRANSITION_TYPE_CROSSFADE);
-	gtk_revealer_set_transition_type(GTK_REVEALER(handler->handler_statusbar.revealer_statusbar), GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP);
+	gtk_stack_set_transition_type(GTK_STACK(handler->window.stack), GTK_STACK_TRANSITION_TYPE_CROSSFADE);
+	gtk_revealer_set_transition_type(GTK_REVEALER(handler->statusbar.revealer), GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP);
 }
 
 static void application_shutdown(GtkApplication *application, gpointer user_data)
 {
 	chandler *handler = user_data;
 	g_key_file_free(handler->key_file_sessions);
+	g_slice_free1(sizeof(chandler), handler);
 }
 
 int main(void)
 {
-	chandler *handler = malloc(sizeof(chandler));
-	memset(handler, 0, sizeof(chandler));
+	chandler *handler = NULL;;
 	gtk_init(NULL, NULL);
+	handler = g_slice_alloc0(sizeof(chandler));
 	ggit_init();
 	handler->application = gtk_application_new("app.code", G_APPLICATION_FLAGS_NONE);
 	g_signal_connect(handler->application, "activate", G_CALLBACK(application_activate), handler);
 	g_signal_connect(handler->application, "shutdown", G_CALLBACK(application_shutdown), handler);
 	g_application_run(G_APPLICATION(handler->application), 0, NULL);
-	free(handler);
 	return EXIT_SUCCESS;
 }

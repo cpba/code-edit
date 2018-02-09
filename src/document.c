@@ -15,8 +15,6 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <gtk/gtk.h>
 #include "handlers.h"
 
@@ -24,7 +22,7 @@ cview *get_nth_view(chandler *handler, gint index)
 {
 	cview *view = NULL;
 	GtkWidget *page = NULL;
-	page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), index);
+	page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), index);
 	if (page) {
 		view = g_object_get_data(G_OBJECT(page), "view");
 	}
@@ -33,10 +31,10 @@ cview *get_nth_view(chandler *handler, gint index)
 
 cview *get_current_view(chandler *handler)
 {
-	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook));
+	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->session.notebook));
 	cview *view = NULL;
 	if (current_page > -1) {
-		GtkWidget *page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), current_page);
+		GtkWidget *page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), current_page);
 		view = g_object_get_data(G_OBJECT(page), "view");
 	}
 	return view;
@@ -71,7 +69,7 @@ void update_document_views_status(chandler *handler, cdocument *document)
 			text = g_string_append(text, basename);
 			g_free(basename);
 		} else {
-			text = g_string_append(text, "<i>Untitled</i>");
+			text = g_string_append(text, TEXT_MARKUP_UNTITLED);
 		}
 		gtk_label_set_markup(GTK_LABEL(view->label_tab), text->str);
 		g_string_free(text, TRUE);
@@ -217,9 +215,9 @@ void free_document(chandler *handler, cdocument *document)
 		}
 		g_object_unref(G_OBJECT(document->source_file));
 	}
-	gtk_source_completion_words_unregister(handler->handler_frame_view.source_completion_words, GTK_TEXT_BUFFER(document->source_buffer));
+	gtk_source_completion_words_unregister(handler->search_and_replace.source_completion_words, GTK_TEXT_BUFFER(document->source_buffer));
 	g_object_unref(G_OBJECT(document->source_buffer));
-	free(document);
+	g_slice_free1(sizeof(cdocument), document);
 }
 
 void save_document(cdocument *document, gchar *file_name)
@@ -254,7 +252,7 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 	gchar *content_type = NULL;
 	cdocument *document = get_document_by_file_name(handler, file_name);
 	if (!document) {
-		document = malloc(sizeof(cdocument));
+		document = g_slice_alloc0(sizeof(cdocument));
 		document->handler = handler;
 		document->encoding = NULL;
 		document->views = NULL;
@@ -264,7 +262,7 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 		document->cancelled = FALSE;
 		document->encoding = gtk_source_encoding_get_utf8();
 		document->source_buffer = gtk_source_buffer_new(NULL);
-		document->source_search_context = gtk_source_search_context_new(document->source_buffer, handler->handler_frame_view.source_search_settings);
+		document->source_search_context = gtk_source_search_context_new(document->source_buffer, handler->search_and_replace.source_search_settings);
 		document->operation_start = g_date_time_new_now_local();
 		g_object_set_data(G_OBJECT(document->source_buffer), "document", document);
 		g_signal_connect(document->source_buffer, "changed", G_CALLBACK(source_buffer_changed), handler);
@@ -296,7 +294,7 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 				document_async_ready,
 				document);
 		}
-		gtk_source_completion_words_register(handler->handler_frame_view.source_completion_words, GTK_TEXT_BUFFER(document->source_buffer));
+		gtk_source_completion_words_register(handler->search_and_replace.source_completion_words, GTK_TEXT_BUFFER(document->source_buffer));
 		handler->documents = g_list_append(handler->documents, document);
 	}
 	return document;
@@ -323,11 +321,11 @@ void close_view(chandler *handler, cview *view)
 	} else {
 		if (!view->document->cancelled && gtk_text_buffer_get_modified(GTK_TEXT_BUFFER(view->document->source_buffer))) {
 			gint response = 0;
-			GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(handler->handler_window.window),
+			GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(handler->window.window),
 				GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR,
 				GTK_MESSAGE_QUESTION,
 				GTK_BUTTONS_OK_CANCEL,
-				"Close the tab without saving the modifications?");
+				TEXT_CLOSE_TAB_WITHOUT_SAVING_THE_MODIFICATIONS);
 			response = gtk_dialog_run(GTK_DIALOG(dialog));
 			if (response == GTK_RESPONSE_OK) {
 				close = TRUE;
@@ -346,7 +344,7 @@ void close_view(chandler *handler, cview *view)
 		free_document(handler, view->document);
 	}
 	if (close) {
-		free(view);
+		g_slice_free1(sizeof(cview), view);
 	}
 	update_view_status(handler, NULL);
 	/* Session */
@@ -357,80 +355,92 @@ void close_view(chandler *handler, cview *view)
 
 void add_view_for_document(chandler *handler, cdocument *document)
 {
-	cview *view = malloc(sizeof(cview));
+	cview *view = NULL;
+	GList *first_view = NULL;
 	GtkSourceCompletion *source_completion = NULL;
 	gint page_index = 0;
-	view->document = document;
-	view->box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	g_object_set_data(G_OBJECT(view->box), "view", view);
-	/* Revealer info bar */
-	view->revealer_progress_bar = gtk_revealer_new();
-	gtk_container_add(GTK_CONTAINER(view->box), view->revealer_progress_bar);
-	gtk_widget_set_hexpand(view->revealer_progress_bar, TRUE);
-	gtk_widget_set_vexpand(view->revealer_progress_bar, FALSE);
-	gtk_widget_set_halign(view->revealer_progress_bar, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(view->revealer_progress_bar, GTK_ALIGN_START);
-	gtk_revealer_set_transition_type(GTK_REVEALER(view->revealer_progress_bar), GTK_REVEALER_TRANSITION_TYPE_SLIDE_DOWN);
-	/* Progress bar */
-	view->progress_bar = gtk_progress_bar_new();
-	gtk_container_add(GTK_CONTAINER(view->revealer_progress_bar), view->progress_bar);
-	gtk_widget_set_hexpand(view->progress_bar, TRUE);
-	gtk_widget_set_vexpand(view->progress_bar, FALSE);
-	gtk_widget_set_halign(view->progress_bar, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(view->progress_bar, GTK_ALIGN_CENTER);
-	gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(view->progress_bar), 0.5);
-	/* Source view */
-	view->scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-	gtk_container_add(GTK_CONTAINER(view->box), view->scrolled_window);
-	gtk_widget_set_hexpand(view->scrolled_window, TRUE);
-	gtk_widget_set_vexpand(view->scrolled_window, TRUE);
-	gtk_widget_set_halign(view->scrolled_window, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(view->scrolled_window, GTK_ALIGN_FILL);
-	view->source_view = gtk_source_view_new_with_buffer(GTK_SOURCE_BUFFER(document->source_buffer));
-	gtk_container_add(GTK_CONTAINER(view->scrolled_window), view->source_view);
-	gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(view->source_view), TRUE);
-	gtk_source_view_set_show_right_margin(GTK_SOURCE_VIEW(view->source_view), TRUE);
-	gtk_text_view_set_monospace(GTK_TEXT_VIEW(view->source_view), TRUE);
-	/* Tab */
-	view->box_tab = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-	/* Label */
-	view->label_tab = gtk_label_new("");
-	gtk_container_add(GTK_CONTAINER(view->box_tab), view->label_tab);
-	gtk_widget_set_hexpand(view->label_tab, TRUE);
-	gtk_widget_set_vexpand(view->label_tab, TRUE);
-	gtk_widget_set_halign(view->label_tab, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(view->label_tab, GTK_ALIGN_FILL);
-	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(view->label_tab)), GTK_STYLE_CLASS_DIM_LABEL);
-	gtk_label_set_use_markup(GTK_LABEL(view->label_tab), TRUE);
-	gtk_label_set_markup(GTK_LABEL(view->label_tab), "");
-	/* Button close */
-	view->button_close_tab = gtk_button_new_from_icon_name("window-close-symbolic", GTK_ICON_SIZE_BUTTON);
-	gtk_container_add(GTK_CONTAINER(view->box_tab), view->button_close_tab);
-	gtk_widget_set_hexpand(view->button_close_tab, FALSE);
-	gtk_widget_set_vexpand(view->button_close_tab, TRUE);
-	gtk_widget_set_halign(view->button_close_tab, GTK_ALIGN_END);
-	gtk_widget_set_valign(view->button_close_tab, GTK_ALIGN_FILL);
-	gtk_button_set_relief(GTK_BUTTON(view->button_close_tab), GTK_RELIEF_NONE);
-	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(view->button_close_tab)), "circular");
-	g_object_set_data(G_OBJECT(view->button_close_tab), "view", view);
-	g_signal_connect(view->button_close_tab, "clicked", G_CALLBACK(button_close_tab_clicked), handler);
-	/* Add to notebook */
-	page_index = gtk_notebook_append_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), view->box, view->box_tab);
-	gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(handler->handler_frame_view.notebook), view->box, TRUE);
-	gtk_widget_show_all(handler->handler_frame_view.notebook);
-	gtk_widget_show_all(view->box_tab);
-	/* Update document */
-	document->views = g_list_append(document->views, view);
-	update_document_views_status(handler, document);
-	/* Show page */
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(handler->handler_frame_view.notebook), page_index);
-	update_view_status(handler, view);
-	/* Session */
-	if (handler->current_session) {
-		window_save_session(handler, handler->current_session);
+	first_view = document->views;
+	/*
+	TODO
+	Use the preferences option to open a new view or use an existing view.
+	*/
+	if (first_view && TRUE) {
+		view = first_view->data;
+		page_index = gtk_notebook_page_num(GTK_NOTEBOOK(handler->session.notebook), view->box);
+		gtk_notebook_set_current_page(GTK_NOTEBOOK(handler->session.notebook), page_index);
+	} else {
+		view = g_slice_alloc0(sizeof(cview));
+		view->document = document;
+		view->box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+		g_object_set_data(G_OBJECT(view->box), "view", view);
+		/* Revealer info bar */
+		view->revealer_progress_bar = gtk_revealer_new();
+		gtk_container_add(GTK_CONTAINER(view->box), view->revealer_progress_bar);
+		gtk_widget_set_hexpand(view->revealer_progress_bar, TRUE);
+		gtk_widget_set_vexpand(view->revealer_progress_bar, FALSE);
+		gtk_widget_set_halign(view->revealer_progress_bar, GTK_ALIGN_FILL);
+		gtk_widget_set_valign(view->revealer_progress_bar, GTK_ALIGN_START);
+		gtk_revealer_set_transition_type(GTK_REVEALER(view->revealer_progress_bar), GTK_REVEALER_TRANSITION_TYPE_SLIDE_DOWN);
+		/* Progress bar */
+		view->progress_bar = gtk_progress_bar_new();
+		gtk_container_add(GTK_CONTAINER(view->revealer_progress_bar), view->progress_bar);
+		gtk_widget_set_hexpand(view->progress_bar, TRUE);
+		gtk_widget_set_vexpand(view->progress_bar, FALSE);
+		gtk_widget_set_halign(view->progress_bar, GTK_ALIGN_FILL);
+		gtk_widget_set_valign(view->progress_bar, GTK_ALIGN_CENTER);
+		gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(view->progress_bar), 0.5);
+		/* Source view */
+		view->scrolled_window = gtk_scrolled_window_new(NULL, NULL);
+		gtk_container_add(GTK_CONTAINER(view->box), view->scrolled_window);
+		gtk_widget_set_hexpand(view->scrolled_window, TRUE);
+		gtk_widget_set_vexpand(view->scrolled_window, TRUE);
+		gtk_widget_set_halign(view->scrolled_window, GTK_ALIGN_FILL);
+		gtk_widget_set_valign(view->scrolled_window, GTK_ALIGN_FILL);
+		view->source_view = gtk_source_view_new_with_buffer(GTK_SOURCE_BUFFER(document->source_buffer));
+		gtk_container_add(GTK_CONTAINER(view->scrolled_window), view->source_view);
+		gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(view->source_view), TRUE);
+		gtk_source_view_set_show_right_margin(GTK_SOURCE_VIEW(view->source_view), TRUE);
+		gtk_text_view_set_monospace(GTK_TEXT_VIEW(view->source_view), TRUE);
+		/* Tab */
+		view->box_tab = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+		/* Label */
+		view->label_tab = gtk_label_new("");
+		gtk_container_add(GTK_CONTAINER(view->box_tab), view->label_tab);
+		gtk_widget_set_hexpand(view->label_tab, TRUE);
+		gtk_widget_set_vexpand(view->label_tab, TRUE);
+		gtk_widget_set_halign(view->label_tab, GTK_ALIGN_FILL);
+		gtk_widget_set_valign(view->label_tab, GTK_ALIGN_FILL);
+		gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(view->label_tab)), GTK_STYLE_CLASS_DIM_LABEL);
+		gtk_label_set_use_markup(GTK_LABEL(view->label_tab), TRUE);
+		gtk_label_set_markup(GTK_LABEL(view->label_tab), "");
+		/* Button close */
+		view->button_close_tab = gtk_button_new_from_icon_name("window-close-symbolic", GTK_ICON_SIZE_BUTTON);
+		gtk_container_add(GTK_CONTAINER(view->box_tab), view->button_close_tab);
+		gtk_widget_set_hexpand(view->button_close_tab, FALSE);
+		gtk_widget_set_vexpand(view->button_close_tab, TRUE);
+		gtk_widget_set_halign(view->button_close_tab, GTK_ALIGN_END);
+		gtk_widget_set_valign(view->button_close_tab, GTK_ALIGN_FILL);
+		gtk_button_set_relief(GTK_BUTTON(view->button_close_tab), GTK_RELIEF_NONE);
+		gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(view->button_close_tab)), "circular");
+		g_object_set_data(G_OBJECT(view->button_close_tab), "view", view);
+		g_signal_connect(view->button_close_tab, "clicked", G_CALLBACK(button_close_tab_clicked), handler);
+		/* Add to notebook */
+		page_index = gtk_notebook_append_page(GTK_NOTEBOOK(handler->session.notebook), view->box, view->box_tab);
+		gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(handler->session.notebook), view->box, TRUE);
+		gtk_widget_show_all(handler->session.notebook);
+		gtk_widget_show_all(view->box_tab);
+		/* Update document */
+		document->views = g_list_append(document->views, view);
+		update_document_views_status(handler, document);
+		/* Show page */
+		gtk_notebook_set_current_page(GTK_NOTEBOOK(handler->session.notebook), page_index);
+		update_view_status(handler, view);
+		/* Session */
+		if (handler->current_session) {
+			window_save_session(handler, handler->current_session);
+		}
+		/* Add source completion */
+		source_completion = gtk_source_view_get_completion(GTK_SOURCE_VIEW(view->source_view));
+		gtk_source_completion_add_provider(source_completion, GTK_SOURCE_COMPLETION_PROVIDER(handler->search_and_replace.source_completion_words), NULL);
 	}
-	/* Add source completion */
-	source_completion = gtk_source_view_get_completion(GTK_SOURCE_VIEW(view->source_view));
-	gtk_source_completion_add_provider(source_completion, GTK_SOURCE_COMPLETION_PROVIDER(handler->handler_frame_view.source_completion_words), NULL);
 }
-

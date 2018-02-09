@@ -18,10 +18,9 @@
 #ifndef HANDLERS_H
 #define HANDLERS_H
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <gtk/gtk.h>
 #include <gtksourceview/gtksource.h>
+#include "texts.h"
 
 #define PROGRAM_NAME "Code"
 #define CONFIGURATION_FILE_NAME "/code.conf"
@@ -36,18 +35,10 @@
 #define MINOR_SPACING 6
 #define MEDIUM_SPACING 12
 #define MAJOR_SPACING 18
-#define HEADER_BAR_TEXT_SELECT_SESSION "Select Session"
 
 typedef struct cdocument cdocument;
 typedef struct cview cview;
 typedef struct csession csession;
-typedef struct chandler_dialog_save chandler_dialog_save;
-typedef struct chandler_header chandler_header;
-typedef struct chandler_frame_tree_view chandler_frame_tree_view;
-typedef struct chandler_frame_view chandler_frame_view;
-typedef struct chandler_frame_preferences chandler_frame_preferences;
-typedef struct chandler_statusbar chandler_statusbar;
-typedef struct chandler_window chandler_window;
 typedef struct chandler chandler;
 
 struct cdocument {
@@ -86,98 +77,105 @@ struct csession {
 	GtkWidget *label;
 };
 
-struct chandler_dialog_save {
-	GtkWidget *dialog;
-	GtkWidget *button_encoding;
-	GtkWidget *button_newline;
-};
-
-struct chandler_header {
-	chandler *handler;
-	GtkWidget *header_bar;
-	GtkWidget *revealer_session;
-	GtkWidget *stack_extra;
-	GtkWidget *button_open_menu;
-	GtkWidget *button_new_document;
-	GtkWidget *button_open_document;
-	GtkWidget *button_save_document;
-	GtkWidget *button_save_as_document;
-	GtkWidget *button_preferences;
-	GtkWidget *button_session_selection_mode;
-};
-
-struct chandler_frame_tree_view {
-	GtkWidget *revealer;
-	GtkWidget *box;
-	GtkWidget *scrolled_window;
-	GtkWidget *tree_view;
-	GtkWidget *popover_folder;
-	GtkWidget *popover_file;
-	GtkWidget *popover_rename;
-};
-
-struct chandler_frame_view {
-	GtkWidget *box;
-	GtkWidget *notebook;
-	GtkWidget *revealer_search_and_replace;
-	GtkWidget *box_search_and_replace;
-	GtkWidget *entry_search;
-	GtkWidget *entry_file_pattern;
-	GtkWidget *button_use_regex;
-	GtkWidget *button_case_sensitive;
-	GtkWidget *button_at_word_boundaries;
-	GtkWidget *button_wrap_around;
-	GtkWidget *button_search_next;
-	GtkWidget *button_search_previous;
-	GtkWidget *box_replace;
-	GtkWidget *entry_replace;
-	GtkWidget *button_replace;
-	GtkWidget *button_replace_all;
-	GtkSourceSearchSettings *source_search_settings;
-	GtkSourceCompletionWords *source_completion_words;
-	gint iter_search_offset;
-};
-
-struct chandler_frame_preferences {
-	GtkWidget *box;
-	GtkWidget *stack_switcher;
-	GtkWidget *stack;
-	GtkSizeGroup *size_group_input;
-};
-
-struct chandler_statusbar {
-	GtkWidget *revealer_statusbar;
-	GtkWidget *action_bar;
-	GtkWidget *button_language;
-	GtkWidget *button_repo_branch;
-};
-
-struct chandler_window {
-	GtkWidget *window;
-	GtkWidget *stack;
-	/* Select session */
-	GtkWidget *box_select_session;
-	GtkWidget *search_entry_session;
-	GtkWidget *list_box_sessions;
-	/* Session */
-	GtkWidget *box_session;
-	GtkWidget *box_frames;
-};
-
 struct chandler {
 	GtkApplication *application;
 	GList *documents;
 	GKeyFile *key_file_config;
 	GKeyFile *key_file_sessions;
 	csession *current_session;
-	chandler_window handler_window;
-	chandler_header handler_header;
-	chandler_statusbar handler_statusbar;
-	chandler_frame_preferences handler_frame_preferences;
-	chandler_frame_view handler_frame_view;
-	chandler_frame_tree_view handler_frame_tree_view;
-	chandler_dialog_save handler_dialog_save;
-	chandler_dialog_save handler_dialog_save_as;
+	struct {
+		GtkWidget *window;
+		GtkWidget *stack;
+	} window;
+	struct {
+		chandler *handler;
+		GtkWidget *header_bar;
+		GtkWidget *revealer_session;
+		GtkWidget *stack_extra;
+		GtkWidget *button_open_menu;
+		GtkWidget *button_new_document;
+		GtkWidget *button_open_document;
+		GtkWidget *button_save_document;
+		GtkWidget *button_save_as_document;
+		GtkWidget *button_preferences;
+		GtkWidget *button_session_selection_mode;
+	} header;
+	struct {
+		GtkWidget *box;
+		GtkWidget *search_entry;
+		GtkWidget *list_box;
+	} select_session;
+	struct {
+		GtkWidget *box;
+		GtkWidget *box_notebook_and_sidebar;
+		GtkWidget *notebook;
+		gint iter_search_offset;
+		struct {
+			GtkWidget *revealer;
+			GtkWidget *box;
+			GtkTreeStore *tree_store;
+			GtkWidget *tree_view;
+			GtkWidget *popover_folder;
+			GtkWidget *popover_file;
+			GtkWidget *popover_rename;
+		} sidebar_files;
+	} session;
+	struct {
+		GtkWidget *revealer;
+		GtkWidget *entry_search;
+		GtkWidget *entry_file_pattern;
+		GtkWidget *button_use_regex;
+		GtkWidget *button_case_sensitive;
+		GtkWidget *button_at_word_boundaries;
+		GtkWidget *button_wrap_around;
+		GtkWidget *button_search_next;
+		GtkWidget *button_search_previous;
+		GtkWidget *box_replace;
+		GtkWidget *entry_replace;
+		GtkWidget *button_replace;
+		GtkWidget *button_replace_all;
+		GtkSourceSearchSettings *source_search_settings;
+		GtkSourceCompletionWords *source_completion_words;
+	} search_and_replace;
+	struct {
+		GtkWidget *dialog;
+		GtkWidget *button_encoding;
+		GtkWidget *button_newline;
+	} save;
+	struct {
+		GtkWidget *dialog;
+		GtkWidget *button_encoding;
+		GtkWidget *button_newline;
+	} save_as;
+	struct {
+		GtkWidget *revealer;
+		GtkWidget *box;
+		GtkWidget *stack_switcher;
+		GtkWidget *stack;
+		GtkWidget *switch_show_files_tree;
+		GtkWidget *switch_show_status_bar;
+		GtkWidget *switch_show_overview_map;
+		GtkWidget *switch_show_line_numbers;
+		GtkWidget *switch_show_grid_pattern;
+		GtkWidget *switch_show_right_margin;
+		GtkWidget *spin_button_right_margin_position;
+		GtkWidget *switch_automatic_indentation;
+		GtkWidget *switch_show_spaces;
+		GtkWidget *switch_insert_spaces_instead_of_tabs;
+		GtkWidget *spin_button_tab_width;
+		GtkWidget *switch_allow_text_wrapping;
+		GtkWidget *switch_allow_split_words_over_lines;
+		GtkWidget *switch_highlight_current_line;
+		GtkWidget *switch_highlight_matching_brackets;
+		GtkWidget *font_button;
+		GtkWidget *list_box_highlight;
+	} preferences;
+	struct {
+		GtkWidget *revealer;
+		GtkWidget *action_bar;
+		GtkWidget *button_language;
+		GtkWidget *button_repo_branch;
+	} statusbar;
 };
 
 void window_update_sessions(chandler *handler);
@@ -193,6 +191,10 @@ void update_statusbar_language(chandler *handler, cview *view);
 void update_statusbar_repository_branch(chandler *handler, cview *view);
 void update_statusbar(chandler *handler, cview *view);
 
+/* Tree view */
+void tree_view_update_iter_children(chandler *handler, GtkTreeIter iter);
+GtkTreeIter tree_view_add_iter(chandler *handler, GtkTreeIter *parent, gchar *path);
+
 /* Document */
 cview *get_nth_view(chandler *handler, gint index);
 cview *get_current_view(chandler *handler);
@@ -205,6 +207,7 @@ void close_view(chandler *handler, cview *view);
 void add_view_for_document(chandler *handler, cdocument *document);
 
 /* Actions */
+void window_quit(chandler *handler);
 void window_go_to_select_session(gpointer user_data);
 void window_go_to_session(gpointer user_data);
 void window_new(gpointer user_data);
@@ -222,11 +225,14 @@ void window_show_search_and_replace_bar(chandler *handler);
 void window_toggle_tree_view(chandler *handler);
 
 /* Initialization */
-void init_frame_tree_view(chandler *handler);
-void init_frame_view(chandler *handler);
-void init_header(chandler *handler);
-void init_statusbar(chandler *handler);
 void init_file_chooser_save(chandler *handler, gchar *title, gchar *button);
+void init_preferences(chandler *handler);
+void init_sidebar_files(chandler *handler);
+void init_search_and_replace(chandler *handler);
+void init_session(chandler *handler);
+void init_select_session(chandler *handler);
+void init_statusbar(chandler *handler);
+void init_header(chandler *handler);
 void init_window(chandler *handler);
 
 #endif
