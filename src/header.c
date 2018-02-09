@@ -30,45 +30,14 @@ void update_headerbar(chandler *handler, cview *view)
 		if (file) {
 			GString *subtitle = NULL;
 			GFile *home = NULL;
-			GFile *parent = g_file_get_parent(file);
-			gchar *basename = g_file_get_basename(file);
-			gchar *path = NULL;
-			const gchar *home_dir = g_get_home_dir();
-			home = g_file_new_for_path(home_dir);
-			if (home && parent) {
-				path = g_file_get_relative_path(home, parent);
-			}
-			if (path) {
-				subtitle = g_string_new("~/");
-				subtitle = g_string_append(subtitle, path);
-			} else {
-				path = g_file_get_path(parent);
-			}
-			if (!subtitle && path) {
-				subtitle = g_string_new(path);
-			} else {
-				path = g_file_get_path(file);
-			}
-			if (!subtitle && path) {
-				subtitle = g_string_new(path);
-			}
+			gchar *path = g_file_get_path(file);
+			gchar *basename = g_path_get_basename(path);
+			gchar *dirname = g_path_get_dirname(path);
 			gtk_header_bar_set_title(GTK_HEADER_BAR(handler->handler_header.header_bar), basename);
-			if (subtitle) {
-				gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->handler_header.header_bar), subtitle->str);
-			} else {
-				gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->handler_header.header_bar), NULL);
-			}
+			gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->handler_header.header_bar), dirname);
 			g_free(basename);
+			g_free(dirname);
 			g_free(path);
-			if (subtitle) {
-				g_string_free(subtitle, TRUE);
-			}
-			if (parent) {
-				g_object_unref(G_OBJECT(parent));
-			}
-			if (home) {
-				g_object_unref(G_OBJECT(home));
-			}
 		} else {
 			gtk_header_bar_set_title(GTK_HEADER_BAR(handler->handler_header.header_bar), "Untitled");
 			gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->handler_header.header_bar), NULL);
