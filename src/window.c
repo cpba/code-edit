@@ -408,7 +408,7 @@ void window_search_previous(chandler *handler)
 
 void window_show_search_bar(chandler *handler)
 {
-	gtk_widget_hide(GTK_WIDGET(handler->handler_frame_view.box_replace));
+	gtk_widget_hide(handler->handler_frame_view.box_replace);
 	if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace))) {
 		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace), TRUE);
 	}
@@ -417,7 +417,7 @@ void window_show_search_bar(chandler *handler)
 
 void window_show_search_and_replace_bar(chandler *handler)
 {
-	gtk_widget_show_all(GTK_WIDGET(handler->handler_frame_view.box_replace));
+	gtk_widget_show_all(handler->handler_frame_view.box_replace);
 	if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace))) {
 		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace), TRUE);
 	}
@@ -473,27 +473,26 @@ static void window_destroy(GtkWidget *widget, gpointer user_data)
 
 void init_window(chandler *handler)
 {
-	chandler_window *handler_window = &handler->handler_window;
 	GtkWidget *scrolled_window = NULL;
 	GtkWidget *box = NULL;
 	GtkWidget *frame = NULL;
 	/* Window */
-	handler_window->window = gtk_application_window_new(handler->application);
-	gtk_window_set_icon_name(GTK_WINDOW(handler_window->window), "text-editor");
-	g_signal_connect(handler_window->window, "destroy", G_CALLBACK(window_destroy), handler);
+	handler->handler_window.window = gtk_application_window_new(handler->application);
+	gtk_window_set_icon_name(GTK_WINDOW(handler->handler_window.window), "text-editor");
+	g_signal_connect(handler->handler_window.window, "destroy", G_CALLBACK(window_destroy), handler);
 	/* Stack main */
-	handler_window->stack = gtk_stack_new();
-	gtk_widget_set_name(handler_window->stack, "stack");
-	gtk_container_add(GTK_CONTAINER(handler_window->window), handler_window->stack);
-	gtk_widget_set_hexpand(handler_window->stack, TRUE);
-	gtk_widget_set_vexpand(handler_window->stack, TRUE);
-	gtk_widget_set_halign(handler_window->stack, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(handler_window->stack, GTK_ALIGN_FILL);
-	gtk_widget_set_size_request(handler_window->stack, WINDOW_VIEW_MIN_WIDTH, WINDOW_VIEW_MIN_HEIGHT);
-	gtk_stack_set_transition_type(GTK_STACK(handler_window->stack), GTK_STACK_TRANSITION_TYPE_NONE);
+	handler->handler_window.stack = gtk_stack_new();
+	gtk_widget_set_name(handler->handler_window.stack, "stack");
+	gtk_container_add(GTK_CONTAINER(handler->handler_window.window), handler->handler_window.stack);
+	gtk_widget_set_hexpand(handler->handler_window.stack, TRUE);
+	gtk_widget_set_vexpand(handler->handler_window.stack, TRUE);
+	gtk_widget_set_halign(handler->handler_window.stack, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->handler_window.stack, GTK_ALIGN_FILL);
+	gtk_widget_set_size_request(handler->handler_window.stack, WINDOW_VIEW_MIN_WIDTH, WINDOW_VIEW_MIN_HEIGHT);
+	gtk_stack_set_transition_type(GTK_STACK(handler->handler_window.stack), GTK_STACK_TRANSITION_TYPE_NONE);
 	/* Scrolled window select-session */
 	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-	gtk_stack_add_named(GTK_STACK(handler_window->stack), scrolled_window, "select-session");
+	gtk_stack_add_named(GTK_STACK(handler->handler_window.stack), scrolled_window, "select-session");
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	/* Box scrolled window */
 	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
@@ -501,51 +500,51 @@ void init_window(chandler *handler)
 	gtk_container_add(GTK_CONTAINER(scrolled_window), box);
 	gtk_widget_set_size_request(box, 400, -1);
 	/* Box select-session */
-	handler_window->box_select_session = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_widget_set_name(handler_window->box_select_session, "box_select_session");
-	gtk_container_add(GTK_CONTAINER(box), handler_window->box_select_session);
-	gtk_widget_set_hexpand(handler_window->box_select_session, FALSE);
-	gtk_widget_set_halign(handler_window->box_select_session, GTK_ALIGN_CENTER);
-	gtk_widget_set_margin_start(handler_window->box_select_session, MAJOR_SPACING);
-	gtk_widget_set_margin_end(handler_window->box_select_session, MAJOR_SPACING);
-	gtk_widget_set_size_request(handler_window->box_select_session, LIST_BOX_SESSIONS_MIN_WIDTH, -1);
+	handler->handler_window.box_select_session = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	gtk_widget_set_name(handler->handler_window.box_select_session, "box_select_session");
+	gtk_container_add(GTK_CONTAINER(box), handler->handler_window.box_select_session);
+	gtk_widget_set_hexpand(handler->handler_window.box_select_session, FALSE);
+	gtk_widget_set_halign(handler->handler_window.box_select_session, GTK_ALIGN_CENTER);
+	gtk_widget_set_margin_start(handler->handler_window.box_select_session, MAJOR_SPACING);
+	gtk_widget_set_margin_end(handler->handler_window.box_select_session, MAJOR_SPACING);
+	gtk_widget_set_size_request(handler->handler_window.box_select_session, LIST_BOX_SESSIONS_MIN_WIDTH, -1);
 	/* Entry search session */
-	handler_window->search_entry_session = gtk_search_entry_new();
-	gtk_widget_set_name(handler_window->search_entry_session, "search_entry_session");
-	gtk_container_add(GTK_CONTAINER(handler_window->box_select_session), handler_window->search_entry_session);
-	gtk_widget_set_hexpand(handler_window->search_entry_session, TRUE);
-	gtk_widget_set_vexpand(handler_window->search_entry_session, FALSE);
-	gtk_widget_set_halign(handler_window->search_entry_session, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(handler_window->search_entry_session, GTK_ALIGN_CENTER);
-	gtk_widget_set_margin_top(handler_window->search_entry_session, MAJOR_SPACING);
+	handler->handler_window.search_entry_session = gtk_search_entry_new();
+	gtk_widget_set_name(handler->handler_window.search_entry_session, "search_entry_session");
+	gtk_container_add(GTK_CONTAINER(handler->handler_window.box_select_session), handler->handler_window.search_entry_session);
+	gtk_widget_set_hexpand(handler->handler_window.search_entry_session, TRUE);
+	gtk_widget_set_vexpand(handler->handler_window.search_entry_session, FALSE);
+	gtk_widget_set_halign(handler->handler_window.search_entry_session, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->handler_window.search_entry_session, GTK_ALIGN_CENTER);
+	gtk_widget_set_margin_top(handler->handler_window.search_entry_session, MAJOR_SPACING);
 	/* Frame list box */
 	frame = gtk_frame_new(NULL);
-	gtk_container_add(GTK_CONTAINER(handler_window->box_select_session), frame);
+	gtk_container_add(GTK_CONTAINER(handler->handler_window.box_select_session), frame);
 	gtk_widget_set_hexpand(frame, TRUE);
 	gtk_widget_set_vexpand(frame, FALSE);
 	gtk_widget_set_halign(frame, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(frame, GTK_ALIGN_CENTER);
 	gtk_widget_set_margin_top(frame, MAJOR_SPACING);
 	/* List box */
-	handler_window->list_box_sessions = gtk_list_box_new();
-	gtk_widget_set_name(handler_window->list_box_sessions, "list_box_sessions");
-	gtk_container_add(GTK_CONTAINER(frame), handler_window->list_box_sessions);
-	gtk_widget_set_hexpand(handler_window->list_box_sessions, TRUE);
-	gtk_widget_set_vexpand(handler_window->list_box_sessions, TRUE);
-	gtk_widget_set_halign(handler_window->list_box_sessions, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(handler_window->list_box_sessions, GTK_ALIGN_FILL);
-	gtk_list_box_set_activate_on_single_click(GTK_LIST_BOX(handler_window->list_box_sessions), FALSE);
-	g_signal_connect(handler_window->list_box_sessions, "row-activated", G_CALLBACK(list_box_sessions_row_activated), handler);
+	handler->handler_window.list_box_sessions = gtk_list_box_new();
+	gtk_widget_set_name(handler->handler_window.list_box_sessions, "list_box_sessions");
+	gtk_container_add(GTK_CONTAINER(frame), handler->handler_window.list_box_sessions);
+	gtk_widget_set_hexpand(handler->handler_window.list_box_sessions, TRUE);
+	gtk_widget_set_vexpand(handler->handler_window.list_box_sessions, TRUE);
+	gtk_widget_set_halign(handler->handler_window.list_box_sessions, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->handler_window.list_box_sessions, GTK_ALIGN_FILL);
+	gtk_list_box_set_activate_on_single_click(GTK_LIST_BOX(handler->handler_window.list_box_sessions), FALSE);
+	g_signal_connect(handler->handler_window.list_box_sessions, "row-activated", G_CALLBACK(list_box_sessions_row_activated), handler);
 	/* Box session */
-	handler_window->box_session = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-	gtk_widget_set_name(handler_window->box_session, "box_session");
-	gtk_stack_add_named(GTK_STACK(handler_window->stack), handler_window->box_session, "session");
+	handler->handler_window.box_session = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	gtk_widget_set_name(handler->handler_window.box_session, "box_session");
+	gtk_stack_add_named(GTK_STACK(handler->handler_window.stack), handler->handler_window.box_session, "session");
 	/* Box frames */
-	handler_window->box_frames = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-	gtk_widget_set_name(handler_window->box_frames, "box_frames");
-	gtk_container_add(GTK_CONTAINER(handler_window->box_session), handler_window->box_frames);
-	gtk_widget_set_hexpand(handler_window->box_frames, TRUE);
-	gtk_widget_set_vexpand(handler_window->box_frames, TRUE);
-	gtk_widget_set_halign(handler_window->box_frames, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(handler_window->box_frames, GTK_ALIGN_FILL);
+	handler->handler_window.box_frames = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	gtk_widget_set_name(handler->handler_window.box_frames, "box_frames");
+	gtk_container_add(GTK_CONTAINER(handler->handler_window.box_session), handler->handler_window.box_frames);
+	gtk_widget_set_hexpand(handler->handler_window.box_frames, TRUE);
+	gtk_widget_set_vexpand(handler->handler_window.box_frames, TRUE);
+	gtk_widget_set_halign(handler->handler_window.box_frames, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->handler_window.box_frames, GTK_ALIGN_FILL);
 }

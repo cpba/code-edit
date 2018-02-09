@@ -22,27 +22,16 @@
 
 void init_frame_tree_view(chandler *handler)
 {
-	chandler_window *handler_window = &handler->handler_window;
-	chandler_frame_tree_view *handler_frame_tree_view = &handler->handler_frame_tree_view;
 	/* Sidebar revealer */
-	handler_frame_tree_view->revealer = gtk_revealer_new();
-	gtk_widget_set_name(handler_frame_tree_view->revealer, "revealer_tree_view");
-	gtk_container_add(GTK_CONTAINER(handler_window->box_frames), handler_frame_tree_view->revealer);
-	gtk_widget_set_hexpand(handler_frame_tree_view->revealer, FALSE);
-	gtk_widget_set_vexpand(handler_frame_tree_view->revealer, TRUE);
-	gtk_widget_set_halign(handler_frame_tree_view->revealer, GTK_ALIGN_END);
-	gtk_widget_set_valign(handler_frame_tree_view->revealer, GTK_ALIGN_FILL);
-	gtk_revealer_set_transition_type(GTK_REVEALER(handler_frame_tree_view->revealer), GTK_REVEALER_TRANSITION_TYPE_SLIDE_LEFT);
+	handler->handler_frame_tree_view.revealer = gtk_revealer_new();
+	gtk_widget_set_name(handler->handler_frame_tree_view.revealer, "revealer_tree_view");
+	gtk_container_add(GTK_CONTAINER(handler->handler_window.box_frames), handler->handler_frame_tree_view.revealer);
+	gtk_widget_set_hexpand(handler->handler_frame_tree_view.revealer, FALSE);
+	gtk_widget_set_vexpand(handler->handler_frame_tree_view.revealer, TRUE);
+	gtk_widget_set_halign(handler->handler_frame_tree_view.revealer, GTK_ALIGN_END);
+	gtk_widget_set_valign(handler->handler_frame_tree_view.revealer, GTK_ALIGN_FILL);
+	gtk_revealer_set_transition_type(GTK_REVEALER(handler->handler_frame_tree_view.revealer), GTK_REVEALER_TRANSITION_TYPE_SLIDE_LEFT);
 	/* Scrolled window */
-	handler_frame_tree_view->scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-	gtk_widget_set_name(handler_frame_tree_view->scrolled_window, "scrolled_window_tree_view");
-	gtk_container_add(GTK_CONTAINER(handler_frame_tree_view->revealer), handler_frame_tree_view->scrolled_window);
-	gtk_widget_set_hexpand(handler_frame_tree_view->scrolled_window, TRUE);
-	gtk_widget_set_vexpand(handler_frame_tree_view->scrolled_window, TRUE);
-	gtk_widget_set_halign(handler_frame_tree_view->scrolled_window, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(handler_frame_tree_view->scrolled_window, GTK_ALIGN_FILL);
-	gtk_widget_set_size_request(handler_frame_tree_view->scrolled_window, SIDEBAR_TREE_VIEW_MIN_WIDTH, -1);
-	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(handler_frame_tree_view->scrolled_window), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 	/* Box */
 	handler_frame_tree_view->tree_view = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	gtk_widget_set_name(handler_frame_tree_view->tree_view, "tree_view");
@@ -53,4 +42,13 @@ void init_frame_tree_view(chandler *handler)
 	gtk_widget_set_valign(handler_frame_tree_view->tree_view, GTK_ALIGN_FILL);
 	gtk_style_context_add_class(gtk_widget_get_style_context(handler_frame_tree_view->tree_view), GTK_STYLE_CLASS_RIGHT);
 	gtk_style_context_add_class(gtk_widget_get_style_context(handler_frame_tree_view->tree_view), GTK_STYLE_CLASS_SIDEBAR);
+	handler->handler_frame_tree_view.scrolled_window = gtk_scrolled_window_new(NULL, NULL);
+	gtk_widget_set_name(handler->handler_frame_tree_view.scrolled_window, "scrolled_window_tree_view");
+	gtk_container_add(GTK_CONTAINER(handler->handler_frame_tree_view.revealer), handler->handler_frame_tree_view.scrolled_window);
+	gtk_widget_set_hexpand(handler->handler_frame_tree_view.scrolled_window, TRUE);
+	gtk_widget_set_vexpand(handler->handler_frame_tree_view.scrolled_window, TRUE);
+	gtk_widget_set_halign(handler->handler_frame_tree_view.scrolled_window, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->handler_frame_tree_view.scrolled_window, GTK_ALIGN_FILL);
+	gtk_widget_set_size_request(handler->handler_frame_tree_view.scrolled_window, SIDEBAR_TREE_VIEW_MIN_WIDTH, -1);
+	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(handler->handler_frame_tree_view.scrolled_window), GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
 }
