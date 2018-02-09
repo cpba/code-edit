@@ -60,12 +60,12 @@ static void init_accels(chandler *handler)
 		GDK_KEY_F,
 		GDK_CONTROL_MASK,
 		0,
-		g_cclosure_new_swap(G_CALLBACK(window_toggle_search_bar), handler, NULL));
+		g_cclosure_new_swap(G_CALLBACK(window_show_search_bar), handler, NULL));
 	gtk_accel_group_connect(GTK_ACCEL_GROUP(accel_group),
 		GDK_KEY_R,
 		GDK_CONTROL_MASK,
 		0,
-		g_cclosure_new_swap(G_CALLBACK(window_toggle_search_and_replace_bar), handler, NULL));
+		g_cclosure_new_swap(G_CALLBACK(window_show_search_and_replace_bar), handler, NULL));
 	gtk_accel_group_connect(GTK_ACCEL_GROUP(accel_group),
 		GDK_KEY_F9,
 		0,

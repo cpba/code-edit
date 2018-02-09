@@ -61,6 +61,9 @@ struct cdocument {
 	const GtkSourceEncoding *encoding;
 	GtkSourceBuffer *source_buffer;
 	GtkSourceSearchContext *source_search_context;
+	GtkTextIter iter_insert;
+	GtkTextIter search_match_start;
+	GtkTextIter search_match_end;
 	GList *views;
 	chandler *handler;
 };
@@ -121,10 +124,11 @@ struct chandler_frame_view {
 	GtkWidget *entry_search;
 	GtkWidget *entry_file_pattern;
 	GtkWidget *button_use_regex;
-	GtkWidget *button_match_case;
-	GtkWidget *button_only_in_selection;
-	GtkWidget *button_search;
-	GtkWidget *button_search_all;
+	GtkWidget *button_case_sensitive;
+	GtkWidget *button_at_word_boundaries;
+	GtkWidget *button_wrap_around;
+	GtkWidget *button_search_next;
+	GtkWidget *button_search_previous;
 	GtkWidget *box_replace;
 	GtkWidget *entry_replace;
 	GtkWidget *button_replace;
@@ -208,11 +212,14 @@ void window_open(gpointer user_data);
 void window_save_as(gpointer user_data);
 void window_save(gpointer user_data);
 void window_close(gpointer user_data);
-void window_search_next(gpointer user_data);
-void window_search_previous(gpointer user_data);
-void window_toggle_search_bar(gpointer user_data);
-void window_toggle_search_and_replace_bar(gpointer user_data);
-void window_toggle_tree_view(gpointer user_data);
+void window_save_insert_iter(chandler *handler);
+void window_search_here(chandler *handler);
+void window_search_next(chandler *handler);
+void window_search_previous(chandler *handler);
+void window_hide_search_bar_and_replace_bar(chandler *handler);
+void window_show_search_bar(chandler *handler);
+void window_show_search_and_replace_bar(chandler *handler);
+void window_toggle_tree_view(chandler *handler);
 
 /* Initialization */
 void init_frame_tree_view(chandler *handler);

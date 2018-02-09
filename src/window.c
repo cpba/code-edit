@@ -313,16 +313,46 @@ static void button_remove_session_clicked(GtkWidget *widget, gpointer user_data)
 	window_remove_session(handler, session);
 }
 
-void window_search_next(gpointer user_data)
+void window_search_here(chandler *handler)
 {
-	chandler *handler = user_data;
 	cview *view = get_current_view(handler);
+	gboolean found = FALSE;
 	if (view) {
-		gboolean found = FALSE;
-		GtkTextIter iter_beginning;
-		GtkTextIter iter_start;
-		GtkTextIter iter_end;
-		GtkTextMark *text_mark = NULL;
+		found = gtk_source_search_context_forward2(view->document->source_search_context,
+			&view->document->iter_insert,
+			&view->document->search_match_start,
+			&view->document->search_match_end,
+			NULL);
+		if (found) {
+			gtk_text_buffer_select_range(GTK_TEXT_BUFFER(view->document->source_buffer),
+				&view->document->search_match_start,
+				&view->document->search_match_end);
+			gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(view->source_view),
+				&view->document->search_match_start,
+				0.25,
+				TRUE,
+				0.5,
+				0.5);
+		} else {
+			gtk_text_buffer_place_cursor(GTK_TEXT_BUFFER(view->document->source_buffer),
+				&view->document->iter_insert);
+			gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(view->source_view),
+				&view->document->iter_insert,
+				0.25,
+				TRUE,
+				0.5,
+				0.5);
+		}
+	}
+}
+
+void window_search_next(chandler *handler)
+{
+	cview *view = get_current_view(handler);
+	gboolean found = FALSE;
+	GtkTextIter iter_beginning;
+	GtkTextMark *text_mark = NULL;
+	if (view) {
 		if (gtk_text_buffer_get_has_selection(GTK_TEXT_BUFFER(view->document->source_buffer))) {
 			text_mark = gtk_text_buffer_get_selection_bound(GTK_TEXT_BUFFER(view->document->source_buffer));
 		} else {
@@ -331,15 +361,15 @@ void window_search_next(gpointer user_data)
 		gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(view->document->source_buffer), &iter_beginning, text_mark);
 		found = gtk_source_search_context_forward2(view->document->source_search_context,
 			&iter_beginning,
-			&iter_start,
-			&iter_end,
+			&view->document->search_match_start,
+			&view->document->search_match_end,
 			NULL);
 		if (found) {
 			gtk_text_buffer_select_range(GTK_TEXT_BUFFER(view->document->source_buffer),
-				&iter_start,
-				&iter_end);
+				&view->document->search_match_start,
+				&view->document->search_match_end);
 			gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(view->source_view),
-				&iter_start,
+				&view->document->search_match_start,
 				0.25,
 				TRUE,
 				0.5,
@@ -348,29 +378,26 @@ void window_search_next(gpointer user_data)
 	}
 }
 
-void window_search_previous(gpointer user_data)
+void window_search_previous(chandler *handler)
 {
-	chandler *handler = user_data;
 	cview *view = get_current_view(handler);
+	gboolean found = FALSE;
+	GtkTextIter iter_beginning;
 	if (view) {
-		gboolean found = FALSE;
-		GtkTextIter iter_beginning;
-		GtkTextIter iter_start;
-		GtkTextIter iter_end;
-		GtkTextMark *text_mark = NULL;
+		GtkTextMark *text_mark = gtk_text_buffer_get_insert(GTK_TEXT_BUFFER(view->document->source_buffer));
 		text_mark = gtk_text_buffer_get_insert(GTK_TEXT_BUFFER(view->document->source_buffer));
 		gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(view->document->source_buffer), &iter_beginning, text_mark);
 		found = gtk_source_search_context_backward2(view->document->source_search_context,
 			&iter_beginning,
-			&iter_start,
-			&iter_end,
+			&view->document->search_match_start,
+			&view->document->search_match_end,
 			NULL);
 		if (found) {
 			gtk_text_buffer_select_range(GTK_TEXT_BUFFER(view->document->source_buffer),
-				&iter_start,
-				&iter_end);
+				&view->document->search_match_start,
+				&view->document->search_match_end);
 			gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(view->source_view),
-				&iter_start,
+				&view->document->search_match_start,
 				0.25,
 				TRUE,
 				0.5,
@@ -379,9 +406,8 @@ void window_search_previous(gpointer user_data)
 	}
 }
 
-void window_toggle_search_bar(gpointer user_data)
+void window_show_search_bar(chandler *handler)
 {
-	chandler *handler = user_data;
 	gtk_widget_hide(GTK_WIDGET(handler->handler_frame_view.box_replace));
 	if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace))) {
 		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace), TRUE);
@@ -389,9 +415,8 @@ void window_toggle_search_bar(gpointer user_data)
 	gtk_widget_grab_focus(handler->handler_frame_view.entry_search);
 }
 
-void window_toggle_search_and_replace_bar(gpointer user_data)
+void window_show_search_and_replace_bar(chandler *handler)
 {
-	chandler *handler = user_data;
 	gtk_widget_show_all(GTK_WIDGET(handler->handler_frame_view.box_replace));
 	if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace))) {
 		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace), TRUE);
@@ -399,9 +424,24 @@ void window_toggle_search_and_replace_bar(gpointer user_data)
 	gtk_widget_grab_focus(handler->handler_frame_view.entry_search);
 }
 
-void window_toggle_tree_view(gpointer user_data)
+void window_hide_search_bar_and_replace_bar(chandler *handler)
 {
-	chandler *handler = user_data;
+	cview *view = get_current_view(handler);
+	gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_frame_view.revealer_search_and_replace), FALSE);
+	if (view) {
+		gtk_text_buffer_place_cursor(GTK_TEXT_BUFFER(view->document->source_buffer),
+			&view->document->iter_insert);
+		gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(view->source_view),
+			&view->document->iter_insert,
+			0.25,
+			TRUE,
+			0.5,
+			0.5);
+	}
+}
+
+void window_toggle_tree_view(chandler *handler)
+{
 	if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->handler_frame_tree_view.revealer))) {
 		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->handler_frame_tree_view.revealer), TRUE);
 	} else if (gtk_revealer_get_child_revealed(GTK_REVEALER(handler->handler_frame_tree_view.revealer))) {
