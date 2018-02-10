@@ -21,14 +21,15 @@
 static gboolean switch_show_files_tree_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
 {
 	chandler *handler = user_data;
-	gtk_revealer_set_reveal_child(GTK_REVEALER(handler->session.sidebar_files.revealer), state);
+	gtk_revealer_set_reveal_child(GTK_REVEALER(handler->sidebar.revealer), state);
 	return FALSE;
 }
 
 static gboolean switch_show_status_bar_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
 {
 	chandler *handler = user_data;
-	gtk_revealer_set_reveal_child(GTK_REVEALER(handler->statusbar.revealer), state);
+	gtk_revealer_set_reveal_child(GTK_REVEALER(handler->statusbar.document.revealer), state);
+	gtk_revealer_set_reveal_child(GTK_REVEALER(handler->statusbar.sidebar.revealer), state);
 	return FALSE;
 }
 

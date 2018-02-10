@@ -73,7 +73,7 @@ static void init_accels(chandler *handler)
 		GDK_KEY_F9,
 		0,
 		0,
-		g_cclosure_new_swap(G_CALLBACK(window_toggle_tree_view), handler, NULL));
+		g_cclosure_new_swap(G_CALLBACK(window_toggle_sidebar), handler, NULL));
 }
 
 static void activate_show_about(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
@@ -103,8 +103,8 @@ static void application_activate(GtkApplication *application, gpointer user_data
 	init_select_session(handler);
 	init_session(handler);
 	init_search_and_replace(handler);
+	init_sidebar(handler);
 	init_statusbar(handler);
-	init_sidebar_files(handler);
 	init_preferences(handler);
 	init_accels(handler);
 	gtk_widget_insert_action_group(handler->window.window, "default", G_ACTION_GROUP(action_group));
@@ -132,7 +132,8 @@ static void application_activate(GtkApplication *application, gpointer user_data
 	update_view_status(handler, NULL);
 	window_go_to_select_session(handler);
 	gtk_stack_set_transition_type(GTK_STACK(handler->window.stack), GTK_STACK_TRANSITION_TYPE_CROSSFADE);
-	gtk_revealer_set_transition_type(GTK_REVEALER(handler->statusbar.revealer), GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP);
+	gtk_revealer_set_transition_type(GTK_REVEALER(handler->statusbar.document.revealer), GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP);
+	gtk_revealer_set_transition_type(GTK_REVEALER(handler->statusbar.sidebar.revealer), GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP);
 }
 
 static void application_shutdown(GtkApplication *application, gpointer user_data)

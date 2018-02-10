@@ -172,7 +172,7 @@ void init_search_and_replace(chandler *handler)
 	GtkSizeGroup *size_group_buttons = NULL;
 	/* Revealer search and replace */
 	handler->search_and_replace.revealer = gtk_revealer_new();
-	gtk_container_add(GTK_CONTAINER(handler->session.box), handler->search_and_replace.revealer);
+	gtk_container_add(GTK_CONTAINER(handler->session.box_vertical), handler->search_and_replace.revealer);
 	gtk_widget_set_hexpand(handler->search_and_replace.revealer, TRUE);
 	gtk_widget_set_vexpand(handler->search_and_replace.revealer, FALSE);
 	gtk_widget_set_halign(handler->search_and_replace.revealer, GTK_ALIGN_FILL);

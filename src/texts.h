@@ -54,5 +54,7 @@
 #define TEXT_MARKUP_UNTITLED "<i>Untitled</i>"
 #define TEXT_UNIT_CHARACTER " character"
 #define TEXT_UNIT_CHARACTERS " characters"
+#define TEXT_ADD_ROOT_TO_SIDEBAR "Add Root Folder to Sidebar"
+#define TEXT_ADD_ROOT_TO_SIDEBAR_OK "Choose Folder"
 
 #endif

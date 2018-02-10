@@ -28,8 +28,8 @@ static void tree_view_row_activated(GtkTreeView *tree_view, GtkTreePath *path, G
 	GFileType file_type;
 	GtkTreeIter iter;
 	iter_path = gtk_tree_path_to_string(path);
-	if (gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(handler->session.sidebar_files.tree_store), &iter, iter_path)) {
-		gtk_tree_model_get(GTK_TREE_MODEL(handler->session.sidebar_files.tree_store),
+	if (gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(handler->sidebar.tree_store), &iter, iter_path)) {
+		gtk_tree_model_get(GTK_TREE_MODEL(handler->sidebar.tree_store),
 			&iter,
 			2, &file_path,
 			-1);
@@ -57,10 +57,10 @@ static void tree_view_row_expanded(GtkTreeView *tree_view, GtkTreeIter *iter, Gt
 	chandler *handler = user_data;
 	gboolean valid = FALSE;
 	GtkTreeIter child;
-	valid = gtk_tree_model_iter_children(GTK_TREE_MODEL(handler->session.sidebar_files.tree_store), &child, iter);
+	valid = gtk_tree_model_iter_children(GTK_TREE_MODEL(handler->sidebar.tree_store), &child, iter);
 	while (valid) {
-		tree_view_update_iter_children(handler, child);
-		valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(handler->session.sidebar_files.tree_store), &child);
+		sidebar_update_iter_children(handler, child);
+		valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(handler->sidebar.tree_store), &child);
 	}
 }
 
@@ -69,15 +69,15 @@ static void tree_view_row_collapsed(GtkTreeView *tree_view, GtkTreeIter *iter, G
 	chandler *handler = user_data;
 	gboolean valid = FALSE;
 	GtkTreeIter child;
-	valid = gtk_tree_model_iter_children(GTK_TREE_MODEL(handler->session.sidebar_files.tree_store), &child, iter);
+	valid = gtk_tree_model_iter_children(GTK_TREE_MODEL(handler->sidebar.tree_store), &child, iter);
 	while (valid) {
-		gtk_tree_store_remove(handler->session.sidebar_files.tree_store, &child);
-		valid = gtk_tree_model_iter_children(GTK_TREE_MODEL(handler->session.sidebar_files.tree_store), &child, iter);
+		gtk_tree_store_remove(handler->sidebar.tree_store, &child);
+		valid = gtk_tree_model_iter_children(GTK_TREE_MODEL(handler->sidebar.tree_store), &child, iter);
 	}
-	tree_view_update_iter_children(handler, *iter);
+	sidebar_update_iter_children(handler, *iter);
 }
 
-void tree_view_update_iter_children(chandler *handler, GtkTreeIter iter)
+void sidebar_update_iter_children(chandler *handler, GtkTreeIter iter)
 {
 	GFileInfo *file_info = NULL;
 	gchar *path = NULL;
@@ -86,7 +86,7 @@ void tree_view_update_iter_children(chandler *handler, GtkTreeIter iter)
 	GDir *dir = NULL;
 	const gchar *name = NULL;
 	GString *full_path = NULL;
-	gtk_tree_model_get(GTK_TREE_MODEL(handler->session.sidebar_files.tree_store),
+	gtk_tree_model_get(GTK_TREE_MODEL(handler->sidebar.tree_store),
 		&iter,
 		2, &path,
 		-1);
@@ -108,7 +108,7 @@ void tree_view_update_iter_children(chandler *handler, GtkTreeIter iter)
 			full_path = g_string_append(full_path, path);
 			full_path = g_string_append(full_path, "/");
 			full_path = g_string_append(full_path, name);
-			tree_view_add_iter(handler, &iter, full_path->str);
+			sidebar_add_iter(handler, &iter, full_path->str);
 			full_path = g_string_assign(full_path, "");
 			name = g_dir_read_name(dir);
 		}
@@ -117,7 +117,7 @@ void tree_view_update_iter_children(chandler *handler, GtkTreeIter iter)
 	g_free(path);
 }
 
-GtkTreeIter tree_view_add_iter(chandler *handler, GtkTreeIter *parent, gchar *path)
+GtkTreeIter sidebar_add_iter(chandler *handler, GtkTreeIter *parent, gchar *path)
 {
 	GtkTreeIter iter;
 	GFileInfo *file_info = NULL;
@@ -125,10 +125,10 @@ GtkTreeIter tree_view_add_iter(chandler *handler, GtkTreeIter *parent, gchar *pa
 	const char *content_type = NULL;
 	GFile *file = g_file_new_for_path(path);
 	gchar *basename = g_path_get_basename(path);
-	gtk_tree_store_append(GTK_TREE_STORE(handler->session.sidebar_files.tree_store),
+	gtk_tree_store_append(GTK_TREE_STORE(handler->sidebar.tree_store),
 		&iter,
 		parent);
-	gtk_tree_store_set(GTK_TREE_STORE(handler->session.sidebar_files.tree_store),
+	gtk_tree_store_set(GTK_TREE_STORE(handler->sidebar.tree_store),
 		&iter,
 		1, basename,
 		2, path,
@@ -147,7 +147,7 @@ GtkTreeIter tree_view_add_iter(chandler *handler, GtkTreeIter *parent, gchar *pa
 	if (!icon) {
 		icon = g_icon_new_for_string("text-x-generic-template", NULL);
 	}
-	gtk_tree_store_set(GTK_TREE_STORE(handler->session.sidebar_files.tree_store),
+	gtk_tree_store_set(GTK_TREE_STORE(handler->sidebar.tree_store),
 			&iter,
 			0, icon,
 			-1);
@@ -158,24 +158,30 @@ GtkTreeIter tree_view_add_iter(chandler *handler, GtkTreeIter *parent, gchar *pa
 	return iter;
 }
 
-void init_sidebar_files(chandler *handler)
+void init_sidebar(chandler *handler)
 {
 	GtkWidget *scrolled_window = NULL;
 	GtkCellRenderer *renderer;
 	GtkTreeViewColumn *column;
 	/* Sidebar revealer */
-	handler->session.sidebar_files.revealer = gtk_revealer_new();
-	gtk_widget_set_name(handler->session.sidebar_files.revealer, "revealer_tree_view");
-	gtk_container_add(GTK_CONTAINER(handler->session.box_notebook_and_sidebar), handler->session.sidebar_files.revealer);
-	gtk_widget_set_hexpand(handler->session.sidebar_files.revealer, FALSE);
-	gtk_widget_set_vexpand(handler->session.sidebar_files.revealer, TRUE);
-	gtk_widget_set_halign(handler->session.sidebar_files.revealer, GTK_ALIGN_END);
-	gtk_widget_set_valign(handler->session.sidebar_files.revealer, GTK_ALIGN_FILL);
-	gtk_revealer_set_transition_type(GTK_REVEALER(handler->session.sidebar_files.revealer), GTK_REVEALER_TRANSITION_TYPE_SLIDE_LEFT);
+	handler->sidebar.revealer = gtk_revealer_new();
+	gtk_widget_set_name(handler->sidebar.revealer, "revealer_tree_view");
+	gtk_container_add(GTK_CONTAINER(handler->session.box), handler->sidebar.revealer);
+	gtk_widget_set_hexpand(handler->sidebar.revealer, FALSE);
+	gtk_widget_set_vexpand(handler->sidebar.revealer, TRUE);
+	gtk_widget_set_halign(handler->sidebar.revealer, GTK_ALIGN_END);
+	gtk_widget_set_valign(handler->sidebar.revealer, GTK_ALIGN_FILL);
+	gtk_revealer_set_transition_type(GTK_REVEALER(handler->sidebar.revealer), GTK_REVEALER_TRANSITION_TYPE_SLIDE_LEFT);
+	/* Box */
+	handler->sidebar.box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	gtk_container_add(GTK_CONTAINER(handler->sidebar.revealer), handler->sidebar.box);
+	gtk_widget_set_hexpand(handler->sidebar.box, TRUE);
+	gtk_widget_set_vexpand(handler->sidebar.box, TRUE);
+	gtk_widget_set_halign(handler->sidebar.box, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->sidebar.box, GTK_ALIGN_FILL);
 	/* Scrolled window */
 	scrolled_window = gtk_scrolled_window_new(NULL, NULL);
-	gtk_widget_set_name(scrolled_window, "scrolled_window_tree_view");
-	gtk_container_add(GTK_CONTAINER(handler->session.sidebar_files.revealer), scrolled_window);
+	gtk_container_add(GTK_CONTAINER(handler->sidebar.box), scrolled_window);
 	gtk_widget_set_hexpand(scrolled_window, TRUE);
 	gtk_widget_set_vexpand(scrolled_window, TRUE);
 	gtk_widget_set_halign(scrolled_window, GTK_ALIGN_FILL);
@@ -185,23 +191,23 @@ void init_sidebar_files(chandler *handler)
 	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(scrolled_window)), GTK_STYLE_CLASS_RIGHT);
 	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(scrolled_window)), GTK_STYLE_CLASS_SIDEBAR);
 	/* Tree model */
-	handler->session.sidebar_files.tree_store = gtk_tree_store_new(3, G_TYPE_ICON, G_TYPE_STRING, G_TYPE_STRING);
+	handler->sidebar.tree_store = gtk_tree_store_new(3, G_TYPE_ICON, G_TYPE_STRING, G_TYPE_STRING);
 	/* Tree view */
-	handler->session.sidebar_files.tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(handler->session.sidebar_files.tree_store));
-	gtk_widget_set_name(handler->session.sidebar_files.tree_view, "tree_view");
-	gtk_container_add(GTK_CONTAINER(scrolled_window), handler->session.sidebar_files.tree_view);
-	gtk_widget_set_hexpand(handler->session.sidebar_files.tree_view, TRUE);
-	gtk_widget_set_vexpand(handler->session.sidebar_files.tree_view, TRUE);
-	gtk_widget_set_halign(handler->session.sidebar_files.tree_view, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(handler->session.sidebar_files.tree_view, GTK_ALIGN_FILL);
-	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(handler->session.sidebar_files.tree_view), FALSE);
-	gtk_tree_view_set_search_column(GTK_TREE_VIEW(handler->session.sidebar_files.tree_view), 1);
-	g_signal_connect(handler->session.sidebar_files.tree_view, "row-expanded", G_CALLBACK(tree_view_row_expanded), handler);
-	g_signal_connect(handler->session.sidebar_files.tree_view, "row-collapsed", G_CALLBACK(tree_view_row_collapsed), handler);
-	g_signal_connect(handler->session.sidebar_files.tree_view, "row-activated", G_CALLBACK(tree_view_row_activated), handler);
+	handler->sidebar.tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(handler->sidebar.tree_store));
+	gtk_widget_set_name(handler->sidebar.tree_view, "tree_view");
+	gtk_container_add(GTK_CONTAINER(scrolled_window), handler->sidebar.tree_view);
+	gtk_widget_set_hexpand(handler->sidebar.tree_view, TRUE);
+	gtk_widget_set_vexpand(handler->sidebar.tree_view, TRUE);
+	gtk_widget_set_halign(handler->sidebar.tree_view, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->sidebar.tree_view, GTK_ALIGN_FILL);
+	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(handler->sidebar.tree_view), FALSE);
+	gtk_tree_view_set_search_column(GTK_TREE_VIEW(handler->sidebar.tree_view), 1);
+	g_signal_connect(handler->sidebar.tree_view, "row-expanded", G_CALLBACK(tree_view_row_expanded), handler);
+	g_signal_connect(handler->sidebar.tree_view, "row-collapsed", G_CALLBACK(tree_view_row_collapsed), handler);
+	g_signal_connect(handler->sidebar.tree_view, "row-activated", G_CALLBACK(tree_view_row_activated), handler);
 	/* Column */
 	column = gtk_tree_view_column_new();
-	gtk_tree_view_insert_column(GTK_TREE_VIEW(handler->session.sidebar_files.tree_view), column, -1);
+	gtk_tree_view_insert_column(GTK_TREE_VIEW(handler->sidebar.tree_view), column, -1);
 	gtk_tree_view_column_set_clickable(column, FALSE);
 	/* Cell renderer */
 	renderer = gtk_cell_renderer_pixbuf_new();

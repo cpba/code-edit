@@ -107,19 +107,19 @@ struct chandler {
 	} select_session;
 	struct {
 		GtkWidget *box;
-		GtkWidget *box_notebook_and_sidebar;
+		GtkWidget *box_vertical;
 		GtkWidget *notebook;
 		gint iter_search_offset;
-		struct {
-			GtkWidget *revealer;
-			GtkWidget *box;
-			GtkTreeStore *tree_store;
-			GtkWidget *tree_view;
-			GtkWidget *popover_folder;
-			GtkWidget *popover_file;
-			GtkWidget *popover_rename;
-		} sidebar_files;
 	} session;
+	struct {
+		GtkWidget *revealer;
+		GtkWidget *box;
+		GtkTreeStore *tree_store;
+		GtkWidget *tree_view;
+		GtkWidget *popover_folder;
+		GtkWidget *popover_file;
+		GtkWidget *popover_rename;
+	} sidebar;
 	struct {
 		GtkWidget *revealer;
 		GtkWidget *entry_search;
@@ -171,10 +171,18 @@ struct chandler {
 		GtkWidget *list_box_highlight;
 	} preferences;
 	struct {
-		GtkWidget *revealer;
-		GtkWidget *action_bar;
-		GtkWidget *button_language;
-		GtkWidget *button_repo_branch;
+		GtkSizeGroup *size_group;
+		struct {
+			GtkWidget *revealer;
+			GtkWidget *action_bar;
+			GtkWidget *button_language;
+			GtkWidget *button_repo_branch;
+		} document;
+		struct {
+			GtkWidget *revealer;
+			GtkWidget *action_bar;
+			GtkWidget *button_add_root;
+		} sidebar;
 	} statusbar;
 };
 
@@ -191,9 +199,9 @@ void update_statusbar_language(chandler *handler, cview *view);
 void update_statusbar_repository_branch(chandler *handler, cview *view);
 void update_statusbar(chandler *handler, cview *view);
 
-/* Tree view */
-void tree_view_update_iter_children(chandler *handler, GtkTreeIter iter);
-GtkTreeIter tree_view_add_iter(chandler *handler, GtkTreeIter *parent, gchar *path);
+/* Sidebar */
+void sidebar_update_iter_children(chandler *handler, GtkTreeIter iter);
+GtkTreeIter sidebar_add_iter(chandler *handler, GtkTreeIter *parent, gchar *path);
 
 /* Document */
 cview *get_nth_view(chandler *handler, gint index);
@@ -222,12 +230,12 @@ void window_search_previous(chandler *handler);
 void window_hide_search_bar_and_replace_bar(chandler *handler);
 void window_show_search_bar(chandler *handler);
 void window_show_search_and_replace_bar(chandler *handler);
-void window_toggle_tree_view(chandler *handler);
+void window_toggle_sidebar(chandler *handler);
 
 /* Initialization */
 void init_file_chooser_save(chandler *handler, gchar *title, gchar *button);
 void init_preferences(chandler *handler);
-void init_sidebar_files(chandler *handler);
+void init_sidebar(chandler *handler);
 void init_search_and_replace(chandler *handler);
 void init_session(chandler *handler);
 void init_select_session(chandler *handler);

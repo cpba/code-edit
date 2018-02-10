@@ -13,7 +13,7 @@ build:
 	$(CC) -Wall $(CFLAGS) -c select_session.c
 	$(CC) -Wall $(CFLAGS) -c session.c
 	$(CC) -Wall $(CFLAGS) -c search_and_replace.c
-	$(CC) -Wall $(CFLAGS) -c sidebar_files.c
+	$(CC) -Wall $(CFLAGS) -c sidebar.c
 	$(CC) -Wall $(CFLAGS) -c file_chooser_save.c
 	$(CC) -Wall $(CFLAGS) -c preferences.c
 	$(CC) -Wall $(CFLAGS) -c main.c

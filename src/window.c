@@ -423,12 +423,12 @@ void window_hide_search_bar_and_replace_bar(chandler *handler)
 	}
 }
 
-void window_toggle_tree_view(chandler *handler)
+void window_toggle_sidebar(chandler *handler)
 {
-	if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->session.sidebar_files.revealer))) {
-		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->session.sidebar_files.revealer), TRUE);
-	} else if (gtk_revealer_get_child_revealed(GTK_REVEALER(handler->session.sidebar_files.revealer))) {
-		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->session.sidebar_files.revealer), FALSE);
+	if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->sidebar.revealer))) {
+		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->sidebar.revealer), TRUE);
+	} else if (gtk_revealer_get_child_revealed(GTK_REVEALER(handler->sidebar.revealer))) {
+		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->sidebar.revealer), FALSE);
 	}
 }
 

@@ -34,20 +34,20 @@ static void notebook_switch_page(GtkWidget *widget, GtkWidget *page, guint page_
 void init_session(chandler *handler)
 {
 	/* Box */
-	handler->session.box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	handler->session.box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
 	gtk_stack_add_named(GTK_STACK(handler->window.stack), handler->session.box, "session");
-	/* Box notebook and sidebar */
-	handler->session.box_notebook_and_sidebar = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-	gtk_widget_set_name(handler->session.box_notebook_and_sidebar, "box_notebook_and_sidebar");
-	gtk_container_add(GTK_CONTAINER(handler->session.box), handler->session.box_notebook_and_sidebar);
-	gtk_widget_set_hexpand(handler->session.box_notebook_and_sidebar, TRUE);
-	gtk_widget_set_vexpand(handler->session.box_notebook_and_sidebar, TRUE);
-	gtk_widget_set_halign(handler->session.box_notebook_and_sidebar, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(handler->session.box_notebook_and_sidebar, GTK_ALIGN_FILL);
+	/* Box notebook and status bar */
+	handler->session.box_vertical = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	gtk_widget_set_name(handler->session.box_vertical, "box_vertical");
+	gtk_container_add(GTK_CONTAINER(handler->session.box), handler->session.box_vertical);
+	gtk_widget_set_hexpand(handler->session.box_vertical, TRUE);
+	gtk_widget_set_vexpand(handler->session.box_vertical, TRUE);
+	gtk_widget_set_halign(handler->session.box_vertical, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->session.box_vertical, GTK_ALIGN_FILL);
 	/* Notebook */
 	handler->session.notebook = gtk_notebook_new();
 	gtk_widget_set_name(handler->session.notebook, "notebook");
-	gtk_container_add(GTK_CONTAINER(handler->session.box_notebook_and_sidebar), handler->session.notebook);
+	gtk_container_add(GTK_CONTAINER(handler->session.box_vertical), handler->session.notebook);
 	gtk_widget_set_hexpand(handler->session.notebook, TRUE);
 	gtk_widget_set_vexpand(handler->session.notebook, TRUE);
 	gtk_widget_set_halign(handler->session.notebook, GTK_ALIGN_FILL);
