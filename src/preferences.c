@@ -21,7 +21,6 @@
 static gboolean switch_show_sidebar_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
 {
 	chandler *handler = user_data;
-	printf("state\n");
 	if (state) {
 		gtk_widget_show_all(handler->sidebar.overlay);
 	} else {
@@ -46,14 +45,10 @@ static gboolean switch_show_overview_map_state_set(GtkSwitch *widget, gboolean s
 static gboolean switch_show_line_numbers_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
 {
 	chandler *handler = user_data;
-	GtkWidget *page = NULL;
-	cview *view = NULL;
-	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
-	while (page_count > 0) {
-		page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), page_count - 1);
-		view = g_object_get_data(G_OBJECT(page), "view");
+	cview *view = handler->views;
+	while (view) {
 		gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(view->source_view), state);
-		page_count--;
+		view = g_list_next(view);
 	}
 	return FALSE;
 }
@@ -61,14 +56,10 @@ static gboolean switch_show_line_numbers_state_set(GtkSwitch *widget, gboolean s
 static gboolean switch_show_grid_pattern_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
 {
 	chandler *handler = user_data;
-	GtkWidget *page = NULL;
-	cview *view = NULL;
-	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
-	while (page_count > 0) {
-		page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), page_count - 1);
-		view = g_object_get_data(G_OBJECT(page), "view");
+	cview *view = handler->views;
+	while (view) {
 		gtk_source_view_set_background_pattern(GTK_SOURCE_VIEW(view->source_view), state);
-		page_count--;
+		view = g_list_next(view);
 	}
 	return FALSE;
 }
@@ -76,14 +67,10 @@ static gboolean switch_show_grid_pattern_state_set(GtkSwitch *widget, gboolean s
 static gboolean switch_show_right_margin_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
 {
 	chandler *handler = user_data;
-	GtkWidget *page = NULL;
-	cview *view = NULL;
-	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
-	while (page_count > 0) {
-		page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), page_count - 1);
-		view = g_object_get_data(G_OBJECT(page), "view");
+	cview *view = handler->views;
+	while (view) {
 		gtk_source_view_set_show_right_margin(GTK_SOURCE_VIEW(view->source_view), state);
-		page_count--;
+		view = g_list_next(view);
 	}
 	return FALSE;
 }
@@ -91,26 +78,21 @@ static gboolean switch_show_right_margin_state_set(GtkSwitch *widget, gboolean s
 static gboolean switch_automatic_indentation_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
 {
 	chandler *handler = user_data;
-	GtkWidget *page = NULL;
-	cview *view = NULL;
-	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
-	while (page_count > 0) {
-		page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), page_count - 1);
-		view = g_object_get_data(G_OBJECT(page), "view");
+	cview *view = handler->views;
+	while (view) {
 		gtk_source_view_set_auto_indent(GTK_SOURCE_VIEW(view->source_view), state);
-		page_count--;
+		view = g_list_next(view);
 	}
 	return FALSE;
 }
 
 static void preferences_update_show_indicators(chandler *handler)
 {
-	GtkWidget *page = NULL;
+	GList *view_iter = handler->views;
 	cview *view = NULL;
 	GtkSourceSpaceDrawer *source_space_drawer = NULL;
 	GtkSourceSpaceLocationFlags locations = GTK_SOURCE_SPACE_LOCATION_NONE;
 	GtkSourceSpaceTypeFlags types = GTK_SOURCE_SPACE_TYPE_NONE;
-	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
 	if (gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_show_newline))) {
 		types = types | GTK_SOURCE_SPACE_TYPE_NEWLINE;
 	}
@@ -132,16 +114,15 @@ static void preferences_update_show_indicators(chandler *handler)
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_trailing_tabs_and_spaces))) {
 		locations = locations | GTK_SOURCE_SPACE_LOCATION_TRAILING;
 	}
-	while (page_count > 0) {
-		page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), page_count - 1);
-		view = g_object_get_data(G_OBJECT(page), "view");
+	while (view_iter) {
+		view = view_iter->data;
 		source_space_drawer = gtk_source_view_get_space_drawer(GTK_SOURCE_VIEW(view->source_view));
 		gtk_source_space_drawer_set_matrix(source_space_drawer, NULL);
 		gtk_source_space_drawer_set_types_for_locations(source_space_drawer,
 			locations,
 			types);
 		gtk_source_space_drawer_set_enable_matrix(source_space_drawer, TRUE);
-		page_count--;
+		view_iter = g_list_next(view_iter);
 	}
 }
 
@@ -159,14 +140,12 @@ static void toggle_button_show_tabs_and_spaces_location_toggled(GtkSwitch *widge
 static gboolean switch_insert_spaces_instead_of_tabs_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
 {
 	chandler *handler = user_data;
-	GtkWidget *page = NULL;
 	cview *view = NULL;
-	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
-	while (page_count > 0) {
-		page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), page_count - 1);
-		view = g_object_get_data(G_OBJECT(page), "view");
+	GList *view_iter = handler->views;
+	while (view_iter) {
+		view = view_iter->data;
 		gtk_source_view_set_insert_spaces_instead_of_tabs(GTK_SOURCE_VIEW(view->source_view), state);
-		page_count--;
+		view_iter = g_list_next(view_iter);
 	}
 	return FALSE;
 }
@@ -174,12 +153,10 @@ static gboolean switch_insert_spaces_instead_of_tabs_state_set(GtkSwitch *widget
 static gboolean switch_allow_text_wrapping_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
 {
 	chandler *handler = user_data;
-	GtkWidget *page = NULL;
 	cview *view = NULL;
-	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
-	while (page_count > 0) {
-		page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), page_count - 1);
-		view = g_object_get_data(G_OBJECT(page), "view");
+	GList *view_iter = handler->views;
+	while (view_iter) {
+		view = view_iter->data;
 		if (state) {
 			if (gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_allow_split_words_over_lines))) {
 				gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(view->source_view), GTK_WRAP_CHAR);
@@ -189,7 +166,7 @@ static gboolean switch_allow_text_wrapping_state_set(GtkSwitch *widget, gboolean
 		} else {
 			gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(view->source_view), GTK_WRAP_NONE);
 		}
-		page_count--;
+		view_iter = g_list_next(view_iter);
 	}
 	return FALSE;
 }
@@ -197,12 +174,10 @@ static gboolean switch_allow_text_wrapping_state_set(GtkSwitch *widget, gboolean
 static gboolean switch_allow_split_words_over_lines_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
 {
 	chandler *handler = user_data;
-	GtkWidget *page = NULL;
 	cview *view = NULL;
-	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
-	while (page_count > 0) {
-		page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), page_count - 1);
-		view = g_object_get_data(G_OBJECT(page), "view");
+	GList *view_iter = handler->views;
+	while (view_iter) {
+		view = view_iter->data;
 		if (gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_allow_text_wrapping))) {
 			if (state) {
 				gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(view->source_view), GTK_WRAP_CHAR);
@@ -212,7 +187,7 @@ static gboolean switch_allow_split_words_over_lines_state_set(GtkSwitch *widget,
 		} else {
 			gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(view->source_view), GTK_WRAP_NONE);
 		}
-		page_count--;
+		view_iter = g_list_next(view_iter);
 	}
 	return FALSE;
 }
@@ -220,14 +195,12 @@ static gboolean switch_allow_split_words_over_lines_state_set(GtkSwitch *widget,
 static gboolean switch_highlight_current_line_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
 {
 	chandler *handler = user_data;
-	GtkWidget *page = NULL;
 	cview *view = NULL;
-	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
-	while (page_count > 0) {
-		page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), page_count - 1);
-		view = g_object_get_data(G_OBJECT(page), "view");
+	GList *view_iter = handler->views;
+	while (view_iter) {
+		view = view_iter->data;
 		gtk_source_view_set_highlight_current_line(GTK_SOURCE_VIEW(view->source_view), state);
-		page_count--;
+		view_iter = g_list_next(view_iter);
 	}
 	return FALSE;
 }

@@ -81,6 +81,7 @@ struct csession {
 struct chandler {
 	GtkApplication *application;
 	GList *documents;
+	GList *views;
 	GKeyFile *key_file_config;
 	GKeyFile *key_file_sessions;
 	csession *current_session;

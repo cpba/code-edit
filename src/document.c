@@ -337,6 +337,7 @@ void close_view(chandler *handler, cview *view)
 	}
 	if (close) {
 		view->document->views = g_list_remove(view->document->views, view);
+		handler->views = g_list_remove(view->document->views, view);
 		gtk_widget_destroy(view->box);
 	}
 	if (g_list_length(view->document->views) == 0) {
@@ -431,6 +432,7 @@ void add_view_for_document(chandler *handler, cdocument *document)
 		gtk_widget_show_all(view->box_tab);
 		/* Update document */
 		document->views = g_list_append(document->views, view);
+		handler->views = g_list_append(handler->views, view);
 		update_document_views_status(handler, document);
 		/* Show page */
 		gtk_notebook_set_current_page(GTK_NOTEBOOK(handler->session.notebook), page_index);
