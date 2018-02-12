@@ -76,14 +76,64 @@ static void init_accels(chandler *handler)
 		g_cclosure_new_swap(G_CALLBACK(window_toggle_sidebar), handler, NULL));
 }
 
-static void activate_show_about(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
+static void action_open_selected_activate(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
 {
-	/* Show about frame */
+	sidebar_open_selected(user_data);
 }
 
-static void activate_quit(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
+static void action_rename_selected_activate(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
 {
-	gtk_main_quit();
+	sidebar_open_selected(user_data);
+}
+
+static void action_duplicate_selected_activate(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
+{
+	sidebar_open_selected(user_data);
+}
+
+static void action_delete_selected_activate(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
+{
+	sidebar_open_selected(user_data);
+}
+
+static void action_about_activate(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
+{
+	window_show_about(user_data);
+}
+
+static void action_quit_activate(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
+{
+	window_quit(user_data);
+}
+
+static void add_actions(chandler *handler)
+{
+	GSimpleAction *action = NULL;
+	action = g_simple_action_new("about", NULL);
+	g_signal_connect(action, "activate", G_CALLBACK(action_about_activate), handler);
+	g_action_map_add_action(G_ACTION_MAP(handler->window.window), G_ACTION(action));
+	g_object_unref(G_OBJECT(action));
+	action = g_simple_action_new("quit", NULL);
+	g_signal_connect(action, "activate", G_CALLBACK(action_quit_activate), handler);
+	g_action_map_add_action(G_ACTION_MAP(handler->application), G_ACTION(action));
+	g_object_unref(G_OBJECT(action));
+	/* Side bar */
+	action = g_simple_action_new("open-selected", NULL);
+	g_signal_connect(action, "activate", G_CALLBACK(action_open_selected_activate), handler);
+	g_action_map_add_action(G_ACTION_MAP(handler->window.window), G_ACTION(action));
+	g_object_unref(G_OBJECT(action));
+	action = g_simple_action_new("rename-selected", NULL);
+	g_signal_connect(action, "activate", G_CALLBACK(action_rename_selected_activate), handler);
+	g_action_map_add_action(G_ACTION_MAP(handler->window.window), G_ACTION(action));
+	g_object_unref(G_OBJECT(action));
+	action = g_simple_action_new("duplicate-selected", NULL);
+	g_signal_connect(action, "activate", G_CALLBACK(action_duplicate_selected_activate), handler);
+	g_action_map_add_action(G_ACTION_MAP(handler->window.window), G_ACTION(action));
+	g_object_unref(G_OBJECT(action));
+	action = g_simple_action_new("delete-selected", NULL);
+	g_signal_connect(action, "activate", G_CALLBACK(action_delete_selected_activate), handler);
+	g_action_map_add_action(G_ACTION_MAP(handler->window.window), G_ACTION(action));
+	g_object_unref(G_OBJECT(action));
 }
 
 static void application_activate(GtkApplication *application, gpointer user_data)
@@ -91,12 +141,6 @@ static void application_activate(GtkApplication *application, gpointer user_data
 	chandler *handler = user_data;
 	GMenu *menu = NULL;
 	GString *key_file_path = NULL;
-	/* Action group */
-	const GActionEntry action_entries[] = {
-		{"about", activate_show_about},
-		{"quit", activate_quit}};
-	GSimpleActionGroup *action_group = g_simple_action_group_new();
-	g_action_map_add_action_entries(G_ACTION_MAP(action_group), action_entries, G_N_ELEMENTS(action_entries), NULL);
 	/* Initialize handlers */
 	init_window(handler);
 	init_header(handler);
@@ -107,11 +151,11 @@ static void application_activate(GtkApplication *application, gpointer user_data
 	init_statusbar(handler);
 	init_preferences(handler);
 	init_accels(handler);
-	gtk_widget_insert_action_group(handler->window.window, "default", G_ACTION_GROUP(action_group));
 	/* Menu */
+	add_actions(handler);
 	menu = g_menu_new();
-	g_menu_append(menu, TEXT_ABOUT, "about");
-	g_menu_append(menu, TEXT_QUIT, "quit");
+	g_menu_append(menu, TEXT_ABOUT, "win.about");
+	g_menu_append(menu, TEXT_QUIT, "app.quit");
 	gtk_application_set_app_menu(application, G_MENU_MODEL(menu));
 	/* Document list */
 	handler->documents = NULL;

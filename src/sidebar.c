@@ -99,14 +99,71 @@ GtkTreeIter sidebar_add_iter(chandler *handler, GtkTreeIter *parent, gchar *path
 	return iter;
 }
 
+void sidebar_open_selected(chandler *handler)
+{
+	GtkTreeSelection *tree_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(handler->sidebar.tree_view));
+	gchar *file_path = NULL;
+	GtkTreeIter iter;
+	if (gtk_tree_selection_get_selected(tree_selection, NULL, &iter)) {
+		gtk_tree_model_get(GTK_TREE_MODEL(handler->sidebar.tree_store),
+			&iter,
+			2, &file_path,
+			-1);
+		add_view_for_document(handler,
+			new_document(handler, file_path));
+	}
+}
+
+void sidebar_rename_selected(chandler *handler)
+{
+	GtkTreeSelection *tree_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(handler->sidebar.tree_view));
+	gchar *file_path = NULL;
+	GtkTreeIter iter;
+	if (gtk_tree_selection_get_selected(tree_selection, NULL, &iter)) {
+		gtk_tree_model_get(GTK_TREE_MODEL(handler->sidebar.tree_store),
+			&iter,
+			2, &file_path,
+			-1);
+		/* TODO */
+	}
+}
+
+void sidebar_duplicate_selected(chandler *handler)
+{
+	GtkTreeSelection *tree_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(handler->sidebar.tree_view));
+	gchar *file_path = NULL;
+	GtkTreeIter iter;
+	if (gtk_tree_selection_get_selected(tree_selection, NULL, &iter)) {
+		gtk_tree_model_get(GTK_TREE_MODEL(handler->sidebar.tree_store),
+			&iter,
+			2, &file_path,
+			-1);
+		/* TODO */
+	}
+}
+
+void sidebar_delete_selected(chandler *handler)
+{
+	GtkTreeSelection *tree_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(handler->sidebar.tree_view));
+	gchar *file_path = NULL;
+	GtkTreeIter iter;
+	if (gtk_tree_selection_get_selected(tree_selection, NULL, &iter)) {
+		gtk_tree_model_get(GTK_TREE_MODEL(handler->sidebar.tree_store),
+			&iter,
+			2, &file_path,
+			-1);
+		/* TODO */
+	}
+}
+
 static void init_popover_folder_selected(chandler *handler)
 {
 	GMenu *menu;
 	/* Menu */
 	menu = g_menu_new();
-	g_menu_insert(menu, -1, TEXT_RENAME, "rename");
-	g_menu_insert(menu, -1, TEXT_DUPLICATE, "duplicate");
-	g_menu_insert(menu, -1, TEXT_DELETE, "delete");
+	g_menu_insert(menu, -1, TEXT_RENAME, "win.rename-selected");
+	g_menu_insert(menu, -1, TEXT_DUPLICATE, "win.duplicate-selected");
+	g_menu_insert(menu, -1, TEXT_DELETE, "win.delete-selected");
 	/* Popover */
 	handler->sidebar.folder_selected.popover = gtk_popover_new_from_model(handler->sidebar.tree_view, G_MENU_MODEL(menu));
 	gtk_popover_set_position(GTK_POPOVER(handler->sidebar.folder_selected.popover), GTK_POS_LEFT);
@@ -117,10 +174,10 @@ static void init_popover_regular_selected(chandler *handler)
 	GMenu *menu;
 	/* Menu */
 	menu = g_menu_new();
-	g_menu_insert(menu, -1, TEXT_OPEN, "open");
-	g_menu_insert(menu, -1, TEXT_RENAME, "rename");
-	g_menu_insert(menu, -1, TEXT_DUPLICATE, "duplicate");
-	g_menu_insert(menu, -1, TEXT_DELETE, "delete");
+	g_menu_insert(menu, -1, TEXT_OPEN, "win.open-selected");
+	g_menu_insert(menu, -1, TEXT_RENAME, "win.rename-selected");
+	g_menu_insert(menu, -1, TEXT_DUPLICATE, "win.duplicate-selected");
+	g_menu_insert(menu, -1, TEXT_DELETE, "win.delete-selected");
 	/* Popover */
 	handler->sidebar.regular_selected.popover = gtk_popover_new_from_model(handler->sidebar.tree_view, G_MENU_MODEL(menu));
 	gtk_popover_set_position(GTK_POPOVER(handler->sidebar.regular_selected.popover), GTK_POS_LEFT);
@@ -170,8 +227,8 @@ static void tree_view_row_activated(GtkTreeView *tree_view, GtkTreePath *path, G
 				if (file_info) {
 					file_type = g_file_info_get_file_type(file_info);
 					if (file_type == G_FILE_TYPE_REGULAR) {
-						cdocument *document = new_document(handler, file_path);
-						add_view_for_document(handler, document);
+						add_view_for_document(handler,
+							new_document(handler, file_path));
 					}
 				}
 				g_object_unref(G_OBJECT(file));

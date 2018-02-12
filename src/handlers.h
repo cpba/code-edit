@@ -23,6 +23,7 @@
 #include "texts.h"
 
 #define PROGRAM_NAME "Code"
+#define PROGRAM_ICON_NAME "text-editor"
 #define CONFIGURATION_FILE_NAME "/code.conf"
 #define SESSIONS_FILE_NAME "/code-sessions.conf"
 #define DEFAULT_SESSION_NAME "Default"
@@ -213,6 +214,10 @@ void update_statusbar(chandler *handler, cview *view);
 /* Sidebar */
 void sidebar_update_iter_children(chandler *handler, GtkTreeIter iter);
 GtkTreeIter sidebar_add_iter(chandler *handler, GtkTreeIter *parent, gchar *path);
+void sidebar_open_selected(chandler *handler);
+void sidebar_rename_selected(chandler *handler);
+void sidebar_duplicate_selected(chandler *handler);
+void sidebar_delete_selected(chandler *handler);
 
 /* Document */
 cview *get_nth_view(chandler *handler, gint index);
@@ -226,6 +231,7 @@ void close_view(chandler *handler, cview *view);
 void add_view_for_document(chandler *handler, cdocument *document);
 
 /* Actions */
+void window_show_about(chandler *handler);
 void window_quit(chandler *handler);
 void window_go_to_select_session(gpointer user_data);
 void window_go_to_session(gpointer user_data);

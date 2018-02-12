@@ -18,6 +18,22 @@
 #include <gtk/gtk.h>
 #include "handlers.h"
 
+void window_show_about(chandler *handler)
+{
+	gchar **authors[] = {
+		"Felipe Ferreira da Silva <ferreiradaselva@protonmail.com>",
+		NULL
+	};
+	gtk_show_about_dialog(GTK_WINDOW(handler->window.window),
+		"program-name", PROGRAM_NAME,
+		"logo-icon-name", PROGRAM_ICON_NAME,
+		"title", TEXT_ABOUT,
+		"license-type", GTK_LICENSE_GPL_3_0,
+		"copyright", "Copyright © 2017 Felipe Ferreira da Silva",
+		"authors", authors,
+		NULL);
+}
+
 void window_quit(chandler *handler)
 {
 	gtk_window_close(GTK_WINDOW(handler->window.window));
