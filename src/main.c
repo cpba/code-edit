@@ -96,6 +96,11 @@ static void action_delete_selected_activate(GSimpleAction *simple, GVariant *par
 	sidebar_open_selected(user_data);
 }
 
+static void action_remove_folder_from_session_activate(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
+{
+	sidebar_remove_folder_from_session(user_data);
+}
+
 static void action_about_activate(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
 {
 	window_show_about(user_data);
@@ -132,6 +137,10 @@ static void add_actions(chandler *handler)
 	g_object_unref(G_OBJECT(action));
 	action = g_simple_action_new("delete-selected", NULL);
 	g_signal_connect(action, "activate", G_CALLBACK(action_delete_selected_activate), handler);
+	g_action_map_add_action(G_ACTION_MAP(handler->window.window), G_ACTION(action));
+	g_object_unref(G_OBJECT(action));
+	action = g_simple_action_new("remove-folder-from-session", NULL);
+	g_signal_connect(action, "activate", G_CALLBACK(action_remove_folder_from_session_activate), handler);
 	g_action_map_add_action(G_ACTION_MAP(handler->window.window), G_ACTION(action));
 	g_object_unref(G_OBJECT(action));
 }

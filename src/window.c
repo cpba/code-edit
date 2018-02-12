@@ -20,7 +20,7 @@
 
 void window_show_about(chandler *handler)
 {
-	gchar **authors[] = {
+	gchar *authors[] = {
 		"Felipe Ferreira da Silva <ferreiradaselva@protonmail.com>",
 		NULL
 	};

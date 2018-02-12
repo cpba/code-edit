@@ -218,6 +218,7 @@ void sidebar_open_selected(chandler *handler);
 void sidebar_rename_selected(chandler *handler);
 void sidebar_duplicate_selected(chandler *handler);
 void sidebar_delete_selected(chandler *handler);
+void sidebar_remove_folder_from_session(chandler *handler);
 
 /* Document */
 cview *get_nth_view(chandler *handler, gint index);

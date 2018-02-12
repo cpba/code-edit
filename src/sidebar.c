@@ -18,12 +18,27 @@
 #include <gtk/gtk.h>
 #include "handlers.h"
 
+void sidebar_update_iter_with_dummy_child(chandler *handler, GtkTreeIter iter)
+{
+	gchar *path = NULL;
+	GtkTreeIter child;
+	gtk_tree_model_get(GTK_TREE_MODEL(handler->sidebar.tree_store),
+		&iter,
+		2, &path,
+		-1);
+	while (gtk_tree_model_iter_children(GTK_TREE_MODEL(handler->sidebar.tree_store), &child, &iter)) {
+		gtk_tree_store_remove(handler->sidebar.tree_store, &child);
+	}
+	/* Add dummy */
+	gtk_tree_store_append(handler->sidebar.tree_store,
+		&child,
+		&iter);
+}
+
 void sidebar_update_iter_children(chandler *handler, GtkTreeIter iter)
 {
-	GFileInfo *file_info = NULL;
+	GtkTreeIter child;
 	gchar *path = NULL;
-	GFile *file = NULL;
-	GFileType file_type;
 	GDir *dir = NULL;
 	const gchar *name = NULL;
 	GString *full_path = NULL;
@@ -31,17 +46,7 @@ void sidebar_update_iter_children(chandler *handler, GtkTreeIter iter)
 		&iter,
 		2, &path,
 		-1);
-	file = g_file_new_for_path(path);
-	if (file) {
-		file_info = g_file_query_info(file, "*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
-		if (file_info) {
-			file_type = g_file_info_get_file_type(file_info);
-			if (file_type == G_FILE_TYPE_DIRECTORY) {
-				dir = g_dir_open(path, 0, NULL);
-			}
-		}
-		g_object_unref(G_OBJECT(file));
-	}
+	dir = g_dir_open(path, 0, NULL);
 	if (dir) {
 		full_path = g_string_new("");
 		name = g_dir_read_name(dir);
@@ -56,6 +61,9 @@ void sidebar_update_iter_children(chandler *handler, GtkTreeIter iter)
 		g_string_free(full_path, TRUE);
 	}
 	g_free(path);
+	if (gtk_tree_model_iter_children(GTK_TREE_MODEL(handler->sidebar.tree_store), &child, &iter)) {
+		gtk_tree_store_remove(handler->sidebar.tree_store, &child);
+	}
 }
 
 GtkTreeIter sidebar_add_iter(chandler *handler, GtkTreeIter *parent, gchar *path)
@@ -63,13 +71,14 @@ GtkTreeIter sidebar_add_iter(chandler *handler, GtkTreeIter *parent, gchar *path
 	GtkTreeIter iter;
 	GFileInfo *file_info = NULL;
 	GIcon *icon = NULL;
+	GFileType file_type;
 	const gchar *content_type = NULL;
 	GFile *file = g_file_new_for_path(path);
 	gchar *basename = g_path_get_basename(path);
-	gtk_tree_store_append(GTK_TREE_STORE(handler->sidebar.tree_store),
+	gtk_tree_store_append(handler->sidebar.tree_store,
 		&iter,
 		parent);
-	gtk_tree_store_set(GTK_TREE_STORE(handler->sidebar.tree_store),
+	gtk_tree_store_set(handler->sidebar.tree_store,
 		&iter,
 		1, basename,
 		2, path,
@@ -83,12 +92,16 @@ GtkTreeIter sidebar_add_iter(chandler *handler, GtkTreeIter *parent, gchar *path
 				content_type = g_file_info_get_content_type(file_info);
 				icon = g_content_type_get_icon(content_type);
 			}
+			file_type = g_file_info_get_file_type(file_info);
+			if (file_type == G_FILE_TYPE_DIRECTORY) {
+				sidebar_update_iter_with_dummy_child(handler, iter);
+			}
 		}
 	}
 	if (!icon) {
 		icon = g_icon_new_for_string("text-x-generic-template", NULL);
 	}
-	gtk_tree_store_set(GTK_TREE_STORE(handler->sidebar.tree_store),
+	gtk_tree_store_set(handler->sidebar.tree_store,
 			&iter,
 			0, icon,
 			-1);
@@ -156,6 +169,15 @@ void sidebar_delete_selected(chandler *handler)
 	}
 }
 
+void sidebar_remove_folder_from_session(chandler *handler)
+{
+	GtkTreeSelection *tree_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(handler->sidebar.tree_view));
+	GtkTreeIter iter;
+	if (gtk_tree_selection_get_selected(tree_selection, NULL, &iter)) {
+		gtk_tree_store_remove(handler->sidebar.tree_store, &iter);
+	}
+}
+
 static void init_popover_folder_selected(chandler *handler)
 {
 	GMenu *menu;
@@ -187,14 +209,12 @@ static void init_popover_root_selected(chandler *handler)
 {
 	GMenu *menu;
 	GMenu *menu_section_file;
-	GMenuItem *menu_item_rename;
 	GMenu *menu_section_session;
-	GMenuItem *menu_item_remove_folder_from_session;
 	/* Menu */
 	menu = g_menu_new();
 	/* Section session */
 	menu_section_session = g_menu_new();
-	g_menu_insert(menu_section_session, -1, TEXT_REMOVE_FOLDER_FROM_SESSION, "remove-folder-from-session");
+	g_menu_insert(menu_section_session, -1, TEXT_REMOVE_FOLDER_FROM_SESSION, "win.remove-folder-from-session");
 	g_menu_insert_section(menu, -1, NULL, G_MENU_MODEL(menu_section_session));
 	/* Section file */
 	menu_section_file = g_menu_new();
@@ -244,31 +264,24 @@ static void tree_view_row_expanded(GtkTreeView *tree_view, GtkTreeIter *iter, Gt
 	chandler *handler = user_data;
 	gboolean valid = FALSE;
 	GtkTreeIter child;
+	sidebar_update_iter_children(handler, *iter);
 	valid = gtk_tree_model_iter_children(GTK_TREE_MODEL(handler->sidebar.tree_store), &child, iter);
 	while (valid) {
-		sidebar_update_iter_children(handler, child);
 		valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(handler->sidebar.tree_store), &child);
 	}
+	gtk_tree_view_columns_autosize(tree_view);
 }
 
 static void tree_view_row_collapsed(GtkTreeView *tree_view, GtkTreeIter *iter, GtkTreePath *path, gpointer user_data)
 {
 	chandler *handler = user_data;
-	gboolean valid = FALSE;
-	GtkTreeIter child;
-	valid = gtk_tree_model_iter_children(GTK_TREE_MODEL(handler->sidebar.tree_store), &child, iter);
-	while (valid) {
-		gtk_tree_store_remove(handler->sidebar.tree_store, &child);
-		valid = gtk_tree_model_iter_children(GTK_TREE_MODEL(handler->sidebar.tree_store), &child, iter);
-	}
-	sidebar_update_iter_children(handler, *iter);
+	sidebar_update_iter_with_dummy_child(handler, *iter);
+	gtk_tree_view_columns_autosize(tree_view);
 }
 
 static gboolean tree_view_button_press_event(GtkWidget *widget, GdkEventButton *event, gpointer user_data)
 {
 	chandler *handler = user_data;
-	GtkTreeSelection *tree_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(handler->sidebar.tree_view));
-	gchar *iter_path = NULL;
 	gchar *file_path = NULL;
 	GFile *file = NULL;
 	GFileInfo *file_info = NULL;
@@ -321,7 +334,6 @@ static gboolean tree_view_popup_menu(GtkWidget *widget, gpointer user_data)
 {
 	chandler *handler = user_data;
 	GtkTreeSelection *tree_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(handler->sidebar.tree_view));
-	gchar *iter_path = NULL;
 	gchar *file_path = NULL;
 	GFile *file = NULL;
 	GFileInfo *file_info = NULL;
@@ -381,10 +393,8 @@ static void button_add_folder_to_session_clicked(GtkWidget *widget, gpointer use
 		GSList *file_names = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
 		GSList *file_name_iter = file_names;
 		while (file_name_iter) {
-			gchar *file_name = file_name_iter->data;
-			GtkTreeIter iter = sidebar_add_iter(handler, NULL, file_name);
-			sidebar_update_iter_children(handler, iter);
-			g_free(file_name);
+			sidebar_add_iter(handler, NULL, file_name_iter->data);
+			g_free(file_name_iter->data);
 			file_name_iter = file_name_iter->next;
 		}
 		g_slist_free(file_names);
