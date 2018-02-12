@@ -54,7 +54,12 @@
 #define TEXT_MARKUP_UNTITLED "<i>Untitled</i>"
 #define TEXT_UNIT_CHARACTER " character"
 #define TEXT_UNIT_CHARACTERS " characters"
-#define TEXT_ADD_ROOT_TO_SIDEBAR "Add Root Folder to Sidebar"
-#define TEXT_ADD_ROOT_TO_SIDEBAR_OK "Choose Folder"
+#define TEXT_ADD_FOLDER_TO_SESSION "Add Folder to Session"
+#define TEXT_ADD_FOLDER_TO_SESSION_OK "Choose Folder"
+#define TEXT_TOOLTIP_ADD_FOLDER_TO_SESSION "Add Folder to Session"
+#define TEXT_REMOVE_FOLDER_FROM_SESSION "Remove Folder from Session"
+#define TEXT_RENAME "Rename"
+#define TEXT_DELETE "Delete"
+#define TEXT_DUPLICATE "Duplicate"
 
 #endif

@@ -425,10 +425,10 @@ void window_hide_search_bar_and_replace_bar(chandler *handler)
 
 void window_toggle_sidebar(chandler *handler)
 {
-	if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->sidebar.revealer))) {
-		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->sidebar.revealer), TRUE);
-	} else if (gtk_revealer_get_child_revealed(GTK_REVEALER(handler->sidebar.revealer))) {
-		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->sidebar.revealer), FALSE);
+	if (gtk_widget_get_visible(handler->sidebar.overlay)) {
+		gtk_widget_hide(handler->sidebar.overlay);
+	} else {
+		gtk_widget_show_all(handler->sidebar.overlay);
 	}
 }
 

@@ -106,19 +106,37 @@ struct chandler {
 		GtkWidget *list_box;
 	} select_session;
 	struct {
-		GtkWidget *box;
+		GtkWidget *paned;
 		GtkWidget *box_vertical;
 		GtkWidget *notebook;
 		gint iter_search_offset;
 	} session;
 	struct {
-		GtkWidget *revealer;
+		GtkWidget *overlay;
 		GtkWidget *box;
 		GtkTreeStore *tree_store;
 		GtkWidget *tree_view;
-		GtkWidget *popover_folder;
-		GtkWidget *popover_file;
-		GtkWidget *popover_rename;
+		GtkWidget *button_add_folder_to_session;
+		struct {
+			GtkWidget *popover;
+		} root_selected;
+		struct {
+			GtkWidget *popover;
+		} regular_selected;
+		struct {
+			GtkWidget *popover;
+		} folder_selected;
+		struct {
+			GtkWidget *popover;
+			GtkWidget *entry;
+			GtkWidget *button;
+		} rename;
+		struct {
+			GtkWidget *popover;
+			GtkWidget *entry;
+			GtkWidget *button;
+		} name;
+		
 	} sidebar;
 	struct {
 		GtkWidget *revealer;
@@ -172,17 +190,10 @@ struct chandler {
 	} preferences;
 	struct {
 		GtkSizeGroup *size_group;
-		struct {
-			GtkWidget *revealer;
-			GtkWidget *action_bar;
-			GtkWidget *button_language;
-			GtkWidget *button_repo_branch;
-		} document;
-		struct {
-			GtkWidget *revealer;
-			GtkWidget *action_bar;
-			GtkWidget *button_add_root;
-		} sidebar;
+		GtkWidget *revealer;
+		GtkWidget *action_bar;
+		GtkWidget *button_language;
+		GtkWidget *button_repo_branch;
 	} statusbar;
 };
 

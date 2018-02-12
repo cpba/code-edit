@@ -34,12 +34,15 @@ static void notebook_switch_page(GtkWidget *widget, GtkWidget *page, guint page_
 void init_session(chandler *handler)
 {
 	/* Box */
-	handler->session.box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
-	gtk_stack_add_named(GTK_STACK(handler->window.stack), handler->session.box, "session");
+	handler->session.paned = gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
+	gtk_stack_add_named(GTK_STACK(handler->window.stack), handler->session.paned, "session");
 	/* Box notebook and status bar */
 	handler->session.box_vertical = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	gtk_widget_set_name(handler->session.box_vertical, "box_vertical");
-	gtk_container_add(GTK_CONTAINER(handler->session.box), handler->session.box_vertical);
+	gtk_paned_pack1(GTK_PANED(handler->session.paned),
+		handler->session.box_vertical,
+		TRUE,
+		FALSE);
 	gtk_widget_set_hexpand(handler->session.box_vertical, TRUE);
 	gtk_widget_set_vexpand(handler->session.box_vertical, TRUE);
 	gtk_widget_set_halign(handler->session.box_vertical, GTK_ALIGN_FILL);

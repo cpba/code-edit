@@ -132,8 +132,7 @@ static void application_activate(GtkApplication *application, gpointer user_data
 	update_view_status(handler, NULL);
 	window_go_to_select_session(handler);
 	gtk_stack_set_transition_type(GTK_STACK(handler->window.stack), GTK_STACK_TRANSITION_TYPE_CROSSFADE);
-	gtk_revealer_set_transition_type(GTK_REVEALER(handler->statusbar.document.revealer), GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP);
-	gtk_revealer_set_transition_type(GTK_REVEALER(handler->statusbar.sidebar.revealer), GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP);
+	gtk_revealer_set_transition_type(GTK_REVEALER(handler->statusbar.revealer), GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP);
 }
 
 static void application_shutdown(GtkApplication *application, gpointer user_data)
