@@ -103,20 +103,57 @@ static gboolean switch_automatic_indentation_state_set(GtkSwitch *widget, gboole
 	return FALSE;
 }
 
-static gboolean switch_show_spaces_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
+static void preferences_update_show_indicators(chandler *handler)
 {
-	chandler *handler = user_data;
 	GtkWidget *page = NULL;
 	cview *view = NULL;
 	GtkSourceSpaceDrawer *source_space_drawer = NULL;
+	GtkSourceSpaceLocationFlags locations = GTK_SOURCE_SPACE_LOCATION_NONE;
+	GtkSourceSpaceTypeFlags types = GTK_SOURCE_SPACE_TYPE_NONE;
 	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
+	if (gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_show_newline))) {
+		types = types | GTK_SOURCE_SPACE_TYPE_NEWLINE;
+	}
+	if (gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_show_tabs))) {
+		types = types | GTK_SOURCE_SPACE_TYPE_TAB;
+	}
+	if (gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_show_spaces))) {
+		types = types | GTK_SOURCE_SPACE_TYPE_SPACE;
+	}
+	if (gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_show_non_breaking_space))) {
+		types = types | GTK_SOURCE_SPACE_TYPE_NBSP;
+	}
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_leading_tabs_and_spaces))) {
+		locations = locations | GTK_SOURCE_SPACE_LOCATION_LEADING;
+	}
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_inside_text_tabs_and_spaces))) {
+		locations = locations | GTK_SOURCE_SPACE_LOCATION_INSIDE_TEXT;
+	}
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_trailing_tabs_and_spaces))) {
+		locations = locations | GTK_SOURCE_SPACE_LOCATION_TRAILING;
+	}
 	while (page_count > 0) {
 		page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), page_count - 1);
 		view = g_object_get_data(G_OBJECT(page), "view");
 		source_space_drawer = gtk_source_view_get_space_drawer(GTK_SOURCE_VIEW(view->source_view));
+		gtk_source_space_drawer_set_matrix(source_space_drawer, NULL);
+		gtk_source_space_drawer_set_types_for_locations(source_space_drawer,
+			locations,
+			types);
+		gtk_source_space_drawer_set_enable_matrix(source_space_drawer, TRUE);
 		page_count--;
 	}
+}
+
+static gboolean switch_show_tabs_and_spaces_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
+{
+	preferences_update_show_indicators(user_data);
 	return FALSE;
+}
+
+static void toggle_button_show_tabs_and_spaces_location_toggled(GtkSwitch *widget, gpointer user_data)
+{
+	preferences_update_show_indicators(user_data);
 }
 
 static gboolean switch_insert_spaces_instead_of_tabs_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
@@ -244,6 +281,7 @@ void init_preferences(chandler *handler)
 	GtkWidget *box = NULL;
 	GtkWidget *box_centered = NULL;
 	GtkWidget *box_horizontal = NULL;
+	GtkWidget *box_buttons = NULL;
 	GtkWidget *frame = NULL;
 	GtkWidget *label = NULL;
 	GtkSizeGroup *size_group = gtk_size_group_new(GTK_SIZE_GROUP_HORIZONTAL);
@@ -429,8 +467,8 @@ void init_preferences(chandler *handler)
 	gtk_widget_set_halign(handler->preferences.spin_button_right_margin_position, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler->preferences.spin_button_right_margin_position, GTK_ALIGN_FILL);
 	g_signal_connect_after(handler->preferences.spin_button_right_margin_position, "draw", G_CALLBACK(spin_button_draw_unit_characters), handler);
-	/* Tab stops */
-	label = gtk_label_new(TEXT_TAB_STOPS);
+	/* Invisible characters */
+	label = gtk_label_new(TEXT_INVISIBLE_CHARACTERS);
 	gtk_container_add(GTK_CONTAINER(box_centered), label);
 	gtk_widget_set_hexpand(label, TRUE);
 	gtk_widget_set_vexpand(label, FALSE);
@@ -439,7 +477,158 @@ void init_preferences(chandler *handler)
 	gtk_widget_set_margin_top(label, MAJOR_SPACING);
 	gtk_label_set_xalign(GTK_LABEL(label), 0.5);
 	gtk_label_set_use_markup(GTK_LABEL(label), TRUE);
-	gtk_label_set_markup(GTK_LABEL(label), TEXT_TAB_STOPS);
+	gtk_label_set_markup(GTK_LABEL(label), TEXT_INVISIBLE_CHARACTERS);
+	/* Show newline */
+	box_horizontal = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
+	gtk_container_add(GTK_CONTAINER(box_centered), box_horizontal);
+	gtk_widget_set_hexpand(box_horizontal, FALSE);
+	gtk_widget_set_vexpand(box_horizontal, FALSE);
+	gtk_widget_set_halign(box_horizontal, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(box_horizontal, GTK_ALIGN_FILL);
+	gtk_widget_set_margin_top(box_horizontal, MEDIUM_SPACING);
+	gtk_box_set_homogeneous(GTK_BOX(box_horizontal), TRUE);
+	label = gtk_label_new(TEXT_SHOW_NEWLINE);
+	gtk_container_add(GTK_CONTAINER(box_horizontal), label);
+	gtk_widget_set_hexpand(label, FALSE);
+	gtk_widget_set_vexpand(label, TRUE);
+	gtk_widget_set_halign(label, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(label, GTK_ALIGN_FILL);
+	gtk_label_set_xalign(GTK_LABEL(label), 1.0);
+	gtk_size_group_add_widget(size_group, label);
+	handler->preferences.switch_show_newline = gtk_switch_new();
+	gtk_container_add(GTK_CONTAINER(box_horizontal), handler->preferences.switch_show_newline);
+	gtk_widget_set_hexpand(handler->preferences.switch_show_newline, FALSE);
+	gtk_widget_set_vexpand(handler->preferences.switch_show_newline, TRUE);
+	gtk_widget_set_halign(handler->preferences.switch_show_newline, GTK_ALIGN_START);
+	gtk_widget_set_valign(handler->preferences.switch_show_newline, GTK_ALIGN_FILL);
+	g_signal_connect(handler->preferences.switch_show_newline, "state-set", G_CALLBACK(switch_show_tabs_and_spaces_state_set), handler);
+	/* Show non breaking space */
+	box_horizontal = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
+	gtk_container_add(GTK_CONTAINER(box_centered), box_horizontal);
+	gtk_widget_set_hexpand(box_horizontal, FALSE);
+	gtk_widget_set_vexpand(box_horizontal, FALSE);
+	gtk_widget_set_halign(box_horizontal, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(box_horizontal, GTK_ALIGN_FILL);
+	gtk_widget_set_margin_top(box_horizontal, MEDIUM_SPACING);
+	gtk_box_set_homogeneous(GTK_BOX(box_horizontal), TRUE);
+	label = gtk_label_new(TEXT_SHOW_NON_BREAKING_SPACES);
+	gtk_container_add(GTK_CONTAINER(box_horizontal), label);
+	gtk_widget_set_hexpand(label, FALSE);
+	gtk_widget_set_vexpand(label, TRUE);
+	gtk_widget_set_halign(label, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(label, GTK_ALIGN_FILL);
+	gtk_label_set_xalign(GTK_LABEL(label), 1.0);
+	gtk_size_group_add_widget(size_group, label);
+	handler->preferences.switch_show_non_breaking_space = gtk_switch_new();
+	gtk_container_add(GTK_CONTAINER(box_horizontal), handler->preferences.switch_show_non_breaking_space);
+	gtk_widget_set_hexpand(handler->preferences.switch_show_non_breaking_space, FALSE);
+	gtk_widget_set_vexpand(handler->preferences.switch_show_non_breaking_space, TRUE);
+	gtk_widget_set_halign(handler->preferences.switch_show_non_breaking_space, GTK_ALIGN_START);
+	gtk_widget_set_valign(handler->preferences.switch_show_non_breaking_space, GTK_ALIGN_FILL);
+	g_signal_connect(handler->preferences.switch_show_non_breaking_space, "state-set", G_CALLBACK(switch_show_tabs_and_spaces_state_set), handler);
+	/* Show tabs */
+	box_horizontal = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
+	gtk_container_add(GTK_CONTAINER(box_centered), box_horizontal);
+	gtk_widget_set_hexpand(box_horizontal, FALSE);
+	gtk_widget_set_vexpand(box_horizontal, FALSE);
+	gtk_widget_set_halign(box_horizontal, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(box_horizontal, GTK_ALIGN_FILL);
+	gtk_widget_set_margin_top(box_horizontal, MEDIUM_SPACING);
+	gtk_box_set_homogeneous(GTK_BOX(box_horizontal), TRUE);
+	label = gtk_label_new(TEXT_SHOW_TABS);
+	gtk_container_add(GTK_CONTAINER(box_horizontal), label);
+	gtk_widget_set_hexpand(label, FALSE);
+	gtk_widget_set_vexpand(label, TRUE);
+	gtk_widget_set_halign(label, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(label, GTK_ALIGN_FILL);
+	gtk_label_set_xalign(GTK_LABEL(label), 1.0);
+	gtk_size_group_add_widget(size_group, label);
+	handler->preferences.switch_show_tabs = gtk_switch_new();
+	gtk_container_add(GTK_CONTAINER(box_horizontal), handler->preferences.switch_show_tabs);
+	gtk_widget_set_hexpand(handler->preferences.switch_show_tabs, FALSE);
+	gtk_widget_set_vexpand(handler->preferences.switch_show_tabs, TRUE);
+	gtk_widget_set_halign(handler->preferences.switch_show_tabs, GTK_ALIGN_START);
+	gtk_widget_set_valign(handler->preferences.switch_show_tabs, GTK_ALIGN_FILL);
+	g_signal_connect(handler->preferences.switch_show_tabs, "state-set", G_CALLBACK(switch_show_tabs_and_spaces_state_set), handler);
+	/* Show spaces */
+	box_horizontal = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
+	gtk_container_add(GTK_CONTAINER(box_centered), box_horizontal);
+	gtk_widget_set_hexpand(box_horizontal, FALSE);
+	gtk_widget_set_vexpand(box_horizontal, FALSE);
+	gtk_widget_set_halign(box_horizontal, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(box_horizontal, GTK_ALIGN_FILL);
+	gtk_widget_set_margin_top(box_horizontal, MEDIUM_SPACING);
+	gtk_box_set_homogeneous(GTK_BOX(box_horizontal), TRUE);
+	label = gtk_label_new(TEXT_SHOW_SPACES);
+	gtk_container_add(GTK_CONTAINER(box_horizontal), label);
+	gtk_widget_set_hexpand(label, FALSE);
+	gtk_widget_set_vexpand(label, TRUE);
+	gtk_widget_set_halign(label, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(label, GTK_ALIGN_FILL);
+	gtk_label_set_xalign(GTK_LABEL(label), 1.0);
+	gtk_size_group_add_widget(size_group, label);
+	handler->preferences.switch_show_spaces = gtk_switch_new();
+	gtk_container_add(GTK_CONTAINER(box_horizontal), handler->preferences.switch_show_spaces);
+	gtk_widget_set_hexpand(handler->preferences.switch_show_spaces, FALSE);
+	gtk_widget_set_vexpand(handler->preferences.switch_show_spaces, TRUE);
+	gtk_widget_set_halign(handler->preferences.switch_show_spaces, GTK_ALIGN_START);
+	gtk_widget_set_valign(handler->preferences.switch_show_spaces, GTK_ALIGN_FILL);
+	g_signal_connect(handler->preferences.switch_show_spaces, "state-set", G_CALLBACK(switch_show_tabs_and_spaces_state_set), handler);
+	/* Tabs and spaces to show */
+	box_horizontal = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
+	gtk_container_add(GTK_CONTAINER(box_centered), box_horizontal);
+	gtk_widget_set_hexpand(box_horizontal, FALSE);
+	gtk_widget_set_vexpand(box_horizontal, FALSE);
+	gtk_widget_set_halign(box_horizontal, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(box_horizontal, GTK_ALIGN_FILL);
+	gtk_widget_set_margin_top(box_horizontal, MEDIUM_SPACING);
+	gtk_box_set_homogeneous(GTK_BOX(box_horizontal), TRUE);
+	label = gtk_label_new(TEXT_TABS_AND_SPACES_TO_SHOW);
+	gtk_container_add(GTK_CONTAINER(box_horizontal), label);
+	gtk_widget_set_hexpand(label, FALSE);
+	gtk_widget_set_vexpand(label, TRUE);
+	gtk_widget_set_halign(label, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(label, GTK_ALIGN_FILL);
+	gtk_label_set_xalign(GTK_LABEL(label), 1.0);
+	gtk_size_group_add_widget(size_group, label);
+	box_buttons = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+	gtk_container_add(GTK_CONTAINER(box_horizontal), box_buttons);
+	gtk_widget_set_hexpand(box_buttons, TRUE);
+	gtk_widget_set_vexpand(box_buttons, TRUE);
+	gtk_widget_set_halign(box_buttons, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(box_buttons, GTK_ALIGN_FILL);
+	handler->preferences.toggle_button_show_leading_tabs_and_spaces = gtk_toggle_button_new_with_label(TEXT_LEADING);
+	gtk_container_add(GTK_CONTAINER(box_buttons), handler->preferences.toggle_button_show_leading_tabs_and_spaces);
+	gtk_widget_set_hexpand(handler->preferences.toggle_button_show_leading_tabs_and_spaces, TRUE);
+	gtk_widget_set_vexpand(handler->preferences.toggle_button_show_leading_tabs_and_spaces, TRUE);
+	gtk_widget_set_halign(handler->preferences.toggle_button_show_leading_tabs_and_spaces, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->preferences.toggle_button_show_leading_tabs_and_spaces, GTK_ALIGN_CENTER);
+	g_signal_connect(handler->preferences.toggle_button_show_leading_tabs_and_spaces, "toggled", G_CALLBACK(toggle_button_show_tabs_and_spaces_location_toggled), handler);
+	handler->preferences.toggle_button_show_inside_text_tabs_and_spaces = gtk_toggle_button_new_with_label(TEXT_INSIDE_TEXT);
+	gtk_container_add(GTK_CONTAINER(box_buttons), handler->preferences.toggle_button_show_inside_text_tabs_and_spaces);
+	gtk_widget_set_hexpand(handler->preferences.toggle_button_show_inside_text_tabs_and_spaces, TRUE);
+	gtk_widget_set_vexpand(handler->preferences.toggle_button_show_inside_text_tabs_and_spaces, TRUE);
+	gtk_widget_set_halign(handler->preferences.toggle_button_show_inside_text_tabs_and_spaces, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->preferences.toggle_button_show_inside_text_tabs_and_spaces, GTK_ALIGN_CENTER);
+	g_signal_connect(handler->preferences.toggle_button_show_inside_text_tabs_and_spaces, "toggled", G_CALLBACK(toggle_button_show_tabs_and_spaces_location_toggled), handler);
+	handler->preferences.toggle_button_show_trailing_tabs_and_spaces = gtk_toggle_button_new_with_label(TEXT_TRAILING);
+	gtk_container_add(GTK_CONTAINER(box_buttons), handler->preferences.toggle_button_show_trailing_tabs_and_spaces);
+	gtk_widget_set_hexpand(handler->preferences.toggle_button_show_trailing_tabs_and_spaces, TRUE);
+	gtk_widget_set_vexpand(handler->preferences.toggle_button_show_trailing_tabs_and_spaces, TRUE);
+	gtk_widget_set_halign(handler->preferences.toggle_button_show_trailing_tabs_and_spaces, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->preferences.toggle_button_show_trailing_tabs_and_spaces, GTK_ALIGN_CENTER);
+	g_signal_connect(handler->preferences.toggle_button_show_trailing_tabs_and_spaces, "toggled", G_CALLBACK(toggle_button_show_tabs_and_spaces_location_toggled), handler);
+	/* Text */
+	label = gtk_label_new(TEXT_TEXT);
+	gtk_container_add(GTK_CONTAINER(box_centered), label);
+	gtk_widget_set_hexpand(label, TRUE);
+	gtk_widget_set_vexpand(label, FALSE);
+	gtk_widget_set_halign(label, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(label, GTK_ALIGN_FILL);
+	gtk_widget_set_margin_top(label, MAJOR_SPACING);
+	gtk_label_set_xalign(GTK_LABEL(label), 0.5);
+	gtk_label_set_use_markup(GTK_LABEL(label), TRUE);
+	gtk_label_set_markup(GTK_LABEL(label), TEXT_TEXT);
 	/* Automatic indentation */
 	box_horizontal = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
 	gtk_container_add(GTK_CONTAINER(box_centered), box_horizontal);
@@ -464,30 +653,6 @@ void init_preferences(chandler *handler)
 	gtk_widget_set_halign(handler->preferences.switch_automatic_indentation, GTK_ALIGN_START);
 	gtk_widget_set_valign(handler->preferences.switch_automatic_indentation, GTK_ALIGN_FILL);
 	g_signal_connect(handler->preferences.switch_automatic_indentation, "state-set", G_CALLBACK(switch_automatic_indentation_state_set), handler);
-	/* Show spaces */
-	box_horizontal = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
-	gtk_container_add(GTK_CONTAINER(box_centered), box_horizontal);
-	gtk_widget_set_hexpand(box_horizontal, FALSE);
-	gtk_widget_set_vexpand(box_horizontal, FALSE);
-	gtk_widget_set_halign(box_horizontal, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(box_horizontal, GTK_ALIGN_FILL);
-	gtk_widget_set_margin_top(box_horizontal, MEDIUM_SPACING);
-	gtk_box_set_homogeneous(GTK_BOX(box_horizontal), TRUE);
-	label = gtk_label_new(TEXT_SHOW_SPACES);
-	gtk_container_add(GTK_CONTAINER(box_horizontal), label);
-	gtk_widget_set_hexpand(label, FALSE);
-	gtk_widget_set_vexpand(label, TRUE);
-	gtk_widget_set_halign(label, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(label, GTK_ALIGN_FILL);
-	gtk_label_set_xalign(GTK_LABEL(label), 1.0);
-	gtk_size_group_add_widget(size_group, label);
-	handler->preferences.switch_show_spaces = gtk_switch_new();
-	gtk_container_add(GTK_CONTAINER(box_horizontal), handler->preferences.switch_show_spaces);
-	gtk_widget_set_hexpand(handler->preferences.switch_show_spaces, FALSE);
-	gtk_widget_set_vexpand(handler->preferences.switch_show_spaces, TRUE);
-	gtk_widget_set_halign(handler->preferences.switch_show_spaces, GTK_ALIGN_START);
-	gtk_widget_set_valign(handler->preferences.switch_show_spaces, GTK_ALIGN_FILL);
-	g_signal_connect(handler->preferences.switch_show_spaces, "state-set", G_CALLBACK(switch_show_spaces_state_set), handler);
 	/* Insert spaces instead of tabs */
 	box_horizontal = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
 	gtk_container_add(GTK_CONTAINER(box_centered), box_horizontal);
@@ -536,17 +701,6 @@ void init_preferences(chandler *handler)
 	gtk_widget_set_halign(handler->preferences.spin_button_tab_width, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler->preferences.spin_button_tab_width, GTK_ALIGN_FILL);
 	g_signal_connect_after(handler->preferences.spin_button_tab_width, "draw", G_CALLBACK(spin_button_draw_unit_characters), handler);
-	/* Text wrapping */
-	label = gtk_label_new(TEXT_TEXT_WRAPPING);
-	gtk_container_add(GTK_CONTAINER(box_centered), label);
-	gtk_widget_set_hexpand(label, TRUE);
-	gtk_widget_set_vexpand(label, FALSE);
-	gtk_widget_set_halign(label, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(label, GTK_ALIGN_FILL);
-	gtk_widget_set_margin_top(label, MAJOR_SPACING);
-	gtk_label_set_xalign(GTK_LABEL(label), 0.5);
-	gtk_label_set_use_markup(GTK_LABEL(label), TRUE);
-	gtk_label_set_markup(GTK_LABEL(label), TEXT_TEXT_WRAPPING);
 	/* Allow text wrapping */
 	box_horizontal = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
 	gtk_container_add(GTK_CONTAINER(box_centered), box_horizontal);

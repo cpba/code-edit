@@ -179,7 +179,13 @@ struct chandler {
 		GtkWidget *switch_show_right_margin;
 		GtkWidget *spin_button_right_margin_position;
 		GtkWidget *switch_automatic_indentation;
+		GtkWidget *switch_show_newline;
+		GtkWidget *switch_show_non_breaking_space;
 		GtkWidget *switch_show_spaces;
+		GtkWidget *switch_show_tabs;
+		GtkWidget *toggle_button_show_trailing_tabs_and_spaces;
+		GtkWidget *toggle_button_show_inside_text_tabs_and_spaces;
+		GtkWidget *toggle_button_show_leading_tabs_and_spaces;
 		GtkWidget *switch_insert_spaces_instead_of_tabs;
 		GtkWidget *spin_button_tab_width;
 		GtkWidget *switch_allow_text_wrapping;
