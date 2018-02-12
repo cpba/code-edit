@@ -53,7 +53,7 @@ static void button_new_document_clicked(GtkWidget *widget, gpointer user_data)
 	window_new(user_data);
 }
 
-static void button_open_menu_clicked(GtkWidget *widget, gpointer user_data)
+static void button_select_session_clicked(GtkWidget *widget, gpointer user_data)
 {
 	window_go_to_select_session(user_data);
 }
@@ -106,12 +106,12 @@ void init_header(chandler *handler)
 	/* Box session */
 	box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
 	gtk_container_add(GTK_CONTAINER(handler->header.revealer_session), box);
-	/* Button session */
-	handler->header.button_open_menu = gtk_button_new_from_icon_name("open-menu-symbolic", GTK_ICON_SIZE_BUTTON);
-	gtk_widget_set_name(handler->header.button_open_menu, "button_open_menu");
-	gtk_container_add(GTK_CONTAINER(box), handler->header.button_open_menu);
-	gtk_style_context_add_class(gtk_widget_get_style_context(handler->header.button_open_menu), "circular");
-	g_signal_connect(handler->header.button_open_menu, "clicked", G_CALLBACK(button_open_menu_clicked), handler);
+	/* Button select session */
+	handler->header.button_select_session = gtk_button_new_from_icon_name("go-previous-symbolic", GTK_ICON_SIZE_BUTTON);
+	gtk_widget_set_name(handler->header.button_select_session, "button_select_session");
+	gtk_container_add(GTK_CONTAINER(box), handler->header.button_select_session);
+	gtk_style_context_add_class(gtk_widget_get_style_context(handler->header.button_select_session), "circular");
+	g_signal_connect(handler->header.button_select_session, "clicked", G_CALLBACK(button_select_session_clicked), handler);
 	/* Button new document */
 	handler->header.button_new_document = gtk_button_new_from_icon_name("tab-new-symbolic", GTK_ICON_SIZE_BUTTON);
 	gtk_widget_set_name(handler->header.button_new_document, "button_new_document");

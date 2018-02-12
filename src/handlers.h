@@ -94,7 +94,7 @@ struct chandler {
 		GtkWidget *header_bar;
 		GtkWidget *revealer_session;
 		GtkWidget *stack_extra;
-		GtkWidget *button_open_menu;
+		GtkWidget *button_select_session;
 		GtkWidget *button_new_document;
 		GtkWidget *button_open_document;
 		GtkWidget *button_save_document;
