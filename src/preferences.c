@@ -47,7 +47,6 @@ static gboolean switch_show_line_numbers_state_set(GtkSwitch *widget, gboolean s
 {
 	chandler *handler = user_data;
 	GtkWidget *page = NULL;
-	GtkWidget *source_view = NULL;
 	cview *view = NULL;
 	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
 	while (page_count > 0) {
@@ -63,7 +62,6 @@ static gboolean switch_show_grid_pattern_state_set(GtkSwitch *widget, gboolean s
 {
 	chandler *handler = user_data;
 	GtkWidget *page = NULL;
-	GtkWidget *source_view = NULL;
 	cview *view = NULL;
 	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
 	while (page_count > 0) {
@@ -79,7 +77,6 @@ static gboolean switch_show_right_margin_state_set(GtkSwitch *widget, gboolean s
 {
 	chandler *handler = user_data;
 	GtkWidget *page = NULL;
-	GtkWidget *source_view = NULL;
 	cview *view = NULL;
 	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
 	while (page_count > 0) {
@@ -95,7 +92,6 @@ static gboolean switch_automatic_indentation_state_set(GtkSwitch *widget, gboole
 {
 	chandler *handler = user_data;
 	GtkWidget *page = NULL;
-	GtkWidget *source_view = NULL;
 	cview *view = NULL;
 	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
 	while (page_count > 0) {
@@ -111,7 +107,6 @@ static gboolean switch_show_spaces_state_set(GtkSwitch *widget, gboolean state, 
 {
 	chandler *handler = user_data;
 	GtkWidget *page = NULL;
-	GtkWidget *source_view = NULL;
 	cview *view = NULL;
 	GtkSourceSpaceDrawer *source_space_drawer = NULL;
 	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
@@ -128,9 +123,7 @@ static gboolean switch_insert_spaces_instead_of_tabs_state_set(GtkSwitch *widget
 {
 	chandler *handler = user_data;
 	GtkWidget *page = NULL;
-	GtkWidget *source_view = NULL;
 	cview *view = NULL;
-	GtkSourceSpaceDrawer *source_space_drawer = NULL;
 	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
 	while (page_count > 0) {
 		page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), page_count - 1);
@@ -145,9 +138,7 @@ static gboolean switch_allow_text_wrapping_state_set(GtkSwitch *widget, gboolean
 {
 	chandler *handler = user_data;
 	GtkWidget *page = NULL;
-	GtkWidget *source_view = NULL;
 	cview *view = NULL;
-	GtkSourceSpaceDrawer *source_space_drawer = NULL;
 	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
 	while (page_count > 0) {
 		page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), page_count - 1);
@@ -170,9 +161,7 @@ static gboolean switch_allow_split_words_over_lines_state_set(GtkSwitch *widget,
 {
 	chandler *handler = user_data;
 	GtkWidget *page = NULL;
-	GtkWidget *source_view = NULL;
 	cview *view = NULL;
-	GtkSourceSpaceDrawer *source_space_drawer = NULL;
 	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
 	while (page_count > 0) {
 		page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), page_count - 1);
@@ -195,9 +184,7 @@ static gboolean switch_highlight_current_line_state_set(GtkSwitch *widget, gbool
 {
 	chandler *handler = user_data;
 	GtkWidget *page = NULL;
-	GtkWidget *source_view = NULL;
 	cview *view = NULL;
-	GtkSourceSpaceDrawer *source_space_drawer = NULL;
 	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
 	while (page_count > 0) {
 		page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), page_count - 1);
