@@ -45,10 +45,12 @@ static gboolean switch_show_overview_map_state_set(GtkSwitch *widget, gboolean s
 static gboolean switch_show_line_numbers_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
 {
 	chandler *handler = user_data;
-	cview *view = handler->views;
-	while (view) {
+	cview *view = NULL;
+	GList *view_iter = handler->views;
+	while (view_iter) {
+		view = view_iter->data;
 		gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(view->source_view), state);
-		view = g_list_next(view);
+		view_iter = g_list_next(view_iter);
 	}
 	return FALSE;
 }
@@ -56,10 +58,12 @@ static gboolean switch_show_line_numbers_state_set(GtkSwitch *widget, gboolean s
 static gboolean switch_show_grid_pattern_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
 {
 	chandler *handler = user_data;
-	cview *view = handler->views;
-	while (view) {
+	cview *view = NULL;
+	GList *view_iter = handler->views;
+	while (view_iter) {
+		view = view_iter->data;
 		gtk_source_view_set_background_pattern(GTK_SOURCE_VIEW(view->source_view), state);
-		view = g_list_next(view);
+		view_iter = g_list_next(view_iter);
 	}
 	return FALSE;
 }
@@ -67,10 +71,12 @@ static gboolean switch_show_grid_pattern_state_set(GtkSwitch *widget, gboolean s
 static gboolean switch_show_right_margin_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
 {
 	chandler *handler = user_data;
-	cview *view = handler->views;
-	while (view) {
+	cview *view = NULL;
+	GList *view_iter = handler->views;
+	while (view_iter) {
+		view = view_iter->data;
 		gtk_source_view_set_show_right_margin(GTK_SOURCE_VIEW(view->source_view), state);
-		view = g_list_next(view);
+		view_iter = g_list_next(view_iter);
 	}
 	return FALSE;
 }
@@ -78,10 +84,12 @@ static gboolean switch_show_right_margin_state_set(GtkSwitch *widget, gboolean s
 static gboolean switch_automatic_indentation_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
 {
 	chandler *handler = user_data;
-	cview *view = handler->views;
-	while (view) {
+	cview *view = NULL;
+	GList *view_iter = handler->views;
+	while (view_iter) {
+		view = view_iter->data;
 		gtk_source_view_set_auto_indent(GTK_SOURCE_VIEW(view->source_view), state);
-		view = g_list_next(view);
+		view_iter = g_list_next(view_iter);
 	}
 	return FALSE;
 }
