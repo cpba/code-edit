@@ -170,7 +170,7 @@ struct chandler {
 		GtkWidget *box;
 		GtkWidget *stack_switcher;
 		GtkWidget *stack;
-		GtkWidget *switch_show_files_tree;
+		GtkWidget *switch_show_sidebar;
 		GtkWidget *switch_show_status_bar;
 		GtkWidget *switch_show_overview_map;
 		GtkWidget *switch_show_line_numbers;

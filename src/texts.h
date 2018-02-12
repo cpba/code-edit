@@ -33,7 +33,7 @@
 #define TEXT_PREVIOUS "Previous"
 #define TEXT_REPLACE "Replace"
 #define TEXT_REPLACE_ALL "Replace All"
-#define TEXT_SHOW_FILES_TREE "Show files tree"
+#define TEXT_SHOW_SIDEBAR "Show side bar"
 #define TEXT_SHOW_STATUS_BAR "Show status bar"
 #define TEXT_SHOW_OVERVIEW_MAP "Show overview map"
 #define TEXT_SHOW_LINE_NUMBERS "Show line numbers"

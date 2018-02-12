@@ -425,10 +425,10 @@ void window_hide_search_bar_and_replace_bar(chandler *handler)
 
 void window_toggle_sidebar(chandler *handler)
 {
-	if (gtk_widget_get_visible(handler->sidebar.overlay)) {
-		gtk_widget_hide(handler->sidebar.overlay);
+	if (gtk_switch_get_state(GTK_SWITCH(handler->preferences.switch_show_sidebar))) {
+		gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_sidebar), FALSE);
 	} else {
-		gtk_widget_show_all(handler->sidebar.overlay);
+		gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_sidebar), TRUE);
 	}
 }
 

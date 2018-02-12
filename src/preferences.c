@@ -18,9 +18,10 @@
 #include <gtk/gtk.h>
 #include "handlers.h"
 
-static gboolean switch_show_files_tree_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
+static gboolean switch_show_sidebar_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
 {
 	chandler *handler = user_data;
+	printf("state\n");
 	if (state) {
 		gtk_widget_show_all(handler->sidebar.overlay);
 	} else {
@@ -282,7 +283,7 @@ void init_preferences(chandler *handler)
 	gtk_widget_set_halign(box_horizontal, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(box_horizontal, GTK_ALIGN_FILL);
 	gtk_box_set_homogeneous(GTK_BOX(box_horizontal), TRUE);
-	label = gtk_label_new(TEXT_SHOW_FILES_TREE);
+	label = gtk_label_new(TEXT_SHOW_SIDEBAR);
 	gtk_container_add(GTK_CONTAINER(box_horizontal), label);
 	gtk_widget_set_hexpand(label, FALSE);
 	gtk_widget_set_vexpand(label, TRUE);
@@ -290,13 +291,13 @@ void init_preferences(chandler *handler)
 	gtk_widget_set_valign(label, GTK_ALIGN_FILL);
 	gtk_label_set_xalign(GTK_LABEL(label), 1.0);
 	gtk_size_group_add_widget(size_group, label);
-	handler->preferences.switch_show_files_tree = gtk_switch_new();
-	gtk_container_add(GTK_CONTAINER(box_horizontal), handler->preferences.switch_show_files_tree);
-	gtk_widget_set_hexpand(handler->preferences.switch_show_files_tree, FALSE);
-	gtk_widget_set_vexpand(handler->preferences.switch_show_files_tree, TRUE);
-	gtk_widget_set_halign(handler->preferences.switch_show_files_tree, GTK_ALIGN_START);
-	gtk_widget_set_valign(handler->preferences.switch_show_files_tree, GTK_ALIGN_FILL);
-	g_signal_connect(handler->preferences.switch_show_files_tree, "state-set", G_CALLBACK(switch_show_files_tree_state_set), handler);
+	handler->preferences.switch_show_sidebar = gtk_switch_new();
+	gtk_container_add(GTK_CONTAINER(box_horizontal), handler->preferences.switch_show_sidebar);
+	gtk_widget_set_hexpand(handler->preferences.switch_show_sidebar, FALSE);
+	gtk_widget_set_vexpand(handler->preferences.switch_show_sidebar, TRUE);
+	gtk_widget_set_halign(handler->preferences.switch_show_sidebar, GTK_ALIGN_START);
+	gtk_widget_set_valign(handler->preferences.switch_show_sidebar, GTK_ALIGN_FILL);
+	g_signal_connect(handler->preferences.switch_show_sidebar, "state-set", G_CALLBACK(switch_show_sidebar_state_set), handler);
 	/* Show status bar */
 	box_horizontal = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
 	gtk_container_add(GTK_CONTAINER(box_centered), box_horizontal);
