@@ -174,6 +174,8 @@ static void document_async_ready(GObject *source_object, GAsyncResult *res, gpoi
 		update_document_views_status(handler, document);
 		update_view_status(handler, NULL);
 	}
+	gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(document->source_buffer), &document->iter_insert);
+	gtk_text_buffer_place_cursor(GTK_TEXT_BUFFER(document->source_buffer), &document->iter_insert);
 }
 
 static void source_buffer_changed(GtkTextBuffer *text_buffer, gpointer user_data)
@@ -262,6 +264,8 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 		document->cancelled = FALSE;
 		document->encoding = gtk_source_encoding_get_utf8();
 		document->source_buffer = gtk_source_buffer_new(NULL);
+		gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(document->source_buffer), &document->iter_insert);
+		gtk_text_buffer_place_cursor(GTK_TEXT_BUFFER(document->source_buffer), &document->iter_insert);
 		document->source_search_context = gtk_source_search_context_new(document->source_buffer, handler->search_and_replace.source_search_settings);
 		document->operation_start = g_date_time_new_now_local();
 		g_object_set_data(G_OBJECT(document->source_buffer), "document", document);
