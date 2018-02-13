@@ -83,7 +83,7 @@ static void action_open_selected_activate(GSimpleAction *simple, GVariant *param
 
 static void action_rename_selected_activate(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
 {
-	sidebar_open_selected(user_data);
+	sidebar_rename_selected(user_data);
 }
 
 static void action_duplicate_selected_activate(GSimpleAction *simple, GVariant *parameter, gpointer user_data)

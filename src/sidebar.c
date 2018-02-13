@@ -131,13 +131,25 @@ void sidebar_rename_selected(chandler *handler)
 {
 	GtkTreeSelection *tree_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(handler->sidebar.tree_view));
 	gchar *file_path = NULL;
+	gchar *path_string = NULL;
+	GtkTreePath *path = NULL;
+	GdkRectangle rect;
 	GtkTreeIter iter;
 	if (gtk_tree_selection_get_selected(tree_selection, NULL, &iter)) {
+		path_string = gtk_tree_model_get_string_from_iter(GTK_TREE_MODEL(handler->sidebar.tree_store), &iter);
+		path = gtk_tree_path_new_from_string(path_string);
+		g_free(path_string);
 		gtk_tree_model_get(GTK_TREE_MODEL(handler->sidebar.tree_store),
 			&iter,
 			2, &file_path,
 			-1);
-		/* TODO */
+		gtk_tree_view_get_cell_area(GTK_TREE_VIEW(handler->sidebar.tree_view),
+			path,
+			NULL,
+			&rect);
+		gtk_popover_set_pointing_to(GTK_POPOVER(handler->sidebar.rename.popover), &rect);
+		gtk_popover_popup(GTK_POPOVER(handler->sidebar.rename.popover));
+		g_boxed_free(GTK_TYPE_TREE_PATH, path);
 	}
 }
 
@@ -176,6 +188,36 @@ void sidebar_remove_folder_from_session(chandler *handler)
 	if (gtk_tree_selection_get_selected(tree_selection, NULL, &iter)) {
 		gtk_tree_store_remove(handler->sidebar.tree_store, &iter);
 	}
+}
+
+static void init_popover_rename(chandler *handler)
+{
+	GtkWidget *box = NULL;
+	/* Popover */
+	handler->sidebar.rename.popover = gtk_popover_new(handler->sidebar.tree_view);
+	gtk_popover_set_position(GTK_POPOVER(handler->sidebar.rename.popover), GTK_POS_LEFT);
+	/* Box */
+	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, MEDIUM_SPACING);
+	gtk_container_add(GTK_CONTAINER(handler->sidebar.rename.popover), box);
+	gtk_container_set_border_width(GTK_CONTAINER(handler->sidebar.rename.popover), MEDIUM_SPACING);
+	/* Entry rename */
+	handler->sidebar.rename.entry = gtk_entry_new();
+	gtk_container_add(GTK_CONTAINER(box), handler->sidebar.rename.entry);
+	gtk_widget_set_hexpand(handler->sidebar.rename.entry, TRUE);
+	gtk_widget_set_vexpand(handler->sidebar.rename.entry, FALSE);
+	gtk_widget_set_halign(handler->sidebar.rename.entry, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->sidebar.rename.entry, GTK_ALIGN_CENTER);
+	/* Button rename */
+	handler->sidebar.rename.button = gtk_button_new_with_label(TEXT_RENAME);
+	gtk_container_add(GTK_CONTAINER(box), handler->sidebar.rename.button);
+	gtk_widget_set_hexpand(handler->sidebar.rename.button, TRUE);
+	gtk_widget_set_vexpand(handler->sidebar.rename.button, FALSE);
+	gtk_widget_set_halign(handler->sidebar.rename.button, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->sidebar.rename.button, GTK_ALIGN_CENTER);
+	gtk_style_context_add_class(gtk_widget_get_style_context(handler->sidebar.rename.button), GTK_STYLE_CLASS_SUGGESTED_ACTION);
+	/* Show all */
+	gtk_widget_show_all(box);
+	/* TODO */
 }
 
 static void init_popover_folder_selected(chandler *handler)
@@ -480,4 +522,5 @@ void init_sidebar(chandler *handler)
 	init_popover_root_selected(handler);
 	init_popover_regular_selected(handler);
 	init_popover_folder_selected(handler);
+	init_popover_rename(handler);
 }
