@@ -26,7 +26,6 @@
 #define PROGRAM_ICON_NAME "text-editor"
 #define CONFIGURATION_FILE_NAME "/code.conf"
 #define SESSIONS_FILE_NAME "/code-sessions.conf"
-#define DEFAULT_SESSION_NAME "Default"
 #define WINDOW_VIEW_MIN_WIDTH 320
 #define WINDOW_VIEW_MIN_HEIGHT 320
 #define SIDEBAR_TREE_VIEW_MIN_WIDTH 200
@@ -74,16 +73,20 @@ struct cview {
 
 struct csession {
 	GString *name;
+	gchar *id;
 	GtkWidget *box;
 	GtkWidget *label;
+	GtkWidget *entry;
+	GList *view_file_names;
+	GList *folders;
 };
 
 struct chandler {
 	GtkApplication *application;
 	GList *documents;
 	GList *views;
-	GKeyFile *key_file_config;
-	GKeyFile *key_file_sessions;
+	GKeyFile *key_file;
+	GList *sessions;
 	csession *current_session;
 	struct {
 		GtkWidget *window;
@@ -92,8 +95,9 @@ struct chandler {
 	struct {
 		chandler *handler;
 		GtkWidget *header_bar;
-		GtkWidget *revealer_session;
+		GtkWidget *stack_session;
 		GtkWidget *stack_extra;
+		GtkWidget *button_add_session;
 		GtkWidget *button_select_session;
 		GtkWidget *button_new_document;
 		GtkWidget *button_open_document;
@@ -104,8 +108,17 @@ struct chandler {
 	} header;
 	struct {
 		GtkWidget *box;
+		GtkWidget *scrolled_window;
+		GtkWidget *search_bar;
 		GtkWidget *search_entry;
 		GtkWidget *list_box;
+		GList *search_words;
+		GtkSizeGroup *size_group;
+		struct {
+			GtkWidget *popover;
+			GtkWidget *entry;
+			GtkWidget *button_delete_session;
+		} edit;
 	} select_session;
 	struct {
 		GtkWidget *paned;
@@ -205,11 +218,6 @@ struct chandler {
 	} statusbar;
 };
 
-void window_update_sessions(chandler *handler);
-void window_open_session(chandler *handler, csession *session);
-void window_save_session(chandler *handler, csession *session);
-csession *window_new_session(chandler *handler, gchar *name);
-
 /* Header */
 void update_headerbar(chandler *handler, cview *view);
 
@@ -237,6 +245,23 @@ void save_document(cdocument *document, gchar *file_name);
 cdocument *new_document(chandler *handler, gchar *file_name);
 void close_view(chandler *handler, cview *view);
 void add_view_for_document(chandler *handler, cdocument *document);
+
+/* Preferences */
+void preferences_default(chandler *handler);
+void preferences_save(chandler *handler);
+void preferences_load(chandler *handler);
+
+/* Select session */
+gchar *select_session_new_id(chandler *handler);
+void select_session_load(chandler *handler, csession *session);
+csession *select_session_new_session(chandler *handler, gchar *name, gchar *id, gint index);
+void select_session_load_sessions(chandler *handler);
+void select_session_save(chandler *handler);
+
+/* Session */
+void session_update_lists(chandler *handler, csession *session);
+void session_open(chandler *handler, csession *session);
+void session_close(chandler *handler);
 
 /* Actions */
 void window_show_about(chandler *handler);

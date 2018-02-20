@@ -352,10 +352,6 @@ void close_view(chandler *handler, cview *view)
 		g_slice_free1(sizeof(cview), view);
 	}
 	update_view_status(handler, NULL);
-	/* Session */
-	if (handler->current_session) {
-		window_save_session(handler, handler->current_session);
-	}
 }
 
 void add_view_for_document(chandler *handler, cdocument *document)
@@ -441,10 +437,6 @@ void add_view_for_document(chandler *handler, cdocument *document)
 		/* Show page */
 		gtk_notebook_set_current_page(GTK_NOTEBOOK(handler->session.notebook), page_index);
 		update_view_status(handler, view);
-		/* Session */
-		if (handler->current_session) {
-			window_save_session(handler, handler->current_session);
-		}
 		/* Add source completion */
 		source_completion = gtk_source_view_get_completion(GTK_SOURCE_VIEW(view->source_view));
 		gtk_source_completion_add_provider(source_completion, GTK_SOURCE_COMPLETION_PROVIDER(handler->search_and_replace.source_completion_words), NULL);

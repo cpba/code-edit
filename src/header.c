@@ -83,10 +83,20 @@ static void button_preferences_toggled(GtkWidget *widget, gpointer user_data)
 	}
 }
 
-static void button_session_selection_mode_clicked(GtkWidget *widget, gpointer user_data)
+static void button_add_session_clicked(GtkWidget *widget, gpointer user_data)
 {
 	chandler *handler = user_data;
-	gtk_list_box_set_selection_mode(GTK_LIST_BOX(handler->select_session.list_box), TRUE);
+	gchar *id = select_session_new_id(handler);
+	csession *session = select_session_new_session(handler, TEXT_UNTITLED_SESSION_NAME, id, 0);
+	GtkWidget *row = gtk_widget_get_parent(session->box);
+	GtkAllocation allocation;
+	gtk_container_check_resize(GTK_CONTAINER(handler->select_session.list_box));
+	gtk_list_box_select_row(GTK_LIST_BOX(handler->select_session.list_box), GTK_LIST_BOX_ROW(row));
+	gtk_entry_set_text(GTK_ENTRY(handler->select_session.edit.entry), session->name->str);
+	gtk_widget_get_allocation(GTK_WIDGET(row), &allocation);
+	gtk_popover_set_pointing_to(GTK_POPOVER(handler->select_session.edit.popover), &allocation);
+	gtk_popover_popup(GTK_POPOVER(handler->select_session.edit.popover));
+	g_free(id);
 }
 
 void init_header(chandler *handler)
@@ -99,13 +109,24 @@ void init_header(chandler *handler)
 	gtk_header_bar_set_show_close_button(GTK_HEADER_BAR(handler->header.header_bar), TRUE);
 	gtk_header_bar_set_title(GTK_HEADER_BAR(handler->header.header_bar), PROGRAM_NAME);
 	/* Stack session */
-	handler->header.revealer_session = gtk_revealer_new();
-	gtk_widget_set_name(handler->header.revealer_session, "header_revealer_session");
-	gtk_header_bar_pack_start(GTK_HEADER_BAR(handler->header.header_bar), handler->header.revealer_session);
-	gtk_revealer_set_transition_type(GTK_REVEALER(handler->header.revealer_session), GTK_STACK_TRANSITION_TYPE_NONE);
+	handler->header.stack_session = gtk_stack_new();
+	gtk_widget_set_name(handler->header.stack_session, "header_stack_session");
+	gtk_header_bar_pack_start(GTK_HEADER_BAR(handler->header.header_bar), handler->header.stack_session);
+	gtk_stack_set_transition_type(GTK_STACK(handler->header.stack_session), GTK_STACK_TRANSITION_TYPE_NONE);
 	/* Box session */
 	box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
-	gtk_container_add(GTK_CONTAINER(handler->header.revealer_session), box);
+	gtk_stack_add_named(GTK_STACK(handler->header.stack_session), box, "select-session");
+	/* Button add session */
+	handler->header.button_add_session = gtk_button_new_from_icon_name("list-add-symbolic", GTK_ICON_SIZE_BUTTON);
+	gtk_container_add(GTK_CONTAINER(box), handler->header.button_add_session);
+	gtk_widget_set_hexpand(handler->header.button_add_session, TRUE);
+	gtk_widget_set_vexpand(handler->header.button_add_session, FALSE);
+	gtk_widget_set_halign(handler->header.button_add_session, GTK_ALIGN_START);
+	gtk_widget_set_valign(handler->header.button_add_session, GTK_ALIGN_CENTER);
+	g_signal_connect(handler->header.button_add_session, "clicked", G_CALLBACK(button_add_session_clicked), handler);
+	/* Box session */
+	box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
+	gtk_stack_add_named(GTK_STACK(handler->header.stack_session), box, "session");
 	/* Button select session */
 	handler->header.button_select_session = gtk_button_new_from_icon_name("go-previous-symbolic", GTK_ICON_SIZE_BUTTON);
 	gtk_widget_set_name(handler->header.button_select_session, "button_select_session");
@@ -145,12 +166,6 @@ void init_header(chandler *handler)
 	/* Box select-session */
 	box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
 	gtk_stack_add_named(GTK_STACK(handler->header.stack_extra), box, "select-session");
-	/* Button selection-mode */
-	handler->header.button_session_selection_mode = gtk_button_new_from_icon_name("object-select-symbolic", GTK_ICON_SIZE_BUTTON);
-	gtk_widget_set_name(handler->header.button_session_selection_mode, "button_session_selection_mode");
-	gtk_container_add(GTK_CONTAINER(box), handler->header.button_session_selection_mode);
-	gtk_style_context_add_class(gtk_widget_get_style_context(handler->header.button_session_selection_mode), "circular");
-	g_signal_connect(handler->header.button_session_selection_mode, "clicked", G_CALLBACK(button_session_selection_mode_clicked), handler);
 	/* Box session */
 	box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
 	gtk_stack_add_named(GTK_STACK(handler->header.stack_extra), box, "session");

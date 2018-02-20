@@ -18,6 +18,149 @@
 #include <gtk/gtk.h>
 #include "handlers.h"
 
+void preferences_default(chandler *handler)
+{
+	gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_sidebar), FALSE);
+	gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_status_bar), TRUE);
+	gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_overview_map), FALSE);
+	gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_line_numbers), TRUE);
+	gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_grid_pattern), FALSE);
+	gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_right_margin), TRUE);
+	gtk_spin_button_set_value(GTK_SPIN_BUTTON(handler->preferences.spin_button_right_margin_position), 80);
+	gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_automatic_indentation), FALSE);
+	gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_non_breaking_space), TRUE);
+	gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_newline), FALSE);
+	gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_spaces), TRUE);
+	gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_tabs), TRUE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_leading_tabs_and_spaces), TRUE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_inside_text_tabs_and_spaces), FALSE);
+	gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_trailing_tabs_and_spaces), TRUE);
+}
+
+void preferences_save(chandler *handler)
+{
+	g_key_file_set_boolean(handler->key_file, "preferences", "show_sidebar",
+		gtk_switch_get_state(GTK_SWITCH(handler->preferences.switch_show_sidebar)));
+	g_key_file_set_boolean(handler->key_file, "preferences", "show_statusbar",
+		gtk_switch_get_state(GTK_SWITCH(handler->preferences.switch_show_status_bar)));
+	g_key_file_set_boolean(handler->key_file, "preferences", "show_line_numbers",
+		gtk_switch_get_state(GTK_SWITCH(handler->preferences.switch_show_line_numbers)));
+	g_key_file_set_boolean(handler->key_file, "preferences", "show_grid_pattern",
+		gtk_switch_get_state(GTK_SWITCH(handler->preferences.switch_show_grid_pattern)));
+	g_key_file_set_boolean(handler->key_file, "preferences", "show_right_margin",
+		gtk_switch_get_state(GTK_SWITCH(handler->preferences.switch_show_right_margin)));
+	g_key_file_set_integer(handler->key_file, "preferences", "right_margin_position",
+		gtk_spin_button_get_value(GTK_SPIN_BUTTON(handler->preferences.spin_button_right_margin_position)));
+	g_key_file_set_boolean(handler->key_file, "preferences", "automatic_indentation",
+		gtk_switch_get_state(GTK_SWITCH(handler->preferences.switch_automatic_indentation)));
+	g_key_file_set_boolean(handler->key_file, "preferences", "show_non_breaking_space",
+		gtk_switch_get_state(GTK_SWITCH(handler->preferences.switch_show_non_breaking_space)));
+	g_key_file_set_boolean(handler->key_file, "preferences", "show_newline",
+		gtk_switch_get_state(GTK_SWITCH(handler->preferences.switch_show_newline)));
+	g_key_file_set_boolean(handler->key_file, "preferences", "show_spaces",
+		gtk_switch_get_state(GTK_SWITCH(handler->preferences.switch_show_spaces)));
+	g_key_file_set_boolean(handler->key_file, "preferences", "show_tabs",
+		gtk_switch_get_state(GTK_SWITCH(handler->preferences.switch_show_tabs)));
+	g_key_file_set_boolean(handler->key_file, "preferences", "show_leading_tabs_and_spaces",
+		gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_leading_tabs_and_spaces)));
+	g_key_file_set_boolean(handler->key_file, "preferences", "show_inside_text_tabs_and_spaces",
+		gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_inside_text_tabs_and_spaces)));
+	g_key_file_set_boolean(handler->key_file, "preferences", "show_inside_text_tabs_and_spaces",
+		gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_inside_text_tabs_and_spaces)));
+}
+
+void preferences_load(chandler *handler)
+{
+	/* Show sidebar */
+	gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_sidebar),
+		g_key_file_get_boolean(handler->key_file, "preferences", "show_sidebar", NULL));
+	/* Show statusbar */
+	if (g_key_file_has_key(handler->key_file, "preferences", "show_statusbar", NULL)) {
+		gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_status_bar),
+			g_key_file_get_boolean(handler->key_file, "preferences", "show_statusbar", NULL));
+	} else {
+		gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_status_bar), TRUE);
+	}
+	/* Show overview map */
+	/* TODO */
+	/* Show line numbers */
+	if (g_key_file_has_key(handler->key_file, "preferences", "show_line_numbers", NULL)) {
+		gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_line_numbers),
+			g_key_file_get_boolean(handler->key_file, "preferences", "show_line_numbers", NULL));
+	} else {
+		gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_line_numbers), TRUE);
+	}
+	/* Show grid pattern */
+	gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_grid_pattern),
+		g_key_file_get_boolean(handler->key_file, "preferences", "show_grid_pattern", NULL));
+	/* Show right margin */
+	if (g_key_file_has_key(handler->key_file, "preferences", "show_right_margin", NULL)) {
+		gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_right_margin),
+			g_key_file_get_boolean(handler->key_file, "preferences", "show_right_margin", NULL));
+	} else {
+		gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_right_margin), TRUE);
+	}
+	/* Right margin position */
+	if (g_key_file_has_key(handler->key_file, "preferences", "right_margin_position", NULL)) {
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(handler->preferences.spin_button_right_margin_position),
+			g_key_file_get_integer(handler->key_file, "preferences", "right_margin_position", NULL));
+	} else {
+		gtk_spin_button_set_value(GTK_SPIN_BUTTON(handler->preferences.spin_button_right_margin_position), 80);
+	}
+	/* Automatic indentation */
+	gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_automatic_indentation),
+		g_key_file_get_boolean(handler->key_file, "preferences", "automatic_indentation", NULL));
+	/* Show non breaking space */
+	if (g_key_file_has_key(handler->key_file, "preferences", "show_non_breaking_space", NULL)) {
+		gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_non_breaking_space),
+			g_key_file_get_boolean(handler->key_file, "preferences", "show_non_breaking_space", NULL));
+	} else {
+		gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_non_breaking_space), TRUE);
+	}
+	/* Show newline */
+	if (g_key_file_has_key(handler->key_file, "preferences", "show_newline", NULL)) {
+		gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_newline),
+			g_key_file_get_boolean(handler->key_file, "preferences", "show_newline", NULL));
+	} else {
+		gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_newline), FALSE);
+	}
+	/* Show spaces */
+	if (g_key_file_has_key(handler->key_file, "preferences", "show_spaces", NULL)) {
+		gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_spaces),
+			g_key_file_get_boolean(handler->key_file, "preferences", "show_spaces", NULL));
+	} else {
+		gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_spaces), TRUE);
+	}
+	/* Show tabs */
+	if (g_key_file_has_key(handler->key_file, "preferences", "show_tabs", NULL)) {
+		gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_tabs),
+			g_key_file_get_boolean(handler->key_file, "preferences", "show_tabs", NULL));
+	} else {
+		gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_tabs), TRUE);
+	}
+	/* Show leading tabs and spaces */
+	if (g_key_file_has_key(handler->key_file, "preferences", "show_leading_tabs_and_spaces", NULL)) {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_leading_tabs_and_spaces),
+			g_key_file_get_boolean(handler->key_file, "preferences", "show_leading_tabs_and_spaces", NULL));
+	} else {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_leading_tabs_and_spaces), TRUE);
+	}
+	/* Show inside text tabs and spaces */
+	if (g_key_file_has_key(handler->key_file, "preferences", "show_inside_text_tabs_and_spaces", NULL)) {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_inside_text_tabs_and_spaces),
+			g_key_file_get_boolean(handler->key_file, "preferences", "show_inside_text_tabs_and_spaces", NULL));
+	} else {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_inside_text_tabs_and_spaces), FALSE);
+	}
+	/* Show trailing tabs and space */
+	if (g_key_file_has_key(handler->key_file, "preferences", "show_trailing_tabs_and_spaces", NULL)) {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_trailing_tabs_and_spaces),
+			g_key_file_get_boolean(handler->key_file, "preferences", "show_trailing_tabs_and_spaces", NULL));
+	} else {
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_trailing_tabs_and_spaces), TRUE);
+	}
+}
+
 static gboolean switch_show_sidebar_state_set(GtkSwitch *widget, gboolean state, gpointer user_data)
 {
 	chandler *handler = user_data;

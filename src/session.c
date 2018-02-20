@@ -18,6 +18,92 @@
 #include <gtk/gtk.h>
 #include "handlers.h"
 
+void session_update_lists(chandler *handler, csession *session)
+{
+	GString *name = NULL;
+	gchar *path = NULL;
+	GFile *file = NULL;
+	GList *list_iter = NULL;
+	GtkWidget *page = NULL;
+	GtkTreeIter tree_iter;
+	gboolean valid = FALSE;
+	cview *view = NULL;
+	/* Clear current list of file names in views */
+	list_iter = session->view_file_names;
+	while (list_iter) {
+		g_string_free(list_iter->data, TRUE);
+		list_iter = g_list_next(list_iter);
+	}
+	g_list_free(session->view_file_names);
+	session->view_file_names = NULL;
+	/* Update list of file names in views */
+	page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), 0);
+	while (page) {
+		view = g_object_get_data(G_OBJECT(page), "view");
+		file = gtk_source_file_get_location(view->document->source_file);
+		path = g_file_get_path(file);
+		name = g_string_new(path);
+		session->view_file_names = g_list_append(session->view_file_names, name);
+		g_free(path);
+		page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook),
+			gtk_notebook_page_num(GTK_NOTEBOOK(handler->session.notebook), page) + 1);
+	}
+	/* Clear current list of folders in sidebar */
+	list_iter = session->folders;
+	while (list_iter) {
+		g_string_free(list_iter->data, TRUE);
+		list_iter = g_list_next(list_iter);
+	}
+	g_list_free(session->folders);
+	session->folders = NULL;
+	/* Update list of folders in sidebar */
+	valid = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(handler->sidebar.tree_store), &tree_iter);
+	while (valid) {
+		gtk_tree_model_get(GTK_TREE_MODEL(handler->sidebar.tree_store),
+			&tree_iter,
+			2, &path,
+			-1);
+		name = g_string_new(path);
+		session->folders = g_list_append(session->folders, name);
+		g_free(path);
+		valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(handler->sidebar.tree_store), &tree_iter);
+	}
+	handler->current_session = session;
+}
+
+void session_open(chandler *handler, csession *session)
+{
+	GString *name = NULL;
+	GList *name_iter = NULL;
+	cdocument *document = NULL;
+	/* Add views */
+	name_iter = session->view_file_names;
+	while (name_iter) {
+		name = name_iter->data;
+		document = new_document(handler, name->str);
+		add_view_for_document(handler, document);
+		name_iter = g_list_next(name_iter);
+	}
+	/* Add folders */
+	name_iter = session->folders;
+	while (name_iter) {
+		name = name_iter->data;
+		sidebar_add_iter(handler, NULL, name->str);
+		name_iter = g_list_next(name_iter);
+	}
+	handler->current_session = session;
+}
+
+void session_close(chandler *handler)
+{
+	cview *view = NULL;
+	gtk_tree_store_clear(handler->sidebar.tree_store);
+	while (gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook)) > 0) {
+		view = get_nth_view(handler, 0);
+		close_view(handler, view);
+	}
+}
+
 static void notebook_page_removed(GtkWidget *widget, GtkWidget *child, gint page_num, gpointer user_data)
 {
 	chandler *handler = user_data;

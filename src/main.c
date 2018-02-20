@@ -169,16 +169,22 @@ static void application_activate(GtkApplication *application, gpointer user_data
 	/* Document list */
 	handler->documents = NULL;
 	/* Key-file config */
-	handler->key_file_sessions = g_key_file_new();
+	handler->key_file = g_key_file_new();
 	if (g_get_user_config_dir()) {
 		key_file_path = g_string_new(g_get_user_config_dir());
 		key_file_path = g_string_append(key_file_path, SESSIONS_FILE_NAME);
 	}
 	if (key_file_path) {
-		g_key_file_load_from_file(handler->key_file_sessions, key_file_path->str, G_KEY_FILE_NONE, NULL);
+		if (!g_key_file_load_from_file(handler->key_file, key_file_path->str, G_KEY_FILE_NONE, NULL)) {
+			g_log(NULL, G_LOG_LEVEL_MESSAGE, "A new configuration file \"%s\" will be created.", key_file_path->str);
+			preferences_default(handler);
+		} else {
+			preferences_load(handler);
+		}
 		g_string_free(key_file_path, TRUE);
 	}
-	window_update_sessions(handler);
+	select_session_load_sessions(handler);
+	preferences_save(handler);
 	/* Show */
 	gtk_window_present(GTK_WINDOW(handler->window.window));
 	gtk_widget_show_all(handler->window.window);
@@ -191,7 +197,7 @@ static void application_activate(GtkApplication *application, gpointer user_data
 static void application_shutdown(GtkApplication *application, gpointer user_data)
 {
 	chandler *handler = user_data;
-	g_key_file_free(handler->key_file_sessions);
+	g_key_file_free(handler->key_file);
 	g_slice_free1(sizeof(chandler), handler);
 }
 

@@ -39,163 +39,16 @@ void window_quit(chandler *handler)
 	gtk_window_close(GTK_WINDOW(handler->window.window));
 }
 
-void window_open_session(chandler *handler, csession *session)
-{
-	gchar **strings = NULL;
-	gint i = 0;
-	gsize length = 0;
-	cdocument *document = NULL;
-	/* Add pages */
-	strings = g_key_file_get_string_list(handler->key_file_sessions,
-		session->name->str,
-		"views",
-		&length,
-		NULL);
-	if (strings && length > 0) {
-		i = 0;
-		while (i < length) {
-			if (strings[i]) {
-				document = new_document(handler, strings[i]);
-				add_view_for_document(handler, document);
-			}
-			i++;
-		}
-		g_strfreev(strings);
-	}
-	handler->current_session = session;
-}
-
-void window_save_session(chandler *handler, csession *session)
-{
-	GString *key_file_path = NULL;
-	gint page_count = gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook));
-	gint page_index = 0;
-	cview *view = NULL;
-	GFile *file = NULL;
-	const gchar **strings = NULL;
-	if (page_count > 0) {
-		strings = g_slice_alloc0(page_count * sizeof(gchar *));
-	}
-	while (page_index < page_count) {
-		view = get_nth_view(handler, page_index);
-		file = gtk_source_file_get_location(view->document->source_file);
-		if (file) {
-			strings[page_index] = g_file_get_path(file);
-		} else {
-			strings[page_index] = NULL;
-		}
-		page_index++;
-	}
-	g_key_file_set_string_list(handler->key_file_sessions,
-		session->name->str,
-		"views",
-		strings,
-		page_count);
-	if (strings) {
-		g_slice_free1(sizeof(page_count * sizeof(gchar *)), strings);
-	}
-	if (g_get_user_config_dir()) {
-		key_file_path = g_string_new(g_get_user_config_dir());
-		key_file_path = g_string_append(key_file_path, SESSIONS_FILE_NAME);
-	}
-	if (key_file_path) {
-		g_key_file_save_to_file(handler->key_file_sessions, key_file_path->str, NULL);
-		g_string_free(key_file_path, TRUE);
-	}
-}
-
-csession *window_new_session(chandler *handler, gchar *name)
-{
-	csession *session = g_slice_alloc0(sizeof(csession));
-	GString *label_string = NULL;
-	session->name = g_string_new(name);
-	session->box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
-	gtk_container_set_border_width(GTK_CONTAINER(session->box), MEDIUM_SPACING);
-	g_object_set_data(G_OBJECT(session->box), "session", session);
-	/* Label */
-	session->label = gtk_label_new(name);
-	gtk_container_add(GTK_CONTAINER(session->box), session->label);
-	gtk_widget_set_hexpand(session->label, TRUE);
-	gtk_widget_set_vexpand(session->label, FALSE);
-	gtk_widget_set_halign(session->label, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(session->label, GTK_ALIGN_CENTER);
-	gtk_label_set_xalign(GTK_LABEL(session->label), 0.0f);
-	gtk_label_set_ellipsize(GTK_LABEL(session->label), PANGO_ELLIPSIZE_END);
-	label_string = g_string_new("<b>");
-	label_string = g_string_append(label_string, name);
-	label_string = g_string_append(label_string, "</b>");
-	gtk_label_set_use_markup(GTK_LABEL(session->label), TRUE);
-	gtk_label_set_markup(GTK_LABEL(session->label), label_string->str);
-	g_string_free(label_string, TRUE);
-	/* List box */
-	gtk_list_box_insert(GTK_LIST_BOX(handler->select_session.list_box), session->box, -1);
-	gtk_widget_show_all(handler->select_session.list_box);
-	return session;
-}
-
-void window_update_sessions(chandler *handler)
-{
-	csession *session = NULL;
-	gint i = 0;
-	gsize length = 0;
-	gchar **strings = NULL;
-	GList *children = NULL;
-	GList *children_iter = NULL;
-	GtkWidget *session_box = NULL;
-	GtkWidget *row = NULL;
-	GtkWidget *icon = NULL;
-	/* Clear list box */
-	children = gtk_container_get_children(GTK_CONTAINER(handler->select_session.list_box));
-	children_iter = children;
-	while (children_iter) {
-		row = children_iter->data;
-		session_box = gtk_bin_get_child(GTK_BIN(row));
-		session = g_object_get_data(G_OBJECT(session_box), "session");
-		if (session) {
-			g_string_free(session->name, TRUE);
-			g_slice_free1(sizeof(csession), session);
-		}
-		gtk_widget_destroy(row);
-		children_iter = g_list_next(children_iter);
-	}
-	/* Add sessions */
-	strings = g_key_file_get_groups(handler->key_file_sessions, &length);
-	while (i < length) {
-		session = window_new_session(handler, strings[i]);
-		i++;
-	}
-	g_strfreev(strings);
-	/* Default session */
-	children = gtk_container_get_children(GTK_CONTAINER(handler->select_session.list_box));
-	if (g_list_length(children) < 1) {
-		window_new_session(handler, DEFAULT_SESSION_NAME);
-	}
-	/* Add session button */
-	icon = gtk_image_new_from_icon_name("list-add-symbolic", GTK_ICON_SIZE_BUTTON);
-	gtk_list_box_insert(GTK_LIST_BOX(handler->select_session.list_box), icon, -1);
-	gtk_widget_set_margin_top(icon, MEDIUM_SPACING);
-	gtk_widget_set_margin_bottom(icon, MEDIUM_SPACING);
-	gtk_widget_set_margin_start(icon, MEDIUM_SPACING);
-	gtk_widget_set_margin_end(icon, MEDIUM_SPACING);
-	row = gtk_widget_get_parent(icon);
-	gtk_list_box_row_set_selectable(GTK_LIST_BOX_ROW(row), FALSE);
-	gtk_widget_show_all(icon);
-	g_list_free(children);
-}
-
 void window_go_to_select_session(gpointer user_data)
 {
 	chandler *handler = user_data;
-	cview *view = NULL;
-	handler->current_session = NULL;
 	gtk_list_box_unselect_all(GTK_LIST_BOX(handler->select_session.list_box));
-	/* Remove current notebook pages */
-	while (gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook)) > 0) {
-		view = get_nth_view(handler, 0);
-		close_view(handler, view);
+	if (handler->current_session) {
+		session_update_lists(handler, handler->current_session);
+		handler->current_session = NULL;
 	}
-	window_update_sessions(handler);
-	gtk_revealer_set_reveal_child(GTK_REVEALER(handler->header.revealer_session), FALSE);
+	session_close(handler);
+	gtk_stack_set_visible_child_name(GTK_STACK(handler->header.stack_session), "select-session");
 	gtk_stack_set_visible_child_name(GTK_STACK(handler->header.stack_extra), "select-session");
 	gtk_stack_set_visible_child_name(GTK_STACK(handler->window.stack), "select-session");
 	gtk_header_bar_set_title(GTK_HEADER_BAR(handler->header.header_bar), TEXT_SELECT_SESSION);
@@ -205,7 +58,7 @@ void window_go_to_select_session(gpointer user_data)
 void window_go_to_session(gpointer user_data)
 {
 	chandler *handler = user_data;
-	gtk_revealer_set_reveal_child(GTK_REVEALER(handler->header.revealer_session), TRUE);
+	gtk_stack_set_visible_child_name(GTK_STACK(handler->header.stack_session), "session");
 	gtk_stack_set_visible_child_name(GTK_STACK(handler->header.stack_extra), "session");
 	gtk_stack_set_visible_child_name(GTK_STACK(handler->window.stack), "session");
 	update_view_status(handler, NULL);
@@ -448,6 +301,17 @@ void window_toggle_sidebar(chandler *handler)
 	}
 }
 
+static gboolean window_key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
+{
+	chandler *handler = user_data;
+	gboolean stop_propagate = FALSE;
+	const gchar *visible_child = gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack));
+	if (g_strcmp0(visible_child, "select-session") == 0) {
+		stop_propagate = gtk_search_bar_handle_event(GTK_SEARCH_BAR(handler->select_session.search_bar), (GdkEvent *)event);
+	}
+	return stop_propagate;
+}
+
 static gboolean window_delete_event(GtkWidget *widget, GdkEvent *event, gpointer user_data)
 {
 	chandler *handler = user_data;
@@ -481,9 +345,17 @@ static gboolean window_delete_event(GtkWidget *widget, GdkEvent *event, gpointer
 static void window_destroy(GtkWidget *widget, gpointer user_data)
 {
 	chandler *handler = user_data;
+	GString *key_file_path = NULL;
 	if (handler->current_session) {
-		window_save_session(handler, handler->current_session);
+		session_update_lists(handler, handler->current_session);
 	}
+	select_session_save(handler);
+	if (g_get_user_config_dir()) {
+		key_file_path = g_string_new(g_get_user_config_dir());
+		key_file_path = g_string_append(key_file_path, SESSIONS_FILE_NAME);
+		g_key_file_save_to_file(handler->key_file, key_file_path->str, NULL);
+	}
+	preferences_save(handler);
 }
 
 void init_window(chandler *handler)
@@ -492,6 +364,7 @@ void init_window(chandler *handler)
 	handler->window.window = gtk_application_window_new(handler->application);
 	gtk_window_set_icon_name(GTK_WINDOW(handler->window.window), "text-editor");
 	g_signal_connect(handler->window.window, "delete-event", G_CALLBACK(window_delete_event), handler);
+	g_signal_connect(handler->window.window, "key-press-event", G_CALLBACK(window_key_press_event), handler);
 	g_signal_connect(handler->window.window, "destroy", G_CALLBACK(window_destroy), handler);
 	/* Stack main */
 	handler->window.stack = gtk_stack_new();
