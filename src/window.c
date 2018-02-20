@@ -76,73 +76,54 @@ void window_open(gpointer user_data)
 	chandler *handler = user_data;
 	cview *view = NULL;
 	gint response = 0;
-	GtkWidget *dialog = gtk_file_chooser_dialog_new(TEXT_OPEN,
-		GTK_WINDOW(handler->window.window),
-		GTK_FILE_CHOOSER_ACTION_OPEN,
-		TEXT_OPEN, GTK_RESPONSE_OK,
-		NULL);
-	gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), TRUE);
-	view = get_current_view(handler);
-	if (view) {
-		GFile *file = gtk_source_file_get_location(view->document->source_file);
-		if (file) {
-			GFile *parent = g_file_get_parent(file);
-			if (parent) {
-				gchar *current_folder = g_file_get_path(parent);
-				if (current_folder) {
-					gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), current_folder);
-					g_free(current_folder);
+	GtkWidget *dialog = NULL;
+	if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "session") == 0) {
+		dialog = gtk_file_chooser_dialog_new(TEXT_OPEN,
+			GTK_WINDOW(handler->window.window),
+			GTK_FILE_CHOOSER_ACTION_OPEN,
+			TEXT_OPEN, GTK_RESPONSE_OK,
+			NULL);
+		gtk_file_chooser_set_select_multiple(GTK_FILE_CHOOSER(dialog), TRUE);
+		view = get_current_view(handler);
+		if (view) {
+			GFile *file = gtk_source_file_get_location(view->document->source_file);
+			if (file) {
+				GFile *parent = g_file_get_parent(file);
+				if (parent) {
+					gchar *current_folder = g_file_get_path(parent);
+					if (current_folder) {
+						gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), current_folder);
+						g_free(current_folder);
+					}
 				}
 			}
 		}
-	}
-	response = gtk_dialog_run(GTK_DIALOG(dialog));
-	if (response == GTK_RESPONSE_OK) {
-		GSList *file_names = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
-		GSList *file_name_iter = file_names;
-		while (file_name_iter) {
-			gchar *file_name = file_name_iter->data;
-			cdocument *document = new_document(handler, file_name);
-			add_view_for_document(handler, document);
-			g_free(file_name);
-			file_name_iter = file_name_iter->next;
+		response = gtk_dialog_run(GTK_DIALOG(dialog));
+		if (response == GTK_RESPONSE_OK) {
+			GSList *file_names = gtk_file_chooser_get_filenames(GTK_FILE_CHOOSER(dialog));
+			GSList *file_name_iter = file_names;
+			while (file_name_iter) {
+				gchar *file_name = file_name_iter->data;
+				cdocument *document = new_document(handler, file_name);
+				add_view_for_document(handler, document);
+				g_free(file_name);
+				file_name_iter = file_name_iter->next;
+			}
+			g_slist_free(file_names);
 		}
-		g_slist_free(file_names);
+		gtk_widget_destroy(dialog);
 	}
-	gtk_widget_destroy(dialog);
 }
 
 void window_save_as(gpointer user_data)
 {
 	chandler *handler = user_data;
 	cview *view = get_current_view(handler);
-	if (view) {
-		gint response = 0;
-		gchar *file_name = NULL;
-		init_file_chooser_save(handler, TEXT_SAVE_AS, TEXT_SAVE);
-		response = gtk_dialog_run(GTK_DIALOG(handler->save.dialog));
-		if (response == GTK_RESPONSE_OK) {
-			file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(handler->save.dialog));
-			save_document(view->document, file_name);
-			g_free(file_name);
-		}
-		gtk_widget_destroy(handler->save.dialog);
-	}
-}
-
-void window_save(gpointer user_data)
-{
-	chandler *handler = user_data;
-	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->session.notebook));
-	GtkWidget *scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), current_page);
-	cview *view = g_object_get_data(G_OBJECT(scrolled_window), "view");
-	GFile *file = NULL;
-	if (view) {
-		file = gtk_source_file_get_location(view->document->source_file);
-		if (!file) {
-			gint response = 0;
-			gchar *file_name = NULL;
-			init_file_chooser_save(handler, TEXT_SAVE, TEXT_SAVE);
+	gint response = 0;
+	gchar *file_name = NULL;
+	if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "session") == 0) {
+		if (view) {
+			init_file_chooser_save(handler, TEXT_SAVE_AS, TEXT_SAVE);
 			response = gtk_dialog_run(GTK_DIALOG(handler->save.dialog));
 			if (response == GTK_RESPONSE_OK) {
 				file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(handler->save.dialog));
@@ -150,8 +131,38 @@ void window_save(gpointer user_data)
 				g_free(file_name);
 			}
 			gtk_widget_destroy(handler->save.dialog);
-		} else {
-			save_document(view->document, NULL);
+		}
+	}
+}
+
+void window_save(gpointer user_data)
+{
+	chandler *handler = user_data;
+	gint current_page = gtk_notebook_get_current_page(GTK_NOTEBOOK(handler->session.notebook));
+	GtkWidget *scrolled_window = NULL;
+	cview *view = NULL;
+	GFile *file = NULL;
+	if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "session") == 0) {
+		scrolled_window = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook), current_page);
+		if (scrolled_window) {
+			view = g_object_get_data(G_OBJECT(scrolled_window), "view");
+		}
+		if (view) {
+			file = gtk_source_file_get_location(view->document->source_file);
+			if (!file) {
+				gint response = 0;
+				gchar *file_name = NULL;
+				init_file_chooser_save(handler, TEXT_SAVE, TEXT_SAVE);
+				response = gtk_dialog_run(GTK_DIALOG(handler->save.dialog));
+				if (response == GTK_RESPONSE_OK) {
+					file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(handler->save.dialog));
+					save_document(view->document, file_name);
+					g_free(file_name);
+				}
+				gtk_widget_destroy(handler->save.dialog);
+			} else {
+				save_document(view->document, NULL);
+			}
 		}
 	}
 }
@@ -169,23 +180,129 @@ void window_search_here(chandler *handler)
 {
 	cview *view = get_current_view(handler);
 	gboolean found = FALSE;
-	if (view) {
-		found = gtk_source_search_context_forward2(view->document->source_search_context,
-			&view->document->iter_insert,
-			&view->document->search_match_start,
-			&view->document->search_match_end,
-			NULL);
-		if (found) {
-			gtk_text_buffer_select_range(GTK_TEXT_BUFFER(view->document->source_buffer),
+	if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "session") == 0) {
+		if (view) {
+			found = gtk_source_search_context_forward2(view->document->source_search_context,
+				&view->document->iter_insert,
 				&view->document->search_match_start,
-				&view->document->search_match_end);
-			gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(view->source_view),
+				&view->document->search_match_end,
+				NULL);
+			if (found) {
+				gtk_text_buffer_select_range(GTK_TEXT_BUFFER(view->document->source_buffer),
+					&view->document->search_match_start,
+					&view->document->search_match_end);
+				gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(view->source_view),
+					&view->document->search_match_start,
+					0.25,
+					TRUE,
+					0.5,
+					0.5);
+			} else {
+				gtk_text_buffer_place_cursor(GTK_TEXT_BUFFER(view->document->source_buffer),
+					&view->document->iter_insert);
+				gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(view->source_view),
+					&view->document->iter_insert,
+					0.25,
+					TRUE,
+					0.5,
+					0.5);
+			}
+		}
+	}
+}
+
+void window_search_next(chandler *handler)
+{
+	cview *view = get_current_view(handler);
+	gboolean found = FALSE;
+	GtkTextIter iter_beginning;
+	GtkTextMark *text_mark = NULL;
+	if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "session") == 0) {
+		if (view) {
+			if (gtk_text_buffer_get_has_selection(GTK_TEXT_BUFFER(view->document->source_buffer))) {
+				text_mark = gtk_text_buffer_get_selection_bound(GTK_TEXT_BUFFER(view->document->source_buffer));
+			} else {
+				text_mark = gtk_text_buffer_get_insert(GTK_TEXT_BUFFER(view->document->source_buffer));
+			}
+			gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(view->document->source_buffer), &iter_beginning, text_mark);
+			found = gtk_source_search_context_forward2(view->document->source_search_context,
+				&iter_beginning,
 				&view->document->search_match_start,
-				0.25,
-				TRUE,
-				0.5,
-				0.5);
-		} else {
+				&view->document->search_match_end,
+				NULL);
+			if (found) {
+				gtk_text_buffer_select_range(GTK_TEXT_BUFFER(view->document->source_buffer),
+					&view->document->search_match_start,
+					&view->document->search_match_end);
+				gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(view->source_view),
+					&view->document->search_match_start,
+					0.25,
+					TRUE,
+					0.5,
+					0.5);
+			}
+		}
+	}
+}
+
+void window_search_previous(chandler *handler)
+{
+	cview *view = get_current_view(handler);
+	gboolean found = FALSE;
+	GtkTextIter iter_beginning;
+	if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "session") == 0) {
+		if (view) {
+			GtkTextMark *text_mark = gtk_text_buffer_get_insert(GTK_TEXT_BUFFER(view->document->source_buffer));
+			text_mark = gtk_text_buffer_get_insert(GTK_TEXT_BUFFER(view->document->source_buffer));
+			gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(view->document->source_buffer), &iter_beginning, text_mark);
+			found = gtk_source_search_context_backward2(view->document->source_search_context,
+				&iter_beginning,
+				&view->document->search_match_start,
+				&view->document->search_match_end,
+				NULL);
+			if (found) {
+				gtk_text_buffer_select_range(GTK_TEXT_BUFFER(view->document->source_buffer),
+					&view->document->search_match_start,
+					&view->document->search_match_end);
+				gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(view->source_view),
+					&view->document->search_match_start,
+					0.25,
+					TRUE,
+					0.5,
+					0.5);
+			}
+		}
+	}
+}
+
+void window_show_search_bar(chandler *handler)
+{
+	if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "session") == 0) {
+		gtk_widget_hide(handler->search_and_replace.box_replace);
+		if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->search_and_replace.revealer))) {
+			gtk_revealer_set_reveal_child(GTK_REVEALER(handler->search_and_replace.revealer), TRUE);
+		}
+		gtk_widget_grab_focus(handler->search_and_replace.entry_search);
+	}
+}
+
+void window_show_search_and_replace_bar(chandler *handler)
+{
+	if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "session") == 0) {
+		gtk_widget_show_all(handler->search_and_replace.box_replace);
+		if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->search_and_replace.revealer))) {
+			gtk_revealer_set_reveal_child(GTK_REVEALER(handler->search_and_replace.revealer), TRUE);
+		}
+		gtk_widget_grab_focus(handler->search_and_replace.entry_search);
+	}
+}
+
+void window_hide_search_bar_and_replace_bar(chandler *handler)
+{
+	cview *view = get_current_view(handler);
+	if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "session") == 0) {
+		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->search_and_replace.revealer), FALSE);
+		if (view) {
 			gtk_text_buffer_place_cursor(GTK_TEXT_BUFFER(view->document->source_buffer),
 				&view->document->iter_insert);
 			gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(view->source_view),
@@ -198,106 +315,14 @@ void window_search_here(chandler *handler)
 	}
 }
 
-void window_search_next(chandler *handler)
-{
-	cview *view = get_current_view(handler);
-	gboolean found = FALSE;
-	GtkTextIter iter_beginning;
-	GtkTextMark *text_mark = NULL;
-	if (view) {
-		if (gtk_text_buffer_get_has_selection(GTK_TEXT_BUFFER(view->document->source_buffer))) {
-			text_mark = gtk_text_buffer_get_selection_bound(GTK_TEXT_BUFFER(view->document->source_buffer));
-		} else {
-			text_mark = gtk_text_buffer_get_insert(GTK_TEXT_BUFFER(view->document->source_buffer));
-		}
-		gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(view->document->source_buffer), &iter_beginning, text_mark);
-		found = gtk_source_search_context_forward2(view->document->source_search_context,
-			&iter_beginning,
-			&view->document->search_match_start,
-			&view->document->search_match_end,
-			NULL);
-		if (found) {
-			gtk_text_buffer_select_range(GTK_TEXT_BUFFER(view->document->source_buffer),
-				&view->document->search_match_start,
-				&view->document->search_match_end);
-			gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(view->source_view),
-				&view->document->search_match_start,
-				0.25,
-				TRUE,
-				0.5,
-				0.5);
-		}
-	}
-}
-
-void window_search_previous(chandler *handler)
-{
-	cview *view = get_current_view(handler);
-	gboolean found = FALSE;
-	GtkTextIter iter_beginning;
-	if (view) {
-		GtkTextMark *text_mark = gtk_text_buffer_get_insert(GTK_TEXT_BUFFER(view->document->source_buffer));
-		text_mark = gtk_text_buffer_get_insert(GTK_TEXT_BUFFER(view->document->source_buffer));
-		gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(view->document->source_buffer), &iter_beginning, text_mark);
-		found = gtk_source_search_context_backward2(view->document->source_search_context,
-			&iter_beginning,
-			&view->document->search_match_start,
-			&view->document->search_match_end,
-			NULL);
-		if (found) {
-			gtk_text_buffer_select_range(GTK_TEXT_BUFFER(view->document->source_buffer),
-				&view->document->search_match_start,
-				&view->document->search_match_end);
-			gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(view->source_view),
-				&view->document->search_match_start,
-				0.25,
-				TRUE,
-				0.5,
-				0.5);
-		}
-	}
-}
-
-void window_show_search_bar(chandler *handler)
-{
-	gtk_widget_hide(handler->search_and_replace.box_replace);
-	if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->search_and_replace.revealer))) {
-		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->search_and_replace.revealer), TRUE);
-	}
-	gtk_widget_grab_focus(handler->search_and_replace.entry_search);
-}
-
-void window_show_search_and_replace_bar(chandler *handler)
-{
-	gtk_widget_show_all(handler->search_and_replace.box_replace);
-	if (!gtk_revealer_get_child_revealed(GTK_REVEALER(handler->search_and_replace.revealer))) {
-		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->search_and_replace.revealer), TRUE);
-	}
-	gtk_widget_grab_focus(handler->search_and_replace.entry_search);
-}
-
-void window_hide_search_bar_and_replace_bar(chandler *handler)
-{
-	cview *view = get_current_view(handler);
-	gtk_revealer_set_reveal_child(GTK_REVEALER(handler->search_and_replace.revealer), FALSE);
-	if (view) {
-		gtk_text_buffer_place_cursor(GTK_TEXT_BUFFER(view->document->source_buffer),
-			&view->document->iter_insert);
-		gtk_text_view_scroll_to_iter(GTK_TEXT_VIEW(view->source_view),
-			&view->document->iter_insert,
-			0.25,
-			TRUE,
-			0.5,
-			0.5);
-	}
-}
-
 void window_toggle_sidebar(chandler *handler)
 {
-	if (gtk_switch_get_state(GTK_SWITCH(handler->preferences.switch_show_sidebar))) {
-		gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_sidebar), FALSE);
-	} else {
-		gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_sidebar), TRUE);
+	if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "session") == 0) {
+		if (gtk_switch_get_state(GTK_SWITCH(handler->preferences.switch_show_sidebar))) {
+			gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_sidebar), FALSE);
+		} else {
+			gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_sidebar), TRUE);
+		}
 	}
 }
 
@@ -305,8 +330,7 @@ static gboolean window_key_press_event(GtkWidget *widget, GdkEventKey *event, gp
 {
 	chandler *handler = user_data;
 	gboolean stop_propagate = FALSE;
-	const gchar *visible_child = gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack));
-	if (g_strcmp0(visible_child, "select-session") == 0) {
+	if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "select-session") == 0) {
 		stop_propagate = gtk_search_bar_handle_event(GTK_SEARCH_BAR(handler->select_session.search_bar), (GdkEvent *)event);
 	}
 	return stop_propagate;
