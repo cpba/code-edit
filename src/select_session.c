@@ -127,7 +127,7 @@ void select_session_save(chandler *handler)
 		g_key_file_set_string(handler->key_file,
 			"preferences",
 			"session",
-			handler->current_session->name->str);
+			handler->current_session->id);
 	} else {
 		g_key_file_remove_key(handler->key_file,
 			"preferences",
@@ -255,11 +255,17 @@ csession *select_session_new_session(chandler *handler, gchar *name, gchar *id, 
 void select_session_load_sessions(chandler *handler)
 {
 	csession *session = NULL;
+	csession *current_session = NULL;
 	gint i = 0;
 	gsize length = 0;
 	gchar *id = NULL;
+	gchar *current_session_id = NULL;
 	gchar **strings = NULL;
 	GList *children = NULL;
+	current_session_id = g_key_file_get_string(handler->key_file,
+		"preferences",
+		"session",
+		NULL);
 	/* Add sessions */
 	strings = g_key_file_get_string_list(handler->key_file,
 		"sessions",
@@ -272,6 +278,9 @@ void select_session_load_sessions(chandler *handler)
 			if (i + 1 < length) {
 				session = select_session_new_session(handler, strings[i], strings[i + 1], -1);
 				select_session_load(handler, session);
+				if (g_strcmp0(session->id, current_session_id) == 0) {
+					current_session = session;
+				}
 			}
 			i = i + 2;
 		}
@@ -285,6 +294,11 @@ void select_session_load_sessions(chandler *handler)
 		g_free(id);
 	}
 	g_list_free(children);
+	if (current_session_id) {
+		session_open(handler, current_session);
+		window_go_to_session(handler);
+		g_free(current_session_id);
+	}
 }
 
 static void button_delete_session_clicked(GtkWidget *widget, gpointer user_data)
