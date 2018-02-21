@@ -332,6 +332,12 @@ static void entry_session_name_changed(GtkEditable *editable, gpointer user_data
 	}
 }
 
+static void search_entry_search_stop_search(GtkWidget *widget, gpointer user_data)
+{
+	chandler *handler = user_data;
+	gtk_widget_show_all(handler->header.button_add_session);
+}
+
 static void search_entry_search_changed(GtkWidget *widget, gpointer user_data)
 {
 	chandler *handler = user_data;
@@ -483,6 +489,7 @@ void init_select_session(chandler *handler)
 	gtk_widget_set_halign(handler->select_session.search_entry, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler->select_session.search_entry, GTK_ALIGN_CENTER);
 	gtk_search_bar_connect_entry(GTK_SEARCH_BAR(handler->select_session.search_bar), GTK_ENTRY(handler->select_session.search_entry));
+	g_signal_connect(handler->select_session.search_entry, "stop-search", G_CALLBACK(search_entry_search_stop_search), handler);
 	g_signal_connect(handler->select_session.search_entry, "search-changed", G_CALLBACK(search_entry_search_changed), handler);
 	/* Scrolled window select-session */
 	handler->select_session.scrolled_window = gtk_scrolled_window_new(NULL, NULL);

@@ -332,6 +332,9 @@ static gboolean window_key_press_event(GtkWidget *widget, GdkEventKey *event, gp
 	gboolean stop_propagate = FALSE;
 	if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "select-session") == 0) {
 		stop_propagate = gtk_search_bar_handle_event(GTK_SEARCH_BAR(handler->select_session.search_bar), (GdkEvent *)event);
+		if (stop_propagate) {
+			gtk_widget_hide(handler->header.button_add_session);
+		}
 	}
 	return stop_propagate;
 }
