@@ -160,7 +160,7 @@ static void document_async_ready(GObject *source_object, GAsyncResult *res, gpoi
 		view_iter = g_list_first(document->views);
 		while (view_iter) {
 			view = view_iter->data;
-			close_view(handler, view);
+			close_view(handler, view, FALSE);
 			view_iter = g_list_first(document->views);
 		}
 		update_view_status(handler, NULL);
@@ -312,31 +312,28 @@ static void button_close_tab_clicked(GtkWidget *widget, gpointer user_data)
 		view->document->cancelled = TRUE;
 		g_cancellable_cancel(view->document->cancellable);
 	} else {
-		close_view(handler, view);
+		close_view(handler, view, TRUE);
 	}
 }
 
-void close_view(chandler *handler, cview *view)
+void close_view(chandler *handler, cview *view, gboolean ask)
 {
-	gboolean close = FALSE;
+	gboolean close = TRUE;
+	gint response = 0;
+	GtkWidget *dialog = NULL;
 	gint views_count = g_list_length(view->document->views);
-	if (views_count > 1) {
-		close = TRUE;
-	} else {
+	if (ask && views_count == 1) {
 		if (!view->document->cancelled && gtk_text_buffer_get_modified(GTK_TEXT_BUFFER(view->document->source_buffer))) {
-			gint response = 0;
-			GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(handler->window.window),
+			dialog = gtk_message_dialog_new(GTK_WINDOW(handler->window.window),
 				GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR,
 				GTK_MESSAGE_QUESTION,
 				GTK_BUTTONS_OK_CANCEL,
 				TEXT_CLOSE_TAB_WITHOUT_SAVING_THE_MODIFICATIONS);
 			response = gtk_dialog_run(GTK_DIALOG(dialog));
-			if (response == GTK_RESPONSE_OK) {
-				close = TRUE;
+			if (response != GTK_RESPONSE_OK) {
+				close = FALSE;
 			}
 			gtk_widget_destroy(dialog);
-		} else {
-			close = TRUE;
 		}
 	}
 	if (close) {

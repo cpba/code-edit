@@ -243,7 +243,7 @@ void update_document_views_status(chandler *handler, cdocument *document);
 void free_document(chandler *handler, cdocument *document);
 void save_document(cdocument *document, gchar *file_name);
 cdocument *new_document(chandler *handler, gchar *file_name);
-void close_view(chandler *handler, cview *view);
+void close_view(chandler *handler, cview *view, gboolean ask);
 void add_view_for_document(chandler *handler, cdocument *document);
 
 /* Preferences */

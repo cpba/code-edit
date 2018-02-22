@@ -39,20 +39,52 @@ void window_quit(chandler *handler)
 	gtk_window_close(GTK_WINDOW(handler->window.window));
 }
 
+static gboolean session_has_modified_document(chandler *handler)
+{
+	gboolean has_modified_document = FALSE;
+	GList *document_iter = handler->documents;
+	cdocument *document = NULL;
+	while (document_iter && !has_modified_document) {
+		document = document_iter->data;
+		if (gtk_text_buffer_get_modified(GTK_TEXT_BUFFER(document->source_buffer))) {
+			has_modified_document = TRUE;
+		}
+		document_iter = g_list_next(document_iter);
+	}
+	return has_modified_document;
+}
+
 void window_go_to_select_session(gpointer user_data)
 {
 	chandler *handler = user_data;
-	gtk_list_box_unselect_all(GTK_LIST_BOX(handler->select_session.list_box));
-	if (handler->current_session) {
-		session_update_lists(handler, handler->current_session);
-		handler->current_session = NULL;
+	gint response = 0;
+	gboolean go_to_select_session = TRUE;
+	GtkWidget *dialog = NULL;
+	if (session_has_modified_document(handler)) {
+		dialog = gtk_message_dialog_new(GTK_WINDOW(handler->window.window),
+			GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR,
+			GTK_MESSAGE_QUESTION,
+			GTK_BUTTONS_OK_CANCEL,
+			TEXT_CLOSE_TAB_WITHOUT_SAVING_THE_MODIFICATIONS);
+		response = gtk_dialog_run(GTK_DIALOG(dialog));
+		if (response != GTK_RESPONSE_OK) {
+			go_to_select_session = FALSE;
+		}
+		gtk_widget_destroy(dialog);
 	}
-	session_close(handler);
-	gtk_stack_set_visible_child_name(GTK_STACK(handler->header.stack_session), "select-session");
-	gtk_stack_set_visible_child_name(GTK_STACK(handler->header.stack_extra), "select-session");
-	gtk_stack_set_visible_child_name(GTK_STACK(handler->window.stack), "select-session");
-	gtk_header_bar_set_title(GTK_HEADER_BAR(handler->header.header_bar), TEXT_SELECT_SESSION);
-	gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->header.header_bar), NULL);
+	if (go_to_select_session) {
+		gtk_list_box_unselect_all(GTK_LIST_BOX(handler->select_session.list_box));
+		if (handler->current_session) {
+			session_update_lists(handler, handler->current_session);
+			handler->current_session = NULL;
+		}
+		session_close(handler);
+		gtk_stack_set_visible_child_name(GTK_STACK(handler->header.stack_session), "select-session");
+		gtk_stack_set_visible_child_name(GTK_STACK(handler->header.stack_extra), "select-session");
+		gtk_stack_set_visible_child_name(GTK_STACK(handler->window.stack), "select-session");
+		gtk_header_bar_set_title(GTK_HEADER_BAR(handler->header.header_bar), TEXT_SELECT_SESSION);
+		gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->header.header_bar), NULL);
+	}
 }
 
 void window_go_to_session(gpointer user_data)
@@ -172,7 +204,7 @@ void window_close(gpointer user_data)
 	chandler *handler = user_data;
 	cview *view = get_current_view(handler);
 	if (view) {
-		close_view(handler, view);
+		close_view(handler, view, TRUE);
 	}
 }
 

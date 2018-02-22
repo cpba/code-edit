@@ -100,7 +100,7 @@ void session_close(chandler *handler)
 	gtk_tree_store_clear(handler->sidebar.tree_store);
 	while (gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook)) > 0) {
 		view = get_nth_view(handler, 0);
-		close_view(handler, view);
+		close_view(handler, view, FALSE);
 	}
 }
 
