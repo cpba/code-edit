@@ -130,6 +130,7 @@ struct chandler {
 		GtkWidget *overlay;
 		GtkWidget *box;
 		GtkTreeStore *tree_store;
+		GtkTreeModel *tree_model_sort;
 		GtkWidget *tree_view;
 		GtkWidget *button_add_folder_to_session;
 		struct {
@@ -141,11 +142,6 @@ struct chandler {
 		struct {
 			GtkWidget *popover;
 		} folder_selected;
-		struct {
-			GtkWidget *popover;
-			GtkWidget *entry;
-			GtkWidget *button;
-		} rename;
 		struct {
 			GtkWidget *popover;
 			GtkWidget *entry;
@@ -230,8 +226,6 @@ void update_statusbar(chandler *handler, cview *view);
 void sidebar_update_iter_children(chandler *handler, GtkTreeIter iter);
 GtkTreeIter sidebar_add_iter(chandler *handler, GtkTreeIter *parent, gchar *path);
 void sidebar_open_selected(chandler *handler);
-void sidebar_rename_selected(chandler *handler);
-void sidebar_duplicate_selected(chandler *handler);
 void sidebar_delete_selected(chandler *handler);
 void sidebar_remove_folder_from_session(chandler *handler);
 

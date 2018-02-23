@@ -75,6 +75,7 @@ GtkTreeIter sidebar_add_iter(chandler *handler, GtkTreeIter *parent, gchar *path
 	const gchar *content_type = NULL;
 	GFile *file = g_file_new_for_path(path);
 	gchar *basename = g_path_get_basename(path);
+	GDir *dir = NULL;
 	gtk_tree_store_append(handler->sidebar.tree_store,
 		&iter,
 		parent);
@@ -94,7 +95,10 @@ GtkTreeIter sidebar_add_iter(chandler *handler, GtkTreeIter *parent, gchar *path
 			}
 			file_type = g_file_info_get_file_type(file_info);
 			if (file_type == G_FILE_TYPE_DIRECTORY) {
-				sidebar_update_iter_with_dummy_child(handler, iter);
+				dir = g_dir_open(path, 0, NULL);
+				if (g_dir_read_name(dir)) {
+					sidebar_update_iter_with_dummy_child(handler, iter);
+				}
 			}
 		}
 	}
@@ -117,53 +121,14 @@ void sidebar_open_selected(chandler *handler)
 	GtkTreeSelection *tree_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(handler->sidebar.tree_view));
 	gchar *file_path = NULL;
 	GtkTreeIter iter;
+	GtkTreeIter unsorted_iter;
 	if (gtk_tree_selection_get_selected(tree_selection, NULL, &iter)) {
+		gtk_tree_model_sort_convert_iter_to_child_iter(GTK_TREE_MODEL_SORT(handler->sidebar.tree_model_sort), &unsorted_iter, &iter);
 		gtk_tree_model_get(GTK_TREE_MODEL(handler->sidebar.tree_store),
-			&iter,
+			&unsorted_iter,
 			2, &file_path,
 			-1);
-		add_view_for_document(handler,
-			new_document(handler, file_path));
-	}
-}
-
-void sidebar_rename_selected(chandler *handler)
-{
-	GtkTreeSelection *tree_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(handler->sidebar.tree_view));
-	gchar *file_path = NULL;
-	gchar *path_string = NULL;
-	GtkTreePath *path = NULL;
-	GdkRectangle rect;
-	GtkTreeIter iter;
-	if (gtk_tree_selection_get_selected(tree_selection, NULL, &iter)) {
-		path_string = gtk_tree_model_get_string_from_iter(GTK_TREE_MODEL(handler->sidebar.tree_store), &iter);
-		path = gtk_tree_path_new_from_string(path_string);
-		g_free(path_string);
-		gtk_tree_model_get(GTK_TREE_MODEL(handler->sidebar.tree_store),
-			&iter,
-			2, &file_path,
-			-1);
-		gtk_tree_view_get_cell_area(GTK_TREE_VIEW(handler->sidebar.tree_view),
-			path,
-			NULL,
-			&rect);
-		gtk_popover_set_pointing_to(GTK_POPOVER(handler->sidebar.rename.popover), &rect);
-		gtk_popover_popup(GTK_POPOVER(handler->sidebar.rename.popover));
-		g_boxed_free(GTK_TYPE_TREE_PATH, path);
-	}
-}
-
-void sidebar_duplicate_selected(chandler *handler)
-{
-	GtkTreeSelection *tree_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(handler->sidebar.tree_view));
-	gchar *file_path = NULL;
-	GtkTreeIter iter;
-	if (gtk_tree_selection_get_selected(tree_selection, NULL, &iter)) {
-		gtk_tree_model_get(GTK_TREE_MODEL(handler->sidebar.tree_store),
-			&iter,
-			2, &file_path,
-			-1);
-		/* TODO */
+		add_view_for_document(handler, new_document(handler, file_path));
 	}
 }
 
@@ -171,13 +136,38 @@ void sidebar_delete_selected(chandler *handler)
 {
 	GtkTreeSelection *tree_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(handler->sidebar.tree_view));
 	gchar *file_path = NULL;
+	GFile *file = NULL;
 	GtkTreeIter iter;
+	GtkTreeIter unsorted_iter;
+	GtkWidget *dialog = NULL;
+	gint response = 0;
+	gboolean delete_file = FALSE;
 	if (gtk_tree_selection_get_selected(tree_selection, NULL, &iter)) {
+		gtk_tree_model_sort_convert_iter_to_child_iter(GTK_TREE_MODEL_SORT(handler->sidebar.tree_model_sort), &unsorted_iter, &iter);
 		gtk_tree_model_get(GTK_TREE_MODEL(handler->sidebar.tree_store),
-			&iter,
+			&unsorted_iter,
 			2, &file_path,
 			-1);
-		/* TODO */
+		file = g_file_new_for_path(file_path);
+		if (file) {
+			dialog = gtk_message_dialog_new(GTK_WINDOW(handler->window.window),
+				GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR,
+				GTK_MESSAGE_QUESTION,
+				GTK_BUTTONS_OK_CANCEL,
+				TEXT_DELETE_FILE_AND_CLOSE_ANY_OPEN_TAB);
+			response = gtk_dialog_run(GTK_DIALOG(dialog));
+			if (response == GTK_RESPONSE_OK) {
+				delete_file = TRUE;
+			}
+			gtk_widget_destroy(dialog);
+			if (delete_file) {
+				g_file_delete(file, NULL, NULL);
+				if (!g_file_query_exists(file, NULL)) {
+					gtk_tree_store_remove(handler->sidebar.tree_store, &unsorted_iter);
+				}
+			}
+			g_object_unref(G_OBJECT(file));
+		}
 	}
 }
 
@@ -185,39 +175,11 @@ void sidebar_remove_folder_from_session(chandler *handler)
 {
 	GtkTreeSelection *tree_selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(handler->sidebar.tree_view));
 	GtkTreeIter iter;
+	GtkTreeIter unsorted_iter;
 	if (gtk_tree_selection_get_selected(tree_selection, NULL, &iter)) {
-		gtk_tree_store_remove(handler->sidebar.tree_store, &iter);
+		gtk_tree_model_sort_convert_iter_to_child_iter(GTK_TREE_MODEL_SORT(handler->sidebar.tree_model_sort), &unsorted_iter, &iter);
+		gtk_tree_store_remove(handler->sidebar.tree_store, &unsorted_iter);
 	}
-}
-
-static void init_popover_rename(chandler *handler)
-{
-	GtkWidget *box = NULL;
-	/* Popover */
-	handler->sidebar.rename.popover = gtk_popover_new(handler->sidebar.tree_view);
-	gtk_popover_set_position(GTK_POPOVER(handler->sidebar.rename.popover), GTK_POS_LEFT);
-	/* Box */
-	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, MEDIUM_SPACING);
-	gtk_container_add(GTK_CONTAINER(handler->sidebar.rename.popover), box);
-	gtk_container_set_border_width(GTK_CONTAINER(handler->sidebar.rename.popover), MEDIUM_SPACING);
-	/* Entry rename */
-	handler->sidebar.rename.entry = gtk_entry_new();
-	gtk_container_add(GTK_CONTAINER(box), handler->sidebar.rename.entry);
-	gtk_widget_set_hexpand(handler->sidebar.rename.entry, TRUE);
-	gtk_widget_set_vexpand(handler->sidebar.rename.entry, FALSE);
-	gtk_widget_set_halign(handler->sidebar.rename.entry, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(handler->sidebar.rename.entry, GTK_ALIGN_CENTER);
-	/* Button rename */
-	handler->sidebar.rename.button = gtk_button_new_with_label(TEXT_RENAME);
-	gtk_container_add(GTK_CONTAINER(box), handler->sidebar.rename.button);
-	gtk_widget_set_hexpand(handler->sidebar.rename.button, TRUE);
-	gtk_widget_set_vexpand(handler->sidebar.rename.button, FALSE);
-	gtk_widget_set_halign(handler->sidebar.rename.button, GTK_ALIGN_FILL);
-	gtk_widget_set_valign(handler->sidebar.rename.button, GTK_ALIGN_CENTER);
-	gtk_style_context_add_class(gtk_widget_get_style_context(handler->sidebar.rename.button), GTK_STYLE_CLASS_SUGGESTED_ACTION);
-	/* Show all */
-	gtk_widget_show_all(box);
-	/* TODO */
 }
 
 static void init_popover_folder_selected(chandler *handler)
@@ -225,8 +187,6 @@ static void init_popover_folder_selected(chandler *handler)
 	GMenu *menu;
 	/* Menu */
 	menu = g_menu_new();
-	g_menu_insert(menu, -1, TEXT_RENAME, "win.rename-selected");
-	g_menu_insert(menu, -1, TEXT_DUPLICATE, "win.duplicate-selected");
 	g_menu_insert(menu, -1, TEXT_DELETE, "win.delete-selected");
 	/* Popover */
 	handler->sidebar.folder_selected.popover = gtk_popover_new_from_model(handler->sidebar.tree_view, G_MENU_MODEL(menu));
@@ -239,8 +199,6 @@ static void init_popover_regular_selected(chandler *handler)
 	/* Menu */
 	menu = g_menu_new();
 	g_menu_insert(menu, -1, TEXT_OPEN, "win.open-selected");
-	g_menu_insert(menu, -1, TEXT_RENAME, "win.rename-selected");
-	g_menu_insert(menu, -1, TEXT_DUPLICATE, "win.duplicate-selected");
 	g_menu_insert(menu, -1, TEXT_DELETE, "win.delete-selected");
 	/* Popover */
 	handler->sidebar.regular_selected.popover = gtk_popover_new_from_model(handler->sidebar.tree_view, G_MENU_MODEL(menu));
@@ -260,11 +218,55 @@ static void init_popover_root_selected(chandler *handler)
 	g_menu_insert_section(menu, -1, NULL, G_MENU_MODEL(menu_section_session));
 	/* Section file */
 	menu_section_file = g_menu_new();
-	g_menu_insert(menu_section_file, -1, TEXT_RENAME, "rename");
 	g_menu_insert_section(menu, -1, NULL, G_MENU_MODEL(menu_section_file));
 	/* Popover */
 	handler->sidebar.root_selected.popover = gtk_popover_new_from_model(handler->sidebar.tree_view, G_MENU_MODEL(menu));
 	gtk_popover_set_position(GTK_POPOVER(handler->sidebar.root_selected.popover), GTK_POS_LEFT);
+}
+
+static gint tree_sortable_compare(GtkTreeModel *tree_model, GtkTreeIter *a, GtkTreeIter *b, gpointer user_data)
+{
+	gint result = 0;
+	gchar *path_a = NULL;
+	gchar *path_b = NULL;
+	GFile *file_a = NULL;
+	GFile *file_b = NULL;
+	GFileInfo *file_info_a = NULL;
+	GFileInfo *file_info_b = NULL;
+	gint file_type_a = 0;
+	gint file_type_b = 0;
+	gtk_tree_model_get(tree_model,
+		a,
+		2, &path_a,
+		-1);
+	gtk_tree_model_get(tree_model,
+		b,
+		2, &path_b,
+		-1);
+	if (path_b && path_a) {
+		file_a = g_file_new_for_path(path_a);
+		file_b = g_file_new_for_path(path_b);
+	}
+	if (file_a && file_b) {
+		file_info_a = g_file_query_info(file_a, "*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
+		file_info_b = g_file_query_info(file_b, "*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
+		if (file_info_a && file_info_b) {
+			file_type_a = g_file_info_get_file_type(file_info_a);
+			file_type_b = g_file_info_get_file_type(file_info_b);
+			if (file_type_a == file_type_b) {
+				result = g_strcmp0(path_a, path_b);
+			} else {
+				if (file_type_a == G_FILE_TYPE_DIRECTORY) {
+					result = -1;
+				} else {
+					result = 1;
+				}
+			}
+		}
+	}
+	g_free(path_a);
+	g_free(path_b);
+	return result;
 }
 
 static void tree_view_row_activated(GtkTreeView *tree_view, GtkTreePath *path, GtkTreeViewColumn *column, gpointer user_data)
@@ -276,7 +278,8 @@ static void tree_view_row_activated(GtkTreeView *tree_view, GtkTreePath *path, G
 	GFileInfo *file_info = NULL;
 	GFileType file_type;
 	GtkTreeIter iter;
-	iter_path = gtk_tree_path_to_string(path);
+	GtkTreePath *unsorted_path = gtk_tree_model_sort_convert_path_to_child_path(GTK_TREE_MODEL_SORT(handler->sidebar.tree_model_sort), path);
+	iter_path = gtk_tree_path_to_string(unsorted_path);
 	if (gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(handler->sidebar.tree_store), &iter, iter_path)) {
 		gtk_tree_model_get(GTK_TREE_MODEL(handler->sidebar.tree_store),
 			&iter,
@@ -299,15 +302,18 @@ static void tree_view_row_activated(GtkTreeView *tree_view, GtkTreePath *path, G
 		}
 	}
 	g_free(iter_path);
+	gtk_tree_path_free(unsorted_path);
 }
 
 static void tree_view_row_expanded(GtkTreeView *tree_view, GtkTreeIter *iter, GtkTreePath *path, gpointer user_data)
 {
 	chandler *handler = user_data;
 	gboolean valid = FALSE;
+	GtkTreeIter unsorted_iter;
 	GtkTreeIter child;
-	sidebar_update_iter_children(handler, *iter);
-	valid = gtk_tree_model_iter_children(GTK_TREE_MODEL(handler->sidebar.tree_store), &child, iter);
+	gtk_tree_model_sort_convert_iter_to_child_iter(GTK_TREE_MODEL_SORT(handler->sidebar.tree_model_sort), &unsorted_iter, iter);
+	sidebar_update_iter_children(handler, unsorted_iter);
+	valid = gtk_tree_model_iter_children(GTK_TREE_MODEL(handler->sidebar.tree_store), &child, &unsorted_iter);
 	while (valid) {
 		valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(handler->sidebar.tree_store), &child);
 	}
@@ -317,7 +323,34 @@ static void tree_view_row_expanded(GtkTreeView *tree_view, GtkTreeIter *iter, Gt
 static void tree_view_row_collapsed(GtkTreeView *tree_view, GtkTreeIter *iter, GtkTreePath *path, gpointer user_data)
 {
 	chandler *handler = user_data;
-	sidebar_update_iter_with_dummy_child(handler, *iter);
+	GtkTreeIter unsorted_iter;
+	GDir *dir = NULL;
+	GFile *file = NULL;
+	GFileInfo *file_info = NULL;
+	GFileType file_type = 0;
+	gchar *file_path = NULL;
+	gtk_tree_model_sort_convert_iter_to_child_iter(GTK_TREE_MODEL_SORT(handler->sidebar.tree_model_sort), &unsorted_iter, iter);
+	gtk_tree_model_get(GTK_TREE_MODEL(handler->sidebar.tree_store),
+		&unsorted_iter,
+		2, &file_path,
+		-1);
+	if (file_path) {
+		file = g_file_new_for_path(file_path);
+		if (file) {
+			file_info = g_file_query_info(file, "*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
+			if (file_info) {
+				file_type = g_file_info_get_file_type(file_info);
+				if (file_type == G_FILE_TYPE_DIRECTORY) {
+					dir = g_dir_open(file_path, 0, NULL);
+					if (g_dir_read_name(dir)) {
+						sidebar_update_iter_with_dummy_child(handler, unsorted_iter);
+					}
+				}
+			}
+			g_object_unref(G_OBJECT(file));
+		}
+		g_free(file_path);
+	}
 	gtk_tree_view_columns_autosize(tree_view);
 }
 
@@ -331,9 +364,12 @@ static gboolean tree_view_button_press_event(GtkWidget *widget, GdkEventButton *
 	GtkTreeIter iter;
 	GdkRectangle rect;
 	GtkTreePath *path = NULL;
+	gchar *path_string = NULL;
+	GtkTreePath *unsorted_path = NULL;
 	if (event->type == GDK_BUTTON_PRESS && event->button == 3) {
 		if (gtk_tree_view_get_path_at_pos(GTK_TREE_VIEW(widget), event->x, event->y, &path, NULL, NULL, NULL)) {
-			gchar *path_string = gtk_tree_path_to_string(path);
+			unsorted_path = gtk_tree_model_sort_convert_path_to_child_path(GTK_TREE_MODEL_SORT(handler->sidebar.tree_model_sort), path);
+			path_string = gtk_tree_path_to_string(unsorted_path);
 			gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(handler->sidebar.tree_store), &iter, path_string);
 			g_free(path_string);
 			gtk_tree_view_get_cell_area(GTK_TREE_VIEW(widget),
@@ -367,6 +403,7 @@ static gboolean tree_view_button_press_event(GtkWidget *widget, GdkEventButton *
 					g_free(file_path);
 				}
 			}
+			gtk_tree_path_free(unsorted_path);
 		}
 	}
 	return FALSE;
@@ -381,20 +418,27 @@ static gboolean tree_view_popup_menu(GtkWidget *widget, gpointer user_data)
 	GFileInfo *file_info = NULL;
 	GFileType file_type;
 	GtkTreeIter iter;
+	GtkTreeIter unsorted_iter;
 	GdkRectangle rect;
 	GtkTreePath *path = NULL;
+	GtkTreePath *unsorted_path = NULL;
+	gchar *path_string = NULL;
 	if (gtk_tree_selection_get_selected(tree_selection, NULL, &iter)) {
-		path = gtk_tree_model_get_path(GTK_TREE_MODEL(handler->sidebar.tree_store), &iter);
+		path = gtk_tree_model_get_path(handler->sidebar.tree_model_sort, &iter);
+		unsorted_path = gtk_tree_model_sort_convert_path_to_child_path(GTK_TREE_MODEL_SORT(handler->sidebar.tree_model_sort), path);
 		gtk_tree_view_get_cell_area(GTK_TREE_VIEW(widget),
 			path,
 			NULL,
 			&rect);
-		if (gtk_tree_store_iter_depth(handler->sidebar.tree_store, &iter) == 0) {
+		path_string = gtk_tree_path_to_string(unsorted_path);
+		gtk_tree_model_get_iter_from_string(GTK_TREE_MODEL(handler->sidebar.tree_store), &unsorted_iter, path_string);
+		g_free(path_string);
+		if (gtk_tree_store_iter_depth(handler->sidebar.tree_store, &unsorted_iter) == 0) {
 			gtk_popover_set_pointing_to(GTK_POPOVER(handler->sidebar.root_selected.popover), &rect);
 			gtk_popover_popup(GTK_POPOVER(handler->sidebar.root_selected.popover));
 		} else {
 			gtk_tree_model_get(GTK_TREE_MODEL(handler->sidebar.tree_store),
-					&iter,
+					&unsorted_iter,
 					2, &file_path,
 					-1);
 				if (file_path) {
@@ -417,6 +461,8 @@ static gboolean tree_view_popup_menu(GtkWidget *widget, gpointer user_data)
 				}
 		}
 	}
+	gtk_tree_path_free(unsorted_path);
+	gtk_tree_path_free(path);
 	return TRUE;
 }
 
@@ -487,8 +533,10 @@ void init_sidebar(chandler *handler)
 	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(scrolled_window)), GTK_STYLE_CLASS_SIDEBAR);
 	/* Tree model */
 	handler->sidebar.tree_store = gtk_tree_store_new(3, G_TYPE_ICON, G_TYPE_STRING, G_TYPE_STRING);
+	handler->sidebar.tree_model_sort = gtk_tree_model_sort_new_with_model(GTK_TREE_MODEL(handler->sidebar.tree_store));
+	gtk_tree_sortable_set_default_sort_func(GTK_TREE_SORTABLE(handler->sidebar.tree_model_sort), tree_sortable_compare, handler, NULL);
 	/* Tree view */
-	handler->sidebar.tree_view = gtk_tree_view_new_with_model(GTK_TREE_MODEL(handler->sidebar.tree_store));
+	handler->sidebar.tree_view = gtk_tree_view_new_with_model(handler->sidebar.tree_model_sort);
 	gtk_widget_set_name(handler->sidebar.tree_view, "tree_view");
 	gtk_container_add(GTK_CONTAINER(scrolled_window), handler->sidebar.tree_view);
 	gtk_widget_set_hexpand(handler->sidebar.tree_view, TRUE);
@@ -522,5 +570,4 @@ void init_sidebar(chandler *handler)
 	init_popover_root_selected(handler);
 	init_popover_regular_selected(handler);
 	init_popover_folder_selected(handler);
-	init_popover_rename(handler);
 }

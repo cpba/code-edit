@@ -76,6 +76,7 @@ void session_open(chandler *handler, csession *session)
 	GString *name = NULL;
 	GList *name_iter = NULL;
 	cdocument *document = NULL;
+	gtk_tree_store_clear(handler->sidebar.tree_store);
 	/* Add views */
 	name_iter = session->view_file_names;
 	while (name_iter) {

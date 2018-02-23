@@ -81,19 +81,9 @@ static void action_open_selected_activate(GSimpleAction *simple, GVariant *param
 	sidebar_open_selected(user_data);
 }
 
-static void action_rename_selected_activate(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
-{
-	sidebar_rename_selected(user_data);
-}
-
-static void action_duplicate_selected_activate(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
-{
-	sidebar_open_selected(user_data);
-}
-
 static void action_delete_selected_activate(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
 {
-	sidebar_open_selected(user_data);
+	sidebar_delete_selected(user_data);
 }
 
 static void action_remove_folder_from_session_activate(GSimpleAction *simple, GVariant *parameter, gpointer user_data)
@@ -125,14 +115,6 @@ static void add_actions(chandler *handler)
 	/* Side bar */
 	action = g_simple_action_new("open-selected", NULL);
 	g_signal_connect(action, "activate", G_CALLBACK(action_open_selected_activate), handler);
-	g_action_map_add_action(G_ACTION_MAP(handler->window.window), G_ACTION(action));
-	g_object_unref(G_OBJECT(action));
-	action = g_simple_action_new("rename-selected", NULL);
-	g_signal_connect(action, "activate", G_CALLBACK(action_rename_selected_activate), handler);
-	g_action_map_add_action(G_ACTION_MAP(handler->window.window), G_ACTION(action));
-	g_object_unref(G_OBJECT(action));
-	action = g_simple_action_new("duplicate-selected", NULL);
-	g_signal_connect(action, "activate", G_CALLBACK(action_duplicate_selected_activate), handler);
 	g_action_map_add_action(G_ACTION_MAP(handler->window.window), G_ACTION(action));
 	g_object_unref(G_OBJECT(action));
 	action = g_simple_action_new("delete-selected", NULL);
