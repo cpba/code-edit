@@ -18,6 +18,21 @@
 #include <gtk/gtk.h>
 #include "handlers.h"
 
+gboolean session_has_modified_document(chandler *handler)
+{
+	gboolean has_modified_document = FALSE;
+	GList *document_iter = handler->documents;
+	cdocument *document = NULL;
+	while (document_iter && !has_modified_document) {
+		document = document_iter->data;
+		if (!gtk_source_file_get_location(document->source_file) || gtk_text_buffer_get_modified(GTK_TEXT_BUFFER(document->source_buffer))) {
+			has_modified_document = TRUE;
+		}
+		document_iter = g_list_next(document_iter);
+	}
+	return has_modified_document;
+}
+
 void session_update_lists(chandler *handler, csession *session)
 {
 	GString *name = NULL;
@@ -41,10 +56,12 @@ void session_update_lists(chandler *handler, csession *session)
 	while (page) {
 		view = g_object_get_data(G_OBJECT(page), "view");
 		file = gtk_source_file_get_location(view->document->source_file);
-		path = g_file_get_path(file);
-		name = g_string_new(path);
-		session->view_file_names = g_list_append(session->view_file_names, name);
-		g_free(path);
+		if (file) {
+			path = g_file_get_path(file);
+			name = g_string_new(path);
+			session->view_file_names = g_list_append(session->view_file_names, name);
+			g_free(path);
+		}
 		page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(handler->session.notebook),
 			gtk_notebook_page_num(GTK_NOTEBOOK(handler->session.notebook), page) + 1);
 	}
@@ -76,13 +93,13 @@ void session_open(chandler *handler, csession *session)
 	GString *name = NULL;
 	GList *name_iter = NULL;
 	cdocument *document = NULL;
-	gtk_tree_store_clear(handler->sidebar.tree_store);
+	session_clear(handler);
 	/* Add views */
 	name_iter = session->view_file_names;
 	while (name_iter) {
 		name = name_iter->data;
 		document = new_document(handler, name->str);
-		add_view_for_document(handler, document);
+		document_add_view(handler, document);
 		name_iter = g_list_next(name_iter);
 	}
 	/* Add folders */
@@ -95,27 +112,27 @@ void session_open(chandler *handler, csession *session)
 	handler->current_session = session;
 }
 
-void session_close(chandler *handler)
+void session_clear(chandler *handler)
 {
 	cview *view = NULL;
 	gtk_tree_store_clear(handler->sidebar.tree_store);
 	while (gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook)) > 0) {
 		view = get_nth_view(handler, 0);
-		close_view(handler, view, FALSE);
+		view_close(handler, view, FALSE);
 	}
 }
 
 static void notebook_page_removed(GtkWidget *widget, GtkWidget *child, gint page_num, gpointer user_data)
 {
 	chandler *handler = user_data;
-	update_view_status(handler, NULL);
+	window_update(handler, NULL);
 }
 
 static void notebook_switch_page(GtkWidget *widget, GtkWidget *page, guint page_num, gpointer user_data)
 {
 	chandler *handler = user_data;
 	cview *view = g_object_get_data(G_OBJECT(page), "view");
-	update_view_status(handler, view);
+	window_update(handler, view);
 }
 
 void init_session(chandler *handler)

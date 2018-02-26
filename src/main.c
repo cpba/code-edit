@@ -169,7 +169,7 @@ static void application_activate(GtkApplication *application, gpointer user_data
 	gtk_window_present(GTK_WINDOW(handler->window.window));
 	gtk_widget_show_all(handler->window.window);
 	select_session_load_sessions(handler);
-	update_view_status(handler, NULL);
+	window_update(handler, NULL);
 	gtk_stack_set_transition_type(GTK_STACK(handler->window.stack), GTK_STACK_TRANSITION_TYPE_CROSSFADE);
 	gtk_revealer_set_transition_type(GTK_REVEALER(handler->statusbar.revealer), GTK_REVEALER_TRANSITION_TYPE_SLIDE_UP);
 }

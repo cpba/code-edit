@@ -67,6 +67,7 @@ struct cview {
 	GtkWidget *scrolled_window;
 	GtkWidget *source_view;
 	GtkWidget *box_tab;
+	GtkWidget *spinner;
 	GtkWidget *label_tab;
 	GtkWidget *button_close_tab;
 };
@@ -215,12 +216,12 @@ struct chandler {
 };
 
 /* Header */
-void update_headerbar(chandler *handler, cview *view);
+void headerbar_update(chandler *handler, cview *view);
 
 /* Statusbar */
-void update_statusbar_language(chandler *handler, cview *view);
-void update_statusbar_repository_branch(chandler *handler, cview *view);
-void update_statusbar(chandler *handler, cview *view);
+void statusbar_update_language(chandler *handler, cview *view);
+void statusbar_update_repository_branch(chandler *handler, cview *view);
+void statusbar_update(chandler *handler, cview *view);
 
 /* Sidebar */
 void sidebar_update_iter_children(chandler *handler, GtkTreeIter iter);
@@ -232,13 +233,14 @@ void sidebar_remove_folder_from_session(chandler *handler);
 /* Document */
 cview *get_nth_view(chandler *handler, gint index);
 cview *get_current_view(chandler *handler);
-void update_view_status(chandler *handler, cview *view);
-void update_document_views_status(chandler *handler, cdocument *document);
-void free_document(chandler *handler, cdocument *document);
-void save_document(cdocument *document, gchar *file_name);
+void document_update_tabs(chandler *handler, cdocument *document);
+cdocument *get_document_by_file_name(chandler *handler, gchar *file_name);
+void document_close_views(chandler *handler, cdocument *document);
+void document_free(chandler *handler, cdocument *document);
+void document_save(cdocument *document, gchar *file_name);
 cdocument *new_document(chandler *handler, gchar *file_name);
-void close_view(chandler *handler, cview *view, gboolean ask);
-void add_view_for_document(chandler *handler, cdocument *document);
+void view_close(chandler *handler, cview *view, gboolean ask);
+void document_add_view(chandler *handler, cdocument *document);
 
 /* Preferences */
 void preferences_default(chandler *handler);
@@ -253,9 +255,13 @@ void select_session_load_sessions(chandler *handler);
 void select_session_save(chandler *handler);
 
 /* Session */
+gboolean session_has_modified_document(chandler *handler);
 void session_update_lists(chandler *handler, csession *session);
 void session_open(chandler *handler, csession *session);
-void session_close(chandler *handler);
+void session_clear(chandler *handler);
+
+/* Window */
+void window_update(chandler *handler, cview *view);
 
 /* Actions */
 void window_show_about(chandler *handler);

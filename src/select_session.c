@@ -121,7 +121,6 @@ void select_session_save(chandler *handler)
 	gchar **strings = NULL;
 	gint i = 0;
 	GList *children = gtk_container_get_children(GTK_CONTAINER(handler->select_session.list_box));
-	GtkWidget *row = NULL;
 	gint length = g_list_length(children);
 	if (handler->current_session) {
 		g_key_file_set_string(handler->key_file,

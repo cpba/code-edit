@@ -128,7 +128,7 @@ void sidebar_open_selected(chandler *handler)
 			&unsorted_iter,
 			2, &file_path,
 			-1);
-		add_view_for_document(handler, new_document(handler, file_path));
+		document_add_view(handler, new_document(handler, file_path));
 	}
 }
 
@@ -142,6 +142,7 @@ void sidebar_delete_selected(chandler *handler)
 	GtkWidget *dialog = NULL;
 	gint response = 0;
 	gboolean delete_file = FALSE;
+	cdocument *document = NULL;
 	if (gtk_tree_selection_get_selected(tree_selection, NULL, &iter)) {
 		gtk_tree_model_sort_convert_iter_to_child_iter(GTK_TREE_MODEL_SORT(handler->sidebar.tree_model_sort), &unsorted_iter, &iter);
 		gtk_tree_model_get(GTK_TREE_MODEL(handler->sidebar.tree_store),
@@ -165,9 +166,15 @@ void sidebar_delete_selected(chandler *handler)
 				if (!g_file_query_exists(file, NULL)) {
 					gtk_tree_store_remove(handler->sidebar.tree_store, &unsorted_iter);
 				}
+				document = get_document_by_file_name(handler, file_path);
+				if (document) {
+					document_close_views(handler, document);
+					document_free(handler, document);
+				}
 			}
 			g_object_unref(G_OBJECT(file));
 		}
+		g_free(file_path);
 	}
 }
 
@@ -292,8 +299,7 @@ static void tree_view_row_activated(GtkTreeView *tree_view, GtkTreePath *path, G
 				if (file_info) {
 					file_type = g_file_info_get_file_type(file_info);
 					if (file_type == G_FILE_TYPE_REGULAR) {
-						add_view_for_document(handler,
-							new_document(handler, file_path));
+						document_add_view(handler, new_document(handler, file_path));
 					}
 				}
 				g_object_unref(G_OBJECT(file));

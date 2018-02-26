@@ -40,33 +40,36 @@ cview *get_current_view(chandler *handler)
 	return view;
 }
 
-void update_view_status(chandler *handler, cview *view)
-{
-	update_headerbar(handler, view);
-	update_statusbar(handler, view);
-}
-
-void update_document_views_status(chandler *handler, cdocument *document)
+void document_update_views(chandler *handler, cdocument *document)
 {
 	cview *view = NULL;
 	GList *view_iter = g_list_first(document->views);
 	GString *text = NULL;
+	GFile *file = NULL;
+	gchar *path = NULL;
 	gchar *basename = NULL;
 	while (view_iter) {
 		view = view_iter->data;
+		/* Update spinner */
+		if (document->source_file_saver || document->source_file_loader) {
+			gtk_spinner_start(GTK_SPINNER(view->spinner));
+			gtk_widget_show_all(view->spinner);
+		} else {
+			gtk_widget_hide(view->spinner);
+			gtk_spinner_stop(GTK_SPINNER(view->spinner));
+		}
 		/* Update tab label */
 		if (!document->source_file_loader && gtk_text_buffer_get_modified(GTK_TEXT_BUFFER(document->source_buffer))) {
 			text = g_string_new("• ");
 		} else {
 			text = g_string_new("");
 		}
-		if (gtk_source_file_get_location(document->source_file)) {
-			basename = g_file_get_basename(gtk_source_file_get_location(document->source_file));
-		} else {
-			basename = NULL;
-		}
-		if (basename) {
+		file = gtk_source_file_get_location(document->source_file);
+		if (file) {
+			path = g_file_get_path(file);
+			basename = g_path_get_basename(path);
 			text = g_string_append(text, basename);
+			g_free(path);
 			g_free(basename);
 		} else {
 			text = g_string_append(text, TEXT_MARKUP_UNTITLED);
@@ -81,7 +84,6 @@ void update_document_views_status(chandler *handler, cdocument *document)
 		}
 		view_iter = g_list_next(view_iter);
 	}
-	update_view_status(handler, NULL);
 }
 
 static void document_load_progress(goffset current_num_bytes, goffset total_num_bytes, gpointer user_data)
@@ -160,10 +162,9 @@ static void document_async_ready(GObject *source_object, GAsyncResult *res, gpoi
 		view_iter = g_list_first(document->views);
 		while (view_iter) {
 			view = view_iter->data;
-			close_view(handler, view, FALSE);
+			view_close(handler, view, FALSE);
 			view_iter = g_list_first(document->views);
 		}
-		update_view_status(handler, NULL);
 	} else {
 		view_iter = g_list_first(document->views);
 		while (view_iter) {
@@ -171,9 +172,9 @@ static void document_async_ready(GObject *source_object, GAsyncResult *res, gpoi
 			gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), FALSE);
 			view_iter = g_list_next(view_iter);
 		}
-		update_document_views_status(handler, document);
-		update_view_status(handler, NULL);
 	}
+	document_update_views(handler, document);
+	window_update(handler, NULL);
 	gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(document->source_buffer), &document->iter_insert);
 	gtk_text_buffer_place_cursor(GTK_TEXT_BUFFER(document->source_buffer), &document->iter_insert);
 }
@@ -182,10 +183,10 @@ static void source_buffer_changed(GtkTextBuffer *text_buffer, gpointer user_data
 {
 	chandler *handler = user_data;
 	cdocument *document = g_object_get_data(G_OBJECT(text_buffer), "document");
-	update_document_views_status(handler, document);
+	document_update_views(handler, document);
 }
 
-static cdocument *get_document_by_file_name(chandler *handler, gchar *file_name)
+cdocument *get_document_by_file_name(chandler *handler, gchar *file_name)
 {
 	gchar *path = NULL;
 	cdocument *result = NULL;
@@ -208,21 +209,28 @@ static cdocument *get_document_by_file_name(chandler *handler, gchar *file_name)
 	return result;
 }
 
-void free_document(chandler *handler, cdocument *document)
+void document_close_views(chandler *handler, cdocument *document)
 {
+	GList *view_iter;
+	view_iter = document->views;
+	while (view_iter) {
+		view_close(handler, view_iter->data, FALSE);
+		view_iter = document->views;
+	}
+}
+
+void document_free(chandler *handler, cdocument *document)
+{
+	gtk_source_completion_words_unregister(handler->search_and_replace.source_completion_words, GTK_TEXT_BUFFER(document->source_buffer));
 	if (document->source_file) {
-		GFile *file = gtk_source_file_get_location(document->source_file);
-		if (file) {
-			g_object_unref(G_OBJECT(file));
-		}
 		g_object_unref(G_OBJECT(document->source_file));
 	}
-	gtk_source_completion_words_unregister(handler->search_and_replace.source_completion_words, GTK_TEXT_BUFFER(document->source_buffer));
 	g_object_unref(G_OBJECT(document->source_buffer));
+	handler->documents = g_list_remove(handler->documents, document);
 	g_slice_free1(sizeof(cdocument), document);
 }
 
-void save_document(cdocument *document, gchar *file_name)
+void document_save(cdocument *document, gchar *file_name)
 {
 	GFile *file = NULL;
 	if (!document->source_file_saver && !document->source_file_loader) {
@@ -264,6 +272,7 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 		document->cancelled = FALSE;
 		document->encoding = gtk_source_encoding_get_utf8();
 		document->source_buffer = gtk_source_buffer_new(NULL);
+		g_object_ref(G_OBJECT(document->source_buffer));
 		gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(document->source_buffer), &document->iter_insert);
 		gtk_text_buffer_place_cursor(GTK_TEXT_BUFFER(document->source_buffer), &document->iter_insert);
 		document->source_search_context = gtk_source_search_context_new(document->source_buffer, handler->search_and_replace.source_search_settings);
@@ -308,15 +317,19 @@ static void button_close_tab_clicked(GtkWidget *widget, gpointer user_data)
 {
 	chandler *handler = user_data;
 	cview *view = g_object_get_data(G_OBJECT(widget), "view");
+	cdocument *document = view->document;
 	if (view->document->cancellable && g_list_length(view->document->views) == 1) {
 		view->document->cancelled = TRUE;
 		g_cancellable_cancel(view->document->cancellable);
 	} else {
-		close_view(handler, view, TRUE);
+		view_close(handler, view, TRUE);
+		if (!document->views) {
+			document_free(handler, document);
+		}
 	}
 }
 
-void close_view(chandler *handler, cview *view, gboolean ask)
+void view_close(chandler *handler, cview *view, gboolean ask)
 {
 	gboolean close = TRUE;
 	gint response = 0;
@@ -338,31 +351,23 @@ void close_view(chandler *handler, cview *view, gboolean ask)
 	}
 	if (close) {
 		view->document->views = g_list_remove(view->document->views, view);
-		handler->views = g_list_remove(view->document->views, view);
+		handler->views = g_list_remove(handler->views, view);
 		gtk_widget_destroy(view->box);
-	}
-	if (g_list_length(view->document->views) == 0) {
-		handler->documents = g_list_remove(handler->documents, view->document);
-		free_document(handler, view->document);
 	}
 	if (close) {
 		g_slice_free1(sizeof(cview), view);
 	}
-	update_view_status(handler, NULL);
+	window_update(handler, NULL);
 }
 
-void add_view_for_document(chandler *handler, cdocument *document)
+void document_add_view(chandler *handler, cdocument *document)
 {
 	cview *view = NULL;
 	GList *first_view = NULL;
 	GtkSourceCompletion *source_completion = NULL;
 	gint page_index = 0;
 	first_view = document->views;
-	/*
-	TODO
-	Use the preferences option to open a new view or use an existing view.
-	*/
-	if (first_view && TRUE) {
+	if (first_view) {
 		view = first_view->data;
 		page_index = gtk_notebook_page_num(GTK_NOTEBOOK(handler->session.notebook), view->box);
 		gtk_notebook_set_current_page(GTK_NOTEBOOK(handler->session.notebook), page_index);
@@ -401,6 +406,13 @@ void add_view_for_document(chandler *handler, cdocument *document)
 		gtk_text_view_set_monospace(GTK_TEXT_VIEW(view->source_view), TRUE);
 		/* Tab */
 		view->box_tab = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+		/* Spinner */
+		view->spinner = gtk_spinner_new();
+		gtk_container_add(GTK_CONTAINER(view->box_tab), view->spinner);
+		gtk_widget_set_hexpand(view->spinner, FALSE);
+		gtk_widget_set_vexpand(view->spinner, TRUE);
+		gtk_widget_set_halign(view->spinner, GTK_ALIGN_CENTER);
+		gtk_widget_set_valign(view->spinner, GTK_ALIGN_CENTER);
 		/* Label */
 		view->label_tab = gtk_label_new("");
 		gtk_container_add(GTK_CONTAINER(view->box_tab), view->label_tab);
@@ -427,13 +439,14 @@ void add_view_for_document(chandler *handler, cdocument *document)
 		gtk_notebook_set_tab_reorderable(GTK_NOTEBOOK(handler->session.notebook), view->box, TRUE);
 		gtk_widget_show_all(handler->session.notebook);
 		gtk_widget_show_all(view->box_tab);
+		gtk_widget_hide(view->spinner);
 		/* Update document */
 		document->views = g_list_append(document->views, view);
 		handler->views = g_list_append(handler->views, view);
-		update_document_views_status(handler, document);
+		document_update_views(handler, document);
 		/* Show page */
 		gtk_notebook_set_current_page(GTK_NOTEBOOK(handler->session.notebook), page_index);
-		update_view_status(handler, view);
+		window_update(handler, view);
 		/* Add source completion */
 		source_completion = gtk_source_view_get_completion(GTK_SOURCE_VIEW(view->source_view));
 		gtk_source_completion_add_provider(source_completion, GTK_SOURCE_COMPLETION_PROVIDER(handler->search_and_replace.source_completion_words), NULL);

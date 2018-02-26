@@ -19,7 +19,7 @@
 #include <libgit2-glib/ggit.h>
 #include "handlers.h"
 
-void update_statusbar_language(chandler *handler, cview *view)
+void statusbar_update_language(chandler *handler, cview *view)
 {
 	GtkSourceLanguage *source_language = NULL;
 	if (view) {
@@ -33,7 +33,7 @@ void update_statusbar_language(chandler *handler, cview *view)
 	}
 }
 
-void update_statusbar_repository_branch(chandler *handler, cview *view)
+void statusbar_update_repository_branch(chandler *handler, cview *view)
 {
 	GgitRepository *repo = NULL;
 	GgitBranch *branch = NULL;
@@ -67,14 +67,14 @@ void update_statusbar_repository_branch(chandler *handler, cview *view)
 	}
 }
 
-void update_statusbar(chandler *handler, cview *view)
+void statusbar_update(chandler *handler, cview *view)
 {
 	if (!view) {
 		view = get_current_view(handler);
 	}
 	if (view) {
-		update_statusbar_language(handler, view);
-		update_statusbar_repository_branch(handler, view);
+		statusbar_update_language(handler, view);
+		statusbar_update_repository_branch(handler, view);
 		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->statusbar.revealer), TRUE);
 	} else {
 		gtk_revealer_set_reveal_child(GTK_REVEALER(handler->statusbar.revealer), FALSE);

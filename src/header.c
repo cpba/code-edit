@@ -18,25 +18,45 @@
 #include <gtk/gtk.h>
 #include "handlers.h"
 
-void update_headerbar(chandler *handler, cview *view)
+void headerbar_update(chandler *handler, cview *view)
 {
+	GFile *file = NULL;
+	gchar *path = NULL;
+	gchar *basename = NULL;
+	gchar *dirname = NULL;
+	gboolean untitled = FALSE;
 	if (!view) {
 		view = get_current_view(handler);
 	}
 	if (view) {
-		GFile *file = gtk_source_file_get_location(view->document->source_file);
+		file = gtk_source_file_get_location(view->document->source_file);
 		if (file) {
-			gchar *path = g_file_get_path(file);
-			gchar *basename = g_path_get_basename(path);
-			gchar *dirname = g_path_get_dirname(path);
+			path = g_file_get_path(file);
+			basename = g_path_get_basename(path);
+			dirname = g_path_get_dirname(path);
+		}
+		if (basename && dirname) {
+			if (g_strcmp0(dirname, g_get_tmp_dir()) == 0) {
+				untitled = TRUE;
+			}
+		} else {
+			untitled = TRUE;
+		}
+		if (!untitled) {
 			gtk_header_bar_set_title(GTK_HEADER_BAR(handler->header.header_bar), basename);
 			gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->header.header_bar), dirname);
-			g_free(basename);
-			g_free(dirname);
-			g_free(path);
 		} else {
 			gtk_header_bar_set_title(GTK_HEADER_BAR(handler->header.header_bar), TEXT_UNTITLED);
 			gtk_header_bar_set_subtitle(GTK_HEADER_BAR(handler->header.header_bar), NULL);
+		}
+		if (basename) {
+			g_free(basename);
+		}
+		if (dirname) {
+			g_free(dirname);
+		}
+		if (path) {
+			g_free(path);
 		}
 		gtk_widget_show(handler->header.button_save_document);
 		gtk_widget_show(handler->header.button_save_as_document);

@@ -39,21 +39,6 @@ void window_quit(chandler *handler)
 	gtk_window_close(GTK_WINDOW(handler->window.window));
 }
 
-static gboolean session_has_modified_document(chandler *handler)
-{
-	gboolean has_modified_document = FALSE;
-	GList *document_iter = handler->documents;
-	cdocument *document = NULL;
-	while (document_iter && !has_modified_document) {
-		document = document_iter->data;
-		if (gtk_text_buffer_get_modified(GTK_TEXT_BUFFER(document->source_buffer))) {
-			has_modified_document = TRUE;
-		}
-		document_iter = g_list_next(document_iter);
-	}
-	return has_modified_document;
-}
-
 void window_go_to_select_session(gpointer user_data)
 {
 	chandler *handler = user_data;
@@ -78,7 +63,6 @@ void window_go_to_select_session(gpointer user_data)
 			session_update_lists(handler, handler->current_session);
 			handler->current_session = NULL;
 		}
-		session_close(handler);
 		gtk_stack_set_visible_child_name(GTK_STACK(handler->header.stack_session), "select-session");
 		gtk_stack_set_visible_child_name(GTK_STACK(handler->header.stack_extra), "select-session");
 		gtk_stack_set_visible_child_name(GTK_STACK(handler->window.stack), "select-session");
@@ -93,14 +77,14 @@ void window_go_to_session(gpointer user_data)
 	gtk_stack_set_visible_child_name(GTK_STACK(handler->header.stack_session), "session");
 	gtk_stack_set_visible_child_name(GTK_STACK(handler->header.stack_extra), "session");
 	gtk_stack_set_visible_child_name(GTK_STACK(handler->window.stack), "session");
-	update_view_status(handler, NULL);
+	window_update(handler, NULL);
 }
 
 void window_new(gpointer user_data)
 {
 	chandler *handler = user_data;
 	cdocument *document = new_document(handler, NULL);
-	add_view_for_document(handler, document);
+	document_add_view(handler, document);
 }
 
 void window_open(gpointer user_data)
@@ -137,7 +121,7 @@ void window_open(gpointer user_data)
 			while (file_name_iter) {
 				gchar *file_name = file_name_iter->data;
 				cdocument *document = new_document(handler, file_name);
-				add_view_for_document(handler, document);
+				document_add_view(handler, document);
 				g_free(file_name);
 				file_name_iter = file_name_iter->next;
 			}
@@ -159,7 +143,7 @@ void window_save_as(gpointer user_data)
 			response = gtk_dialog_run(GTK_DIALOG(handler->save.dialog));
 			if (response == GTK_RESPONSE_OK) {
 				file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(handler->save.dialog));
-				save_document(view->document, file_name);
+				document_save(view->document, file_name);
 				g_free(file_name);
 			}
 			gtk_widget_destroy(handler->save.dialog);
@@ -188,12 +172,12 @@ void window_save(gpointer user_data)
 				response = gtk_dialog_run(GTK_DIALOG(handler->save.dialog));
 				if (response == GTK_RESPONSE_OK) {
 					file_name = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(handler->save.dialog));
-					save_document(view->document, file_name);
+					document_save(view->document, file_name);
 					g_free(file_name);
 				}
 				gtk_widget_destroy(handler->save.dialog);
 			} else {
-				save_document(view->document, NULL);
+				document_save(view->document, NULL);
 			}
 		}
 	}
@@ -203,8 +187,13 @@ void window_close(gpointer user_data)
 {
 	chandler *handler = user_data;
 	cview *view = get_current_view(handler);
+	cdocument *document = NULL;
 	if (view) {
-		close_view(handler, view, TRUE);
+		document = view->document;
+		view_close(handler, view, TRUE);
+		if (!document->views) {
+			document_free(handler, document);
+		}
 	}
 }
 
@@ -358,6 +347,12 @@ void window_toggle_sidebar(chandler *handler)
 	}
 }
 
+void window_update(chandler *handler, cview *view)
+{
+	headerbar_update(handler, view);
+	statusbar_update(handler, view);
+}
+
 static gboolean window_key_press_event(GtkWidget *widget, GdkEventKey *event, gpointer user_data)
 {
 	chandler *handler = user_data;
@@ -375,17 +370,7 @@ static gboolean window_delete_event(GtkWidget *widget, GdkEvent *event, gpointer
 {
 	chandler *handler = user_data;
 	gboolean stop_propagate = FALSE;
-	gboolean has_modified_document = FALSE;
-	GList *document_iter = handler->documents;
-	cdocument *document = NULL;
-	while (document_iter && !has_modified_document) {
-		document = document_iter->data;
-		if (gtk_text_buffer_get_modified(GTK_TEXT_BUFFER(document->source_buffer))) {
-			has_modified_document = TRUE;
-		}
-		document_iter = g_list_next(document_iter);
-	}
-	if (has_modified_document) {
+	if (session_has_modified_document(handler)) {
 		gint response = 0;
 		GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(handler->window.window),
 			GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR,
