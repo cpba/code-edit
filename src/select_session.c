@@ -215,7 +215,7 @@ static void box_session_destroy(GtkWidget *widget, gpointer user_data)
 	/* Folders */
 	iter = session->folders;
 	while (iter) {
-		g_string_free(session->folders->data, TRUE);
+		g_string_free(iter->data, TRUE);
 		iter = g_list_next(iter);
 	}
 	g_list_free(session->folders);
