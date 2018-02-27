@@ -143,6 +143,7 @@ void init_header(chandler *handler)
 	gtk_widget_set_vexpand(handler->header.button_add_session, FALSE);
 	gtk_widget_set_halign(handler->header.button_add_session, GTK_ALIGN_START);
 	gtk_widget_set_valign(handler->header.button_add_session, GTK_ALIGN_CENTER);
+	gtk_widget_set_tooltip_text(handler->header.button_add_session, TEXT_TOOLTIP_ADD_SESSION);
 	g_signal_connect(handler->header.button_add_session, "clicked", G_CALLBACK(button_add_session_clicked), handler);
 	/* Box session */
 	box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
@@ -151,30 +152,35 @@ void init_header(chandler *handler)
 	handler->header.button_select_session = gtk_button_new_from_icon_name("go-previous-symbolic", GTK_ICON_SIZE_BUTTON);
 	gtk_widget_set_name(handler->header.button_select_session, "button_select_session");
 	gtk_container_add(GTK_CONTAINER(box), handler->header.button_select_session);
+	gtk_widget_set_tooltip_text(handler->header.button_select_session, TEXT_TOOLTIP_SELECT_SESSION);
 	gtk_style_context_add_class(gtk_widget_get_style_context(handler->header.button_select_session), "circular");
 	g_signal_connect(handler->header.button_select_session, "clicked", G_CALLBACK(button_select_session_clicked), handler);
 	/* Button new document */
 	handler->header.button_new_document = gtk_button_new_from_icon_name("tab-new-symbolic", GTK_ICON_SIZE_BUTTON);
 	gtk_widget_set_name(handler->header.button_new_document, "button_new_document");
 	gtk_container_add(GTK_CONTAINER(box), handler->header.button_new_document);
+	gtk_widget_set_tooltip_text(handler->header.button_new_document, TEXT_TOOLTIP_NEW);
 	gtk_style_context_add_class(gtk_widget_get_style_context(handler->header.button_new_document), "circular");
 	g_signal_connect(handler->header.button_new_document, "clicked", G_CALLBACK(button_new_document_clicked), handler);
 	/* Button open document */
 	handler->header.button_open_document = gtk_button_new_from_icon_name("document-open-symbolic", GTK_ICON_SIZE_BUTTON);
 	gtk_widget_set_name(handler->header.button_open_document, "button_open_document");
 	gtk_container_add(GTK_CONTAINER(box), handler->header.button_open_document);
+	gtk_widget_set_tooltip_text(handler->header.button_open_document, TEXT_TOOLTIP_OPEN);
 	gtk_style_context_add_class(gtk_widget_get_style_context(handler->header.button_open_document), "circular");
 	g_signal_connect(handler->header.button_open_document, "clicked", G_CALLBACK(button_open_document_clicked), handler);
 	/* Button save document */
 	handler->header.button_save_document = gtk_button_new_from_icon_name("document-save-symbolic", GTK_ICON_SIZE_BUTTON);
 	gtk_widget_set_name(handler->header.button_save_document, "button_save_document");
 	gtk_container_add(GTK_CONTAINER(box), handler->header.button_save_document);
+	gtk_widget_set_tooltip_text(handler->header.button_save_document, TEXT_TOOLTIP_SAVE);
 	gtk_style_context_add_class(gtk_widget_get_style_context(handler->header.button_save_document), "circular");
 	g_signal_connect(handler->header.button_save_document, "clicked", G_CALLBACK(button_save_document_clicked), handler);
 	/* Button save as document */
 	handler->header.button_save_as_document = gtk_button_new_from_icon_name("document-save-as-symbolic", GTK_ICON_SIZE_BUTTON);
 	gtk_widget_set_name(handler->header.button_save_as_document, "button_save_as_document");
 	gtk_container_add(GTK_CONTAINER(box), handler->header.button_save_as_document);
+	gtk_widget_set_tooltip_text(handler->header.button_save_as_document, TEXT_TOOLTIP_SAVE_AS);
 	gtk_style_context_add_class(gtk_widget_get_style_context(handler->header.button_save_as_document), "circular");
 	g_signal_connect(handler->header.button_save_as_document, "clicked", G_CALLBACK(button_save_as_document_clicked), handler);
 	/* Stack extra */
@@ -193,6 +199,7 @@ void init_header(chandler *handler)
 	handler->header.button_preferences = gtk_toggle_button_new();
 	gtk_widget_set_name(handler->header.button_preferences, "button_preferences");
 	gtk_container_add(GTK_CONTAINER(box), handler->header.button_preferences);
+	gtk_widget_set_tooltip_text(handler->header.button_preferences, TEXT_TOOLTIP_PREFERENCES);
 	gtk_style_context_add_class(gtk_widget_get_style_context(handler->header.button_preferences), "circular");
 	g_signal_connect(handler->header.button_preferences, "clicked", G_CALLBACK(button_preferences_toggled), handler);
 	icon = gtk_image_new_from_icon_name("preferences-system-symbolic", GTK_ICON_SIZE_BUTTON);
