@@ -66,6 +66,8 @@
 #define TEXT_FONT "Font"
 #define TEXT_HIGHLIGHT "Highlight"
 #define TEXT_UNTITLED "Untitled"
+#define TEXT_MARKUP_TAB_UNTITLED_TOOLTIP "<b>Untitled document</b>\n\n<b>Encoding:</b> %s (%s)"
+#define TEXT_MARKUP_TAB_TOOLTIP "<b>Name:</b>%s\n\n<b>Encoding:</b> %s (%s)"
 #define TEXT_MARKUP_UNTITLED "<i>Untitled</i>"
 #define TEXT_UNIT_CHARACTER " character"
 #define TEXT_UNIT_CHARACTERS " characters"

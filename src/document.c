@@ -76,6 +76,23 @@ void document_update_views(chandler *handler, cdocument *document)
 		}
 		gtk_label_set_markup(GTK_LABEL(view->label_tab), text->str);
 		g_string_free(text, TRUE);
+		/* Update tab tooltip */
+		file = gtk_source_file_get_location(document->source_file);
+		if (file) {
+			path = g_file_get_path(file);
+			text = g_string_new("");
+			g_string_append_printf(text, TEXT_MARKUP_TAB_TOOLTIP, path,
+				gtk_source_encoding_get_name(view->document->encoding),
+				gtk_source_encoding_get_charset(view->document->encoding));
+			g_free(path);
+		} else {
+			text = g_string_new("");
+			g_string_append_printf(text, TEXT_MARKUP_TAB_UNTITLED_TOOLTIP,
+				gtk_source_encoding_get_name(view->document->encoding),
+				gtk_source_encoding_get_charset(view->document->encoding));
+		}
+		gtk_widget_set_tooltip_markup(view->label_tab, text->str);
+		g_string_free(text, TRUE);
 		/* Update if document is editable */
 		if (document->source_file_loader || document->source_file_saver) {
 			gtk_text_view_set_editable(GTK_TEXT_VIEW(view->source_view), FALSE);
