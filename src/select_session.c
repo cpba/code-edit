@@ -18,7 +18,27 @@
 #include <gtk/gtk.h>
 #include "handlers.h"
 
-gchar *select_session_new_id(chandler *handler)
+csession *get_session_by_id(chandler *handler, gchar *id)
+{
+	csession *result = NULL;
+	csession *session = NULL;
+	GtkWidget *row = NULL;
+	GtkWidget *child = NULL;
+	GList *children = gtk_container_get_children(GTK_CONTAINER(handler->select_session.list_box));
+	GList *children_iter = children;
+	while (children_iter && !result) {
+		row = children_iter->data;
+		child = gtk_bin_get_child(GTK_BIN(row));
+		session = g_object_get_data(G_OBJECT(child), "session");
+		if (g_strcmp0(session->id, id) == 0) {
+			result = session;
+		}
+		children_iter = g_list_next(children_iter);
+	}
+	return result;
+}
+
+static gchar *get_random_id(void)
 {
 	gchar *id = g_uuid_string_random();
 	gint i = 0;
@@ -27,6 +47,18 @@ gchar *select_session_new_id(chandler *handler)
 			id[i] = '_';
 		}
 		i++;
+	}
+	return id;
+}
+
+gchar *select_session_new_id(chandler *handler)
+{
+	gchar *id = get_random_id();
+	csession *session = get_session_by_id(handler, id);
+	while (session) {
+		g_free(id);
+		id = get_random_id();
+		session = get_session_by_id(handler, id);
 	}
 	return id;
 }

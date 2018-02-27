@@ -247,6 +247,7 @@ void preferences_save(chandler *handler);
 void preferences_load(chandler *handler);
 
 /* Select session */
+csession *get_session_by_id(chandler *handler, gchar *id);
 gchar *select_session_new_id(chandler *handler);
 void select_session_load(chandler *handler, csession *session);
 csession *select_session_new_session(chandler *handler, gchar *name, gchar *id, gint index);
