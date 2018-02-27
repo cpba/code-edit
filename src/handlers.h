@@ -87,7 +87,6 @@ struct chandler {
 	GList *documents;
 	GList *views;
 	GKeyFile *key_file;
-	GList *sessions;
 	csession *current_session;
 	struct {
 		GtkWidget *window;

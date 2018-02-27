@@ -398,12 +398,10 @@ static void search_entry_search_changed(GtkWidget *widget, gpointer user_data)
 static void list_box_sessions_row_activated(GtkWidget *widget, GtkListBoxRow *row, gpointer user_data)
 {
 	chandler *handler = user_data;
-	GList *children = gtk_container_get_children(GTK_CONTAINER(widget));
 	GtkWidget *child = gtk_bin_get_child(GTK_BIN(row));
 	csession *session = g_object_get_data(G_OBJECT(child), "session");
 	session_open(handler, session);
 	window_go_to_session(handler);
-	g_list_free(children);
 }
 
 static gboolean list_box_filter(GtkListBoxRow *row, gpointer user_data)
