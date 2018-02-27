@@ -122,13 +122,17 @@ void sidebar_open_selected(chandler *handler)
 	gchar *file_path = NULL;
 	GtkTreeIter iter;
 	GtkTreeIter unsorted_iter;
+	cdocument *document = NULL;
 	if (gtk_tree_selection_get_selected(tree_selection, NULL, &iter)) {
 		gtk_tree_model_sort_convert_iter_to_child_iter(GTK_TREE_MODEL_SORT(handler->sidebar.tree_model_sort), &unsorted_iter, &iter);
 		gtk_tree_model_get(GTK_TREE_MODEL(handler->sidebar.tree_store),
 			&unsorted_iter,
 			2, &file_path,
 			-1);
-		document_add_view(handler, new_document(handler, file_path));
+		document = new_document(handler, file_path);
+		if (document) {
+			document_add_view(handler, document);
+		}
 	}
 }
 

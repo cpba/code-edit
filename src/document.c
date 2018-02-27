@@ -276,9 +276,22 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 	GtkSourceLanguage *source_language = NULL;
 	GFile *file = NULL;
 	gboolean result_uncertain = FALSE;
+	gboolean regular_file = TRUE;
 	gchar *content_type = NULL;
 	cdocument *document = get_document_by_file_name(handler, file_name);
-	if (!document) {
+	if (file_name) {
+		file = g_file_new_for_path(file_name);
+		if (file) {
+			if (g_file_query_file_type(file, G_FILE_QUERY_INFO_NOFOLLOW_SYMLINKS, NULL) != G_FILE_TYPE_REGULAR) {
+				g_object_unref(G_OBJECT(file));
+				file = NULL;
+				regular_file = FALSE;
+			}
+		} else {
+			regular_file = FALSE;
+		}
+	}
+	if (!document && regular_file) {
 		document = g_slice_alloc0(sizeof(cdocument));
 		document->handler = handler;
 		document->encoding = NULL;
@@ -298,8 +311,7 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 		g_signal_connect(document->source_buffer, "changed", G_CALLBACK(source_buffer_changed), handler);
 		g_signal_connect(document->source_buffer, "modified-changed", G_CALLBACK(source_buffer_changed), handler);
 		document->source_file = gtk_source_file_new();
-		if (file_name) {
-			file = g_file_new_for_path(file_name);
+		if (file) {
 			content_type = g_content_type_guess(file_name, NULL, 0, &result_uncertain);
 			if (result_uncertain) {
 				g_free(content_type);
@@ -322,10 +334,13 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 				document,
 				NULL,
 				document_async_ready,
-				document);
+				document);	
 		}
 		gtk_source_completion_words_register(handler->search_and_replace.source_completion_words, GTK_TEXT_BUFFER(document->source_buffer));
 		handler->documents = g_list_append(handler->documents, document);
+	}
+	if (file_name && !regular_file) {
+		g_log(NULL, G_LOG_LEVEL_WARNING, "The file \"%s\" is invalid.", file_name);
 	}
 	return document;
 }

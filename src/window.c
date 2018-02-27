@@ -84,7 +84,9 @@ void window_new(gpointer user_data)
 {
 	chandler *handler = user_data;
 	cdocument *document = new_document(handler, NULL);
-	document_add_view(handler, document);
+	if (document) {
+		document_add_view(handler, document);
+	}
 }
 
 void window_open(gpointer user_data)
@@ -121,7 +123,9 @@ void window_open(gpointer user_data)
 			while (file_name_iter) {
 				gchar *file_name = file_name_iter->data;
 				cdocument *document = new_document(handler, file_name);
-				document_add_view(handler, document);
+				if (document) {
+					document_add_view(handler, document);
+				}
 				g_free(file_name);
 				file_name_iter = file_name_iter->next;
 			}

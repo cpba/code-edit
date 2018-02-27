@@ -99,7 +99,9 @@ void session_open(chandler *handler, csession *session)
 	while (name_iter) {
 		name = name_iter->data;
 		document = new_document(handler, name->str);
-		document_add_view(handler, document);
+		if (document) {
+			document_add_view(handler, document);
+		}
 		name_iter = g_list_next(name_iter);
 	}
 	/* Add folders */
