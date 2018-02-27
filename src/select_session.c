@@ -319,7 +319,7 @@ void select_session_load_sessions(chandler *handler)
 	}
 	/* Default session */
 	children = gtk_container_get_children(GTK_CONTAINER(handler->select_session.list_box));
-	if (length == 0) {
+	if (length < 2) {
 		id = select_session_new_id(handler);
 		select_session_new_session(handler, TEXT_DEFAULT_SESSION_NAME, id, -1);
 		g_free(id);
