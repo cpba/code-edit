@@ -116,11 +116,17 @@ void session_open(chandler *handler, csession *session)
 
 void session_clear(chandler *handler)
 {
+	GList *document_iter = NULL;
 	cview *view = NULL;
 	gtk_tree_store_clear(handler->sidebar.tree_store);
 	while (gtk_notebook_get_n_pages(GTK_NOTEBOOK(handler->session.notebook)) > 0) {
 		view = get_nth_view(handler, 0);
 		view_close(handler, view, FALSE);
+	}
+	document_iter = handler->documents;
+	while (document_iter) {
+		document_free(handler, document_iter->data);
+		document_iter = handler->documents;
 	}
 }
 
