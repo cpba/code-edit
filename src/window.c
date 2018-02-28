@@ -50,7 +50,7 @@ void window_go_to_select_session(gpointer user_data)
 			GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR,
 			GTK_MESSAGE_QUESTION,
 			GTK_BUTTONS_OK_CANCEL,
-			TEXT_CLOSE_TAB_WITHOUT_SAVING_THE_MODIFICATIONS);
+			TEXT_CLOSE_SESSION_WITHOUT_SAVING_THE_MODIFICATIONS);
 		response = gtk_dialog_run(GTK_DIALOG(dialog));
 		if (response != GTK_RESPONSE_OK) {
 			go_to_select_session = FALSE;
@@ -380,7 +380,7 @@ static gboolean window_delete_event(GtkWidget *widget, GdkEvent *event, gpointer
 			GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR,
 			GTK_MESSAGE_QUESTION,
 			GTK_BUTTONS_OK_CANCEL,
-			TEXT_CLOSE_TAB_WITHOUT_SAVING_THE_MODIFICATIONS);
+			TEXT_CLOSE_SESSION_WITHOUT_SAVING_THE_MODIFICATIONS);
 		response = gtk_dialog_run(GTK_DIALOG(dialog));
 		if (response != GTK_RESPONSE_OK) {
 			stop_propagate = TRUE;

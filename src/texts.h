@@ -42,6 +42,7 @@
 #define TEXT_TEXT "<b>Text</b>"
 #define TEXT_THEMING "<b>Theming</b>"
 #define TEXT_CLOSE_TAB_WITHOUT_SAVING_THE_MODIFICATIONS "Close the tab without saving the modifications?"
+#define TEXT_CLOSE_SESSION_WITHOUT_SAVING_THE_MODIFICATIONS "Close the session without saving the modifications and untitled files?"
 #define TEXT_DELETE_FILE_AND_CLOSE_ANY_OPEN_TAB "Delete the selected file and close any tab open?"
 #define TEXT_NOTIFICATION_CREATE_NEW_SESSION_CONFIGURATION "Configuration file created"
 #define TEXT_NEXT "Next"
