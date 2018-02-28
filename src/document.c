@@ -392,6 +392,15 @@ void view_close(chandler *handler, cview *view, gboolean ask)
 	window_update(handler, NULL);
 }
 
+static void scrolled_window_size_allocate(GtkWidget *widget, GdkRectangle *allocation, gpointer user_data)
+{
+	GtkWidget *text_view = gtk_bin_get_child(GTK_BIN(widget));
+	if (allocation->height > 0) {
+		gtk_text_view_set_bottom_margin(GTK_TEXT_VIEW(text_view), allocation->height / 2);
+		gtk_widget_queue_draw(text_view);
+	}
+}
+
 void document_add_view(chandler *handler, cdocument *document)
 {
 	cview *view = NULL;
@@ -431,6 +440,7 @@ void document_add_view(chandler *handler, cdocument *document)
 		gtk_widget_set_vexpand(view->scrolled_window, TRUE);
 		gtk_widget_set_halign(view->scrolled_window, GTK_ALIGN_FILL);
 		gtk_widget_set_valign(view->scrolled_window, GTK_ALIGN_FILL);
+		g_signal_connect(view->scrolled_window, "size-allocate", G_CALLBACK(scrolled_window_size_allocate), handler);
 		view->source_view = gtk_source_view_new_with_buffer(GTK_SOURCE_BUFFER(document->source_buffer));
 		gtk_container_add(GTK_CONTAINER(view->scrolled_window), view->source_view);
 		gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(view->source_view), TRUE);
