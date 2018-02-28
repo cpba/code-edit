@@ -165,9 +165,9 @@ static gboolean switch_show_sidebar_state_set(GtkSwitch *widget, gboolean state,
 {
 	chandler *handler = user_data;
 	if (state) {
-		gtk_widget_show_all(handler->sidebar.overlay);
+		gtk_widget_show_all(handler->sidebar.box);
 	} else {
-		gtk_widget_hide(handler->sidebar.overlay);
+		gtk_widget_hide(handler->sidebar.box);
 	}
 	return FALSE;
 }

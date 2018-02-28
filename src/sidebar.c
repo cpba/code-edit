@@ -600,14 +600,14 @@ void init_sidebar(chandler *handler)
 	GtkCellRenderer *renderer;
 	GtkTreeViewColumn *column;
 	/* Box */
-	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+	handler->sidebar.box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	gtk_paned_pack2(GTK_PANED(handler->session.paned),
-		box,
+		handler->sidebar.box,
 		FALSE,
 		FALSE);
 	/* Search bar */
 	handler->sidebar.search_bar = gtk_search_bar_new();
-	gtk_container_add(GTK_CONTAINER(box), handler->sidebar.search_bar);
+	gtk_container_add(GTK_CONTAINER(handler->sidebar.box), handler->sidebar.search_bar);
 	gtk_widget_set_hexpand(handler->sidebar.search_bar, TRUE);
 	gtk_widget_set_vexpand(handler->sidebar.search_bar, FALSE);
 	gtk_widget_set_halign(handler->sidebar.search_bar, GTK_ALIGN_FILL);
@@ -623,7 +623,7 @@ void init_sidebar(chandler *handler)
 	g_signal_connect(handler->sidebar.search_entry, "search-changed", G_CALLBACK(search_entry_search_changed), handler);
 	/* Overlay */
 	handler->sidebar.overlay = gtk_overlay_new();
-	gtk_container_add(GTK_CONTAINER(box), handler->sidebar.overlay);
+	gtk_container_add(GTK_CONTAINER(handler->sidebar.box), handler->sidebar.overlay);
 	gtk_widget_set_hexpand(handler->sidebar.overlay, TRUE);
 	gtk_widget_set_vexpand(handler->sidebar.overlay, TRUE);
 	gtk_widget_set_halign(handler->sidebar.overlay, GTK_ALIGN_FILL);
