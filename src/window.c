@@ -366,7 +366,14 @@ static gboolean window_key_press_event(GtkWidget *widget, GdkEventKey *event, gp
 		if (stop_propagate) {
 			gtk_widget_hide(handler->header.button_add_session);
 		}
-	}
+	} else if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "session") == 0) {
+		if (gtk_widget_has_focus(handler->sidebar.tree_view)) {
+			stop_propagate = gtk_search_bar_handle_event(GTK_SEARCH_BAR(handler->sidebar.search_bar), (GdkEvent *)event);
+			if (stop_propagate) {
+				gtk_widget_hide(handler->header.button_add_session);
+			}
+		}
+	} 
 	return stop_propagate;
 }
 

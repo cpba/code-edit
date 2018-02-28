@@ -127,6 +127,9 @@ struct chandler {
 		gint iter_search_offset;
 	} session;
 	struct {
+		GtkWidget *search_bar;
+		GtkWidget *search_entry;
+		GList *search_words;
 		GtkWidget *overlay;
 		GtkWidget *box;
 		GtkTreeStore *tree_store;

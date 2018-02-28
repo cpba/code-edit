@@ -500,18 +500,120 @@ static void button_add_folder_to_session_clicked(GtkWidget *widget, gpointer use
 	gtk_widget_destroy(dialog);
 }
 
+static void search_entry_search_stop_search(GtkWidget *widget, gpointer user_data)
+{
+	chandler *handler = user_data;
+	gtk_widget_grab_focus(handler->sidebar.tree_view);
+}
+
+static void search_entry_search_changed(GtkWidget *widget, gpointer user_data)
+{
+	chandler *handler = user_data;
+	gchar *word_tmp = NULL;
+	gchar *word = NULL;
+	gint search_text_len = 0;
+	gchar *word_c = NULL;
+	gchar *word_start = NULL;
+	gsize word_len = 0;
+	gunichar unichar = 0;
+	gchar *search_text = g_strdup_printf("%s ", gtk_entry_get_text(GTK_ENTRY(widget)));
+	GList *word_iter = handler->sidebar.search_words;
+	while (word_iter) {
+		g_free(word_iter->data);
+		word_iter->data = NULL;
+		word_iter = word_iter->next;
+	}
+	g_list_free(handler->sidebar.search_words);
+	handler->sidebar.search_words = NULL;
+	search_text_len = g_utf8_strlen(search_text, -1);
+	word_c = search_text;
+	while (word_c - search_text <= search_text_len) {
+		unichar = g_utf8_get_char(word_c);
+		if (g_unichar_isgraph(unichar)) {
+			if (word_start == NULL) {
+				word_start = word_c;
+				word_len = word_len + 1;
+			} else {
+				word_len = word_len + 1;
+			}
+		} else {
+			if (word_len > 0) {
+				word_tmp = g_malloc(sizeof(gchar) * (word_c - word_start) + 1);
+				word_tmp = g_utf8_strncpy(word_tmp, word_start, word_len);
+				word = g_utf8_strdown(word_tmp, -1);
+				handler->sidebar.search_words = g_list_append(handler->sidebar.search_words, word);
+				g_free(word_tmp);
+			}
+			word_start = NULL;
+			word_len = 0;
+		}
+		word_c = g_utf8_next_char(word_c);
+	}
+	g_free(search_text);
+}
+
+static gboolean tree_view_search_equal(GtkTreeModel *model, gint column, const gchar *key, GtkTreeIter *iter, gpointer user_data)
+{
+	chandler *handler = user_data;
+	GList *word_iter = NULL;
+	gchar *word = NULL;
+	gchar *path_tmp = NULL;
+	gchar *path = NULL;
+	gchar *basename = NULL;
+	gboolean different = FALSE;
+	gtk_tree_model_get(model, iter,
+		2, &path_tmp,
+		-1);
+	if (path_tmp) {
+		path = g_utf8_strdown(path_tmp, -1);
+		basename = g_path_get_basename(path);
+		word_iter = handler->sidebar.search_words;
+		while (word_iter && !different) {
+			word = word_iter->data;
+			if (!g_strstr_len(basename, -1, word)) {
+				/* One of the search words is missing */
+				different = TRUE;
+			}
+			word_iter = word_iter->next;
+		}
+		g_free(basename);
+		g_free(path_tmp);
+		g_free(path);
+	}
+	return different;
+}
+
 void init_sidebar(chandler *handler)
 {
 	GtkWidget *box = NULL;
 	GtkWidget *scrolled_window = NULL;
 	GtkCellRenderer *renderer;
 	GtkTreeViewColumn *column;
-	/* Overlay */
-	handler->sidebar.overlay = gtk_overlay_new();
+	/* Box */
+	box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	gtk_paned_pack2(GTK_PANED(handler->session.paned),
-		handler->sidebar.overlay,
+		box,
 		FALSE,
 		FALSE);
+	/* Search bar */
+	handler->sidebar.search_bar = gtk_search_bar_new();
+	gtk_container_add(GTK_CONTAINER(box), handler->sidebar.search_bar);
+	gtk_widget_set_hexpand(handler->sidebar.search_bar, TRUE);
+	gtk_widget_set_vexpand(handler->sidebar.search_bar, FALSE);
+	gtk_widget_set_halign(handler->sidebar.search_bar, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->sidebar.search_bar, GTK_ALIGN_FILL);
+	handler->sidebar.search_entry = gtk_search_entry_new();
+	gtk_container_add(GTK_CONTAINER(handler->sidebar.search_bar), handler->sidebar.search_entry);
+	gtk_widget_set_hexpand(handler->sidebar.search_entry, FALSE);
+	gtk_widget_set_vexpand(handler->sidebar.search_entry, TRUE);
+	gtk_widget_set_halign(handler->sidebar.search_entry, GTK_ALIGN_FILL);
+	gtk_widget_set_valign(handler->sidebar.search_entry, GTK_ALIGN_CENTER);
+	gtk_search_bar_connect_entry(GTK_SEARCH_BAR(handler->sidebar.search_bar), GTK_ENTRY(handler->sidebar.search_entry));
+	g_signal_connect(handler->sidebar.search_entry, "stop-search", G_CALLBACK(search_entry_search_stop_search), handler);
+	g_signal_connect(handler->sidebar.search_entry, "search-changed", G_CALLBACK(search_entry_search_changed), handler);
+	/* Overlay */
+	handler->sidebar.overlay = gtk_overlay_new();
+	gtk_container_add(GTK_CONTAINER(box), handler->sidebar.overlay);
 	gtk_widget_set_hexpand(handler->sidebar.overlay, TRUE);
 	gtk_widget_set_vexpand(handler->sidebar.overlay, TRUE);
 	gtk_widget_set_halign(handler->sidebar.overlay, GTK_ALIGN_FILL);
@@ -555,6 +657,11 @@ void init_sidebar(chandler *handler)
 	gtk_widget_set_valign(handler->sidebar.tree_view, GTK_ALIGN_FILL);
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(handler->sidebar.tree_view), FALSE);
 	gtk_tree_view_set_search_column(GTK_TREE_VIEW(handler->sidebar.tree_view), 1);
+	gtk_tree_view_set_search_entry(GTK_TREE_VIEW(handler->sidebar.tree_view), GTK_ENTRY(handler->sidebar.search_entry));
+	gtk_tree_view_set_search_equal_func(GTK_TREE_VIEW(handler->sidebar.tree_view),
+		tree_view_search_equal,
+		handler,
+		NULL);
 	g_signal_connect(handler->sidebar.tree_view, "row-expanded", G_CALLBACK(tree_view_row_expanded), handler);
 	g_signal_connect(handler->sidebar.tree_view, "row-collapsed", G_CALLBACK(tree_view_row_collapsed), handler);
 	g_signal_connect(handler->sidebar.tree_view, "row-activated", G_CALLBACK(tree_view_row_activated), handler);
