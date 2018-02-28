@@ -386,6 +386,7 @@ static void search_entry_search_stop_search(GtkWidget *widget, gpointer user_dat
 static void search_entry_search_changed(GtkWidget *widget, gpointer user_data)
 {
 	chandler *handler = user_data;
+	gchar *word_tmp = NULL;
 	gchar *word = NULL;
 	gint search_text_len = 0;
 	gchar *word_c = NULL;
@@ -414,9 +415,11 @@ static void search_entry_search_changed(GtkWidget *widget, gpointer user_data)
 			}
 		} else {
 			if (word_len > 0) {
-				word = g_malloc(sizeof(gchar) * (word_c - word_start) + 1);
-				word = g_utf8_strncpy(word, word_start, word_len);
+				word_tmp = g_malloc(sizeof(gchar) * (word_c - word_start) + 1);
+				word_tmp = g_utf8_strncpy(word_tmp, word_start, word_len);
+				word = g_utf8_strdown(word_tmp, -1);
 				handler->select_session.search_words = g_list_append(handler->select_session.search_words, word);
+				g_free(word_tmp);
 			}
 			word_start = NULL;
 			word_len = 0;
@@ -445,15 +448,18 @@ static gboolean list_box_filter(GtkListBoxRow *row, gpointer user_data)
 	GList *word_iter = NULL;
 	gchar *word = NULL;
 	const gchar *text = NULL;
+	gchar *text_tmp = NULL;
 	word_iter = handler->select_session.search_words;
 	while (word_iter && show) {
 		word = word_iter->data;
 		text = gtk_label_get_text(GTK_LABEL(session->label));
 		if (text) {
-			if (!g_strstr_len(text, -1, word)) {
+			text_tmp = g_utf8_strdown(text, -1);
+			if (!g_strstr_len(text_tmp, -1, word)) {
 				/* One of the search words is missing */
 				show = FALSE;
 			}
+			g_free(text_tmp);
 		}
 		word_iter = word_iter->next;
 	}
