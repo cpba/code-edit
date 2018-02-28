@@ -240,10 +240,10 @@ static gint tree_sortable_compare(GtkTreeModel *tree_model, GtkTreeIter *a, GtkT
 	gint result = 0;
 	gchar *path_a = NULL;
 	gchar *path_b = NULL;
+	gchar *extension_a = NULL;
+	gchar *extension_b = NULL;
 	GFile *file_a = NULL;
 	GFile *file_b = NULL;
-	GFileInfo *file_info_a = NULL;
-	GFileInfo *file_info_b = NULL;
 	gint file_type_a = 0;
 	gint file_type_b = 0;
 	gtk_tree_model_get(tree_model,
@@ -259,19 +259,29 @@ static gint tree_sortable_compare(GtkTreeModel *tree_model, GtkTreeIter *a, GtkT
 		file_b = g_file_new_for_path(path_b);
 	}
 	if (file_a && file_b) {
-		file_info_a = g_file_query_info(file_a, "*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
-		file_info_b = g_file_query_info(file_b, "*", G_FILE_QUERY_INFO_NONE, NULL, NULL);
-		if (file_info_a && file_info_b) {
-			file_type_a = g_file_info_get_file_type(file_info_a);
-			file_type_b = g_file_info_get_file_type(file_info_b);
-			if (file_type_a == file_type_b) {
-				result = g_strcmp0(path_a, path_b);
-			} else {
-				if (file_type_a == G_FILE_TYPE_DIRECTORY) {
-					result = -1;
+		file_type_a = g_file_query_file_type(file_a, G_FILE_QUERY_INFO_NONE, NULL);
+		file_type_b = g_file_query_file_type(file_b, G_FILE_QUERY_INFO_NONE, NULL);
+		if (file_type_a == file_type_b) {
+			extension_a = g_utf8_strrchr(path_a, -1, '.');
+			extension_b = g_utf8_strrchr(path_b, -1, '.');
+			if (extension_a && extension_b) {
+				if (g_strcmp0(extension_a, extension_b) == 0) {
+					result = g_strcmp0(path_a, path_b);
 				} else {
-					result = 1;
+					result = g_strcmp0(extension_a, extension_b);
 				}
+			} else if (extension_a) {
+				result = -1;
+			} else if (extension_b) {
+				result = 1;
+			} else {
+				result = g_strcmp0(path_a, path_b);
+			}
+		} else {
+			if (file_type_a == G_FILE_TYPE_DIRECTORY) {
+				result = -1;
+			} else {
+				result = 1;
 			}
 		}
 	}
