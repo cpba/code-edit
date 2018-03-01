@@ -817,6 +817,5 @@ void init_preferences(chandler *handler)
 	gtk_widget_set_vexpand(handler->preferences.style_scheme_chooser, TRUE);
 	gtk_widget_set_halign(handler->preferences.style_scheme_chooser, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler->preferences.style_scheme_chooser, GTK_ALIGN_FILL);
-	gtk_list_box_set_activate_on_single_click(GTK_LIST_BOX(handler->preferences.style_scheme_chooser), FALSE);
 	g_signal_connect(scrolled_window, "size-allocate", G_CALLBACK(scrolled_window_list_box_highlight_size_allocate), handler);
 }
