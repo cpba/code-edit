@@ -492,5 +492,6 @@ void document_add_view(chandler *handler, cdocument *document)
 		/* Add source completion */
 		source_completion = gtk_source_view_get_completion(GTK_SOURCE_VIEW(view->source_view));
 		gtk_source_completion_add_provider(source_completion, GTK_SOURCE_COMPLETION_PROVIDER(handler->search_and_replace.source_completion_words), NULL);
+		window_update_preferences(handler);
 	}
 }

@@ -154,13 +154,11 @@ static void application_activate(GtkApplication *application, gpointer user_data
 	handler->key_file = g_key_file_new();
 	if (g_get_user_config_dir()) {
 		key_file_path = g_string_new(g_get_user_config_dir());
-		key_file_path = g_string_append(key_file_path, SESSIONS_FILE_NAME);
+		key_file_path = g_string_append(key_file_path, CONFIGURATION_FILE_NAME);
 	}
+	preferences_default(handler);
 	if (key_file_path) {
-		if (!g_key_file_load_from_file(handler->key_file, key_file_path->str, G_KEY_FILE_NONE, NULL)) {
-			g_log(NULL, G_LOG_LEVEL_MESSAGE, "A new configuration file \"%s\" will be created.", key_file_path->str);
-			preferences_default(handler);
-		} else {
+		if (g_key_file_load_from_file(handler->key_file, key_file_path->str, G_KEY_FILE_NONE, NULL)) {
 			preferences_load(handler);
 		}
 		g_string_free(key_file_path, TRUE);

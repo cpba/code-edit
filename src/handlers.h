@@ -25,7 +25,6 @@
 #define PROGRAM_NAME "Code"
 #define PROGRAM_ICON_NAME "text-editor"
 #define CONFIGURATION_FILE_NAME "/code.conf"
-#define SESSIONS_FILE_NAME "/code-sessions.conf"
 #define WINDOW_VIEW_MIN_WIDTH 320
 #define WINDOW_VIEW_MIN_HEIGHT 320
 #define SIDEBAR_TREE_VIEW_MIN_WIDTH 200
@@ -186,7 +185,7 @@ struct chandler {
 		GtkWidget *stack_switcher;
 		GtkWidget *stack;
 		GtkWidget *switch_show_sidebar;
-		GtkWidget *switch_show_status_bar;
+		GtkWidget *switch_show_statusbar;
 		GtkWidget *switch_show_overview_map;
 		GtkWidget *switch_show_line_numbers;
 		GtkWidget *switch_show_grid_pattern;
@@ -206,8 +205,8 @@ struct chandler {
 		GtkWidget *switch_allow_split_words_over_lines;
 		GtkWidget *switch_highlight_current_line;
 		GtkWidget *switch_highlight_matching_brackets;
-		GtkWidget *font_button;
-		GtkWidget *list_box_highlight;
+		GtkWidget *switch_use_monospace_font;
+		GtkWidget *style_scheme_chooser;
 	} preferences;
 	struct {
 		GtkSizeGroup *size_group;
@@ -265,11 +264,13 @@ void session_open(chandler *handler, csession *session);
 void session_clear(chandler *handler);
 
 /* Window */
+void window_update_preferences(chandler *handler);
 void window_update(chandler *handler, cview *view);
 
 /* Actions */
 void window_show_about(chandler *handler);
 void window_quit(chandler *handler);
+void window_go_to_preferences(gpointer user_data);
 void window_go_to_select_session(gpointer user_data);
 void window_go_to_session(gpointer user_data);
 void window_new(gpointer user_data);

@@ -39,6 +39,15 @@ void window_quit(chandler *handler)
 	gtk_window_close(GTK_WINDOW(handler->window.window));
 }
 
+void window_go_to_preferences(gpointer user_data)
+{
+	chandler *handler = user_data;
+	gtk_stack_set_visible_child_name(GTK_STACK(handler->header.stack_session), "preferences");
+	gtk_stack_set_visible_child_name(GTK_STACK(handler->header.stack_extra), "session");
+	gtk_stack_set_visible_child_name(GTK_STACK(handler->window.stack), "preferences");
+	window_update(handler, NULL);
+}
+
 void window_go_to_select_session(gpointer user_data)
 {
 	chandler *handler = user_data;
@@ -74,6 +83,7 @@ void window_go_to_select_session(gpointer user_data)
 void window_go_to_session(gpointer user_data)
 {
 	chandler *handler = user_data;
+	window_update_preferences(handler);
 	gtk_stack_set_visible_child_name(GTK_STACK(handler->header.stack_session), "session");
 	gtk_stack_set_visible_child_name(GTK_STACK(handler->header.stack_extra), "session");
 	gtk_stack_set_visible_child_name(GTK_STACK(handler->window.stack), "session");
@@ -348,6 +358,93 @@ void window_toggle_sidebar(chandler *handler)
 		} else {
 			gtk_switch_set_state(GTK_SWITCH(handler->preferences.switch_show_sidebar), TRUE);
 		}
+		window_update_preferences(handler);
+	}
+}
+
+void window_update_preferences(chandler *handler)
+{
+	cview *view = NULL;
+	GList *view_iter = handler->views;
+	GtkSourceSpaceDrawer *source_space_drawer = NULL;
+	GtkSourceSpaceLocationFlags locations = GTK_SOURCE_SPACE_LOCATION_NONE;
+	GtkSourceSpaceTypeFlags types = GTK_SOURCE_SPACE_TYPE_NONE;
+	if (gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_show_sidebar))) {
+		gtk_widget_show(handler->sidebar.box);
+	} else {
+		gtk_widget_hide(handler->sidebar.box);
+	}
+	if (gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_show_statusbar))) {
+		gtk_widget_show(handler->statusbar.revealer);
+	} else {
+		gtk_widget_hide(handler->statusbar.revealer);
+	}
+	if (gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_show_statusbar))) {
+		gtk_widget_show(handler->statusbar.revealer);
+	} else {
+		gtk_widget_hide(handler->statusbar.revealer);
+	}
+	if (gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_show_newline))) {
+		types = types | GTK_SOURCE_SPACE_TYPE_NEWLINE;
+	}
+	if (gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_show_tabs))) {
+		types = types | GTK_SOURCE_SPACE_TYPE_TAB;
+	}
+	if (gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_show_spaces))) {
+		types = types | GTK_SOURCE_SPACE_TYPE_SPACE;
+	}
+	if (gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_show_non_breaking_space))) {
+		types = types | GTK_SOURCE_SPACE_TYPE_NBSP;
+	}
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_leading_tabs_and_spaces))) {
+		locations = locations | GTK_SOURCE_SPACE_LOCATION_LEADING;
+	}
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_inside_text_tabs_and_spaces))) {
+		locations = locations | GTK_SOURCE_SPACE_LOCATION_INSIDE_TEXT;
+	}
+	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(handler->preferences.toggle_button_show_trailing_tabs_and_spaces))) {
+		locations = locations | GTK_SOURCE_SPACE_LOCATION_TRAILING;
+	}
+	while (view_iter) {
+		view = view_iter->data;
+		gtk_source_view_set_show_line_numbers(GTK_SOURCE_VIEW(view->source_view),
+			gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_show_line_numbers)));
+		gtk_source_view_set_background_pattern(GTK_SOURCE_VIEW(view->source_view),
+			gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_show_grid_pattern)));
+		gtk_source_view_set_show_right_margin(GTK_SOURCE_VIEW(view->source_view),
+			gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_show_right_margin)));
+		gtk_source_view_set_right_margin_position(GTK_SOURCE_VIEW(view->source_view),
+			gtk_spin_button_get_value(GTK_SPIN_BUTTON(handler->preferences.spin_button_right_margin_position)));
+		gtk_source_view_set_auto_indent(GTK_SOURCE_VIEW(view->source_view),
+			gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_automatic_indentation)));
+		source_space_drawer = gtk_source_view_get_space_drawer(GTK_SOURCE_VIEW(view->source_view));
+		gtk_source_space_drawer_set_matrix(source_space_drawer, NULL);
+		gtk_source_space_drawer_set_types_for_locations(source_space_drawer,
+			locations,
+			types);
+		gtk_source_space_drawer_set_enable_matrix(source_space_drawer, TRUE);
+		gtk_source_view_set_insert_spaces_instead_of_tabs(GTK_SOURCE_VIEW(view->source_view),
+			gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_insert_spaces_instead_of_tabs)));
+		gtk_source_view_set_tab_width(GTK_SOURCE_VIEW(view->source_view),
+			gtk_spin_button_get_value(GTK_SPIN_BUTTON(handler->preferences.spin_button_tab_width)));
+		if (gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_allow_text_wrapping))) {
+			if (gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_allow_split_words_over_lines))) {
+				gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(view->source_view), GTK_WRAP_CHAR);
+			} else {
+				gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(view->source_view), GTK_WRAP_WORD);
+			}
+		} else {
+			gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(view->source_view), GTK_WRAP_NONE);
+		}
+		gtk_source_view_set_highlight_current_line(GTK_SOURCE_VIEW(view->source_view),
+			gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_highlight_current_line)));
+		gtk_source_buffer_set_highlight_matching_brackets(GTK_SOURCE_BUFFER(view->document->source_buffer),
+			gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_highlight_matching_brackets)));
+		gtk_text_view_set_monospace(GTK_TEXT_VIEW(view->source_view),
+			gtk_switch_get_active(GTK_SWITCH(handler->preferences.switch_use_monospace_font)));
+		gtk_source_buffer_set_style_scheme(GTK_SOURCE_BUFFER(view->document->source_buffer),
+			gtk_source_style_scheme_chooser_get_style_scheme(GTK_SOURCE_STYLE_SCHEME_CHOOSER(handler->preferences.style_scheme_chooser)));
+		view_iter = g_list_next(view_iter);
 	}
 }
 
@@ -388,6 +485,7 @@ static gboolean window_delete_event(GtkWidget *widget, GdkEvent *event, gpointer
 			GTK_MESSAGE_QUESTION,
 			GTK_BUTTONS_OK_CANCEL,
 			TEXT_CLOSE_SESSION_WITHOUT_SAVING_THE_MODIFICATIONS);
+		window_go_to_session(handler);
 		response = gtk_dialog_run(GTK_DIALOG(dialog));
 		if (response != GTK_RESPONSE_OK) {
 			stop_propagate = TRUE;
@@ -405,12 +503,12 @@ static void window_destroy(GtkWidget *widget, gpointer user_data)
 		session_update_lists(handler, handler->current_session);
 	}
 	select_session_save(handler);
+	preferences_save(handler);
 	if (g_get_user_config_dir()) {
 		key_file_path = g_string_new(g_get_user_config_dir());
-		key_file_path = g_string_append(key_file_path, SESSIONS_FILE_NAME);
+		key_file_path = g_string_append(key_file_path, CONFIGURATION_FILE_NAME);
 		g_key_file_save_to_file(handler->key_file, key_file_path->str, NULL);
 	}
-	preferences_save(handler);
 }
 
 void init_window(chandler *handler)

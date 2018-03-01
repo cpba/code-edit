@@ -97,9 +97,9 @@ static void button_preferences_toggled(GtkWidget *widget, gpointer user_data)
 {
 	chandler *handler = user_data;
 	if (gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(widget))) {
-		gtk_stack_set_visible_child_name(GTK_STACK(handler->window.stack), "preferences");
+		window_go_to_preferences(handler);
 	} else {
-		gtk_stack_set_visible_child_name(GTK_STACK(handler->window.stack), "session");
+		window_go_to_session(handler);
 	}
 }
 
@@ -140,7 +140,7 @@ void init_header(chandler *handler)
 	gtk_widget_set_name(handler->header.stack_session, "header_stack_session");
 	gtk_header_bar_pack_start(GTK_HEADER_BAR(handler->header.header_bar), handler->header.stack_session);
 	gtk_stack_set_transition_type(GTK_STACK(handler->header.stack_session), GTK_STACK_TRANSITION_TYPE_NONE);
-	/* Box session */
+	/* Box select session */
 	box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
 	gtk_stack_add_named(GTK_STACK(handler->header.stack_session), box, "select-session");
 	/* Button add session */
@@ -190,6 +190,9 @@ void init_header(chandler *handler)
 	gtk_widget_set_tooltip_text(handler->header.button_save_as_document, TEXT_TOOLTIP_SAVE_AS);
 	gtk_style_context_add_class(gtk_widget_get_style_context(handler->header.button_save_as_document), "circular");
 	g_signal_connect(handler->header.button_save_as_document, "clicked", G_CALLBACK(button_save_as_document_clicked), handler);
+	/* Box preferences */
+	box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
+	gtk_stack_add_named(GTK_STACK(handler->header.stack_session), box, "preferences");
 	/* Stack extra */
 	handler->header.stack_extra = gtk_stack_new();
 	gtk_widget_set_name(handler->header.stack_extra, "header_stack_extra");
