@@ -25,6 +25,7 @@
 #define TEXT_SAVE_AS "Save As"
 #define TEXT_OPEN "Open"
 #define TEXT_NEW "New"
+#define TEXT_PREFERENCES "Preferences"
 #define TEXT_TOOLTIP_NEW "New Document"
 #define TEXT_TOOLTIP_OPEN "Open Document"
 #define TEXT_TOOLTIP_SAVE "Save Document"
