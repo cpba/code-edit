@@ -531,6 +531,7 @@ void init_select_session(chandler *handler)
 	gtk_widget_set_vexpand(handler->select_session.search_bar, FALSE);
 	gtk_widget_set_halign(handler->select_session.search_bar, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler->select_session.search_bar, GTK_ALIGN_FILL);
+	gtk_search_bar_set_show_close_button(GTK_SEARCH_BAR(handler->select_session.search_bar), TRUE);
 	handler->select_session.search_entry = gtk_search_entry_new();
 	gtk_container_add(GTK_CONTAINER(handler->select_session.search_bar), handler->select_session.search_entry);
 	gtk_widget_set_hexpand(handler->select_session.search_entry, FALSE);

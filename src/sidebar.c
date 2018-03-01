@@ -510,7 +510,7 @@ static void button_add_folder_to_session_clicked(GtkWidget *widget, gpointer use
 	gtk_widget_destroy(dialog);
 }
 
-static void search_entry_search_stop_search(GtkWidget *widget, gpointer user_data)
+static void search_entry_stop_search(GtkWidget *widget, gpointer user_data)
 {
 	chandler *handler = user_data;
 	gtk_widget_grab_focus(handler->sidebar.tree_view);
@@ -597,8 +597,8 @@ void init_sidebar(chandler *handler)
 {
 	GtkWidget *box = NULL;
 	GtkWidget *scrolled_window = NULL;
-	GtkCellRenderer *renderer;
-	GtkTreeViewColumn *column;
+	GtkCellRenderer *renderer = NULL;
+	GtkTreeViewColumn *column = NULL;
 	/* Box */
 	handler->sidebar.box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
 	gtk_paned_pack2(GTK_PANED(handler->session.paned),
@@ -612,6 +612,7 @@ void init_sidebar(chandler *handler)
 	gtk_widget_set_vexpand(handler->sidebar.search_bar, FALSE);
 	gtk_widget_set_halign(handler->sidebar.search_bar, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler->sidebar.search_bar, GTK_ALIGN_FILL);
+	gtk_search_bar_set_show_close_button(GTK_SEARCH_BAR(handler->sidebar.search_bar), TRUE);
 	handler->sidebar.search_entry = gtk_search_entry_new();
 	gtk_container_add(GTK_CONTAINER(handler->sidebar.search_bar), handler->sidebar.search_entry);
 	gtk_widget_set_hexpand(handler->sidebar.search_entry, FALSE);
@@ -619,7 +620,7 @@ void init_sidebar(chandler *handler)
 	gtk_widget_set_halign(handler->sidebar.search_entry, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler->sidebar.search_entry, GTK_ALIGN_CENTER);
 	gtk_search_bar_connect_entry(GTK_SEARCH_BAR(handler->sidebar.search_bar), GTK_ENTRY(handler->sidebar.search_entry));
-	g_signal_connect(handler->sidebar.search_entry, "stop-search", G_CALLBACK(search_entry_search_stop_search), handler);
+	g_signal_connect(handler->sidebar.search_entry, "stop-search", G_CALLBACK(search_entry_stop_search), handler);
 	g_signal_connect(handler->sidebar.search_entry, "search-changed", G_CALLBACK(search_entry_search_changed), handler);
 	/* Overlay */
 	handler->sidebar.overlay = gtk_overlay_new();
