@@ -32,6 +32,7 @@
 #define TEXT_TOOLTIP_PREFERENCES "Preferences"
 #define TEXT_TOOLTIP_ADD_SESSION "Create New Session"
 #define TEXT_TOOLTIP_SELECT_SESSION "Return to Select Session"
+#define TEXT_OPEN_TEMPORARY_SESSION "Open Temporary Session"
 #define TEXT_SESSION_NAME "Session Name"
 #define TEXT_DELETE_SESSION "Delete Session"
 #define TEXT_SELECT_SESSION_NO_SEARCH_RESULT "<i>The search didn't return any result</i>"

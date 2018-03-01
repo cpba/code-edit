@@ -93,7 +93,6 @@ void session_open(chandler *handler, csession *session)
 	GString *name = NULL;
 	GList *name_iter = NULL;
 	cdocument *document = NULL;
-	session_clear(handler);
 	/* Add views */
 	name_iter = session->view_file_names;
 	while (name_iter) {

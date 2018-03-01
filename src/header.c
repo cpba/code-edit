@@ -103,6 +103,13 @@ static void button_preferences_toggled(GtkWidget *widget, gpointer user_data)
 	}
 }
 
+static void button_open_temporary_session_clicked(GtkWidget *widget, gpointer user_data)
+{
+	chandler *handler = user_data;
+	session_clear(handler);
+	window_go_to_session(handler);
+}
+
 static void button_add_session_clicked(GtkWidget *widget, gpointer user_data)
 {
 	chandler *handler = user_data;
@@ -192,6 +199,11 @@ void init_header(chandler *handler)
 	/* Box select-session */
 	box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
 	gtk_stack_add_named(GTK_STACK(handler->header.stack_extra), box, "select-session");
+	/* Button open temporary session */
+	handler->header.button_open_temporary_session = gtk_button_new_with_label(TEXT_OPEN_TEMPORARY_SESSION);
+	gtk_widget_set_name(handler->header.button_open_temporary_session, "button_open_temporary_session");
+	gtk_container_add(GTK_CONTAINER(box), handler->header.button_open_temporary_session);
+	g_signal_connect(handler->header.button_open_temporary_session, "clicked", G_CALLBACK(button_open_temporary_session_clicked), handler);
 	/* Box session */
 	box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, MEDIUM_SPACING);
 	gtk_stack_add_named(GTK_STACK(handler->header.stack_extra), box, "session");

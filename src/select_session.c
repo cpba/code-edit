@@ -326,9 +326,13 @@ void select_session_load_sessions(chandler *handler)
 	}
 	g_list_free(children);
 	if (current_session_id) {
+		session_clear(handler);
 		session_open(handler, current_session);
 		window_go_to_session(handler);
 		g_free(current_session_id);
+	} else {
+		session_clear(handler);
+		window_go_to_session(handler);
 	}
 }
 
@@ -435,6 +439,7 @@ static void list_box_sessions_row_activated(GtkWidget *widget, GtkListBoxRow *ro
 	chandler *handler = user_data;
 	GtkWidget *child = gtk_bin_get_child(GTK_BIN(row));
 	csession *session = g_object_get_data(G_OBJECT(child), "session");
+	session_clear(handler);
 	session_open(handler, session);
 	window_go_to_session(handler);
 }
