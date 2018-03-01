@@ -22,11 +22,11 @@
 #include <gtksourceview/gtksource.h>
 #include "texts.h"
 
-#define PROGRAM_NAME "Code"
+#define PROGRAM_NAME "Code Edit"
 #define PROGRAM_ICON_NAME "text-editor"
-#define CONFIGURATION_FILE_NAME "/code.conf"
+#define CONFIGURATION_FILE_NAME "/code-edit.conf"
 #define WINDOW_VIEW_MIN_WIDTH 320
-#define WINDOW_VIEW_MIN_HEIGHT 320
+#define WINDOW_VIEW_MIN_HEIGHT 420
 #define SIDEBAR_TREE_VIEW_MIN_WIDTH 200
 #define LIST_VIEW_MIN_HEIGHT 260
 #define LIST_BOX_SESSIONS_MIN_WIDTH 600

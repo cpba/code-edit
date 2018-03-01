@@ -1,6 +1,6 @@
-# Code
+# Code-edit
 
-Code is a simple code editor for GNU/Linux.
+Code-edit is a simple code editor for GNOME.
 
 ## License
 

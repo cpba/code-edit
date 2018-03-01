@@ -269,6 +269,7 @@ void init_search_and_replace(chandler *handler)
 	gtk_widget_set_vexpand(handler->search_and_replace.button_use_regex, FALSE);
 	gtk_widget_set_halign(handler->search_and_replace.button_use_regex, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler->search_and_replace.button_use_regex, GTK_ALIGN_CENTER);
+	gtk_widget_set_tooltip_text(handler->search_and_replace.button_use_regex, TEXT_TOOLTIP_USE_REGULAR_EXPRESSION);
 	gtk_size_group_add_widget(GTK_SIZE_GROUP(size_group_buttons), handler->search_and_replace.button_use_regex);
 	g_signal_connect(handler->search_and_replace.button_use_regex, "toggled", G_CALLBACK(button_use_regex_toggled), handler);
 	icon = gtk_image_new_from_icon_name("format-text-underline-symbolic", GTK_ICON_SIZE_BUTTON);
@@ -281,6 +282,7 @@ void init_search_and_replace(chandler *handler)
 	gtk_widget_set_vexpand(handler->search_and_replace.button_at_word_boundaries, FALSE);
 	gtk_widget_set_halign(handler->search_and_replace.button_at_word_boundaries, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler->search_and_replace.button_at_word_boundaries, GTK_ALIGN_CENTER);
+	gtk_widget_set_tooltip_text(handler->search_and_replace.button_at_word_boundaries, TEXT_TOOLTIP_AT_WORD_BOUNDARIES);
 	gtk_size_group_add_widget(GTK_SIZE_GROUP(size_group_buttons), handler->search_and_replace.button_at_word_boundaries);
 	g_signal_connect(handler->search_and_replace.button_at_word_boundaries, "toggled", G_CALLBACK(button_at_word_boundaries_toggled), handler);
 	icon = gtk_image_new_from_icon_name("object-flip-horizontal-symbolic", GTK_ICON_SIZE_BUTTON);
@@ -293,6 +295,7 @@ void init_search_and_replace(chandler *handler)
 	gtk_widget_set_vexpand(handler->search_and_replace.button_case_sensitive, FALSE);
 	gtk_widget_set_halign(handler->search_and_replace.button_case_sensitive, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler->search_and_replace.button_case_sensitive, GTK_ALIGN_CENTER);
+	gtk_widget_set_tooltip_text(handler->search_and_replace.button_case_sensitive, TEXT_TOOLTIP_CASE_SENSITIVE);
 	gtk_size_group_add_widget(GTK_SIZE_GROUP(size_group_buttons), handler->search_and_replace.button_case_sensitive);
 	g_signal_connect(handler->search_and_replace.button_case_sensitive, "toggled", G_CALLBACK(button_case_sensitive_toggled), handler);
 	icon = gtk_image_new_from_icon_name("insert-text-symbolic", GTK_ICON_SIZE_BUTTON);
@@ -305,6 +308,7 @@ void init_search_and_replace(chandler *handler)
 	gtk_widget_set_vexpand(handler->search_and_replace.button_wrap_around, FALSE);
 	gtk_widget_set_halign(handler->search_and_replace.button_wrap_around, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(handler->search_and_replace.button_wrap_around, GTK_ALIGN_CENTER);
+	gtk_widget_set_tooltip_text(handler->search_and_replace.button_wrap_around, TEXT_TOOLTIP_WRAP_AROUND);
 	gtk_size_group_add_widget(GTK_SIZE_GROUP(size_group_buttons), handler->search_and_replace.button_wrap_around);
 	g_signal_connect(handler->search_and_replace.button_wrap_around, "toggled", G_CALLBACK(button_wrap_around_toggled), handler);
 	icon = gtk_image_new_from_icon_name("view-wrapped-symbolic", GTK_ICON_SIZE_BUTTON);
