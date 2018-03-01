@@ -25,7 +25,7 @@ gboolean session_has_modified_document(chandler *handler)
 	cdocument *document = NULL;
 	while (document_iter && !has_modified_document) {
 		document = document_iter->data;
-		if (!gtk_source_file_get_location(document->source_file) || gtk_text_buffer_get_modified(GTK_TEXT_BUFFER(document->source_buffer))) {
+		if (gtk_text_buffer_get_modified(GTK_TEXT_BUFFER(document->source_buffer))) {
 			has_modified_document = TRUE;
 		}
 		document_iter = g_list_next(document_iter);
