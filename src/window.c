@@ -499,10 +499,16 @@ static void window_destroy(GtkWidget *widget, gpointer user_data)
 {
 	chandler *handler = user_data;
 	GString *key_file_path = NULL;
+	GList *document_iter = NULL;
 	if (handler->current_session) {
 		session_update_lists(handler, handler->current_session);
 	}
 	select_session_save(handler);
+	document_iter = handler->documents;
+	while (document_iter) {
+		document_free(handler, document_iter->data);
+		document_iter = handler->documents;
+	}
 	preferences_save(handler);
 	if (g_get_user_config_dir()) {
 		key_file_path = g_string_new(g_get_user_config_dir());

@@ -191,16 +191,17 @@ static void document_async_ready(GObject *source_object, GAsyncResult *res, gpoi
 		}
 	}
 	document_update_views(handler, document);
-	window_update(handler, NULL);
 	gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(document->source_buffer), &document->iter_insert);
 	gtk_text_buffer_place_cursor(GTK_TEXT_BUFFER(document->source_buffer), &document->iter_insert);
 }
 
-static void source_buffer_changed(GtkTextBuffer *text_buffer, gpointer user_data)
+static void source_buffer_modified_changed(GtkTextBuffer *text_buffer, gpointer user_data)
 {
 	chandler *handler = user_data;
 	cdocument *document = g_object_get_data(G_OBJECT(text_buffer), "document");
-	document_update_views(handler, document);
+	if (!document->cancellable) {
+		document_update_views(handler, document);
+	}
 }
 
 cdocument *get_document_by_file_name(chandler *handler, gchar *file_name)
@@ -239,6 +240,10 @@ void document_close_views(chandler *handler, cdocument *document)
 void document_free(chandler *handler, cdocument *document)
 {
 	gtk_source_completion_words_unregister(handler->search_and_replace.source_completion_words, GTK_TEXT_BUFFER(document->source_buffer));
+	document_close_views(handler, document);
+	if (document->cancellable) {
+		g_cancellable_cancel(document->cancellable);
+	}
 	if (document->source_file) {
 		g_object_unref(G_OBJECT(document->source_file));
 	}
@@ -308,8 +313,7 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 		document->source_search_context = gtk_source_search_context_new(document->source_buffer, handler->search_and_replace.source_search_settings);
 		document->operation_start = g_date_time_new_now_local();
 		g_object_set_data(G_OBJECT(document->source_buffer), "document", document);
-		g_signal_connect(document->source_buffer, "changed", G_CALLBACK(source_buffer_changed), handler);
-		g_signal_connect(document->source_buffer, "modified-changed", G_CALLBACK(source_buffer_changed), handler);
+		g_signal_connect(document->source_buffer, "modified-changed", G_CALLBACK(source_buffer_modified_changed), handler);
 		document->source_file = gtk_source_file_new();
 		if (file) {
 			content_type = g_content_type_guess(file_name, NULL, 0, &result_uncertain);
@@ -350,14 +354,9 @@ static void button_close_tab_clicked(GtkWidget *widget, gpointer user_data)
 	chandler *handler = user_data;
 	cview *view = g_object_get_data(G_OBJECT(widget), "view");
 	cdocument *document = view->document;
-	if (view->document->cancellable && g_list_length(view->document->views) == 1) {
-		view->document->cancelled = TRUE;
-		g_cancellable_cancel(view->document->cancellable);
-	} else {
-		view_close(handler, view, TRUE);
-		if (!document->views) {
-			document_free(handler, document);
-		}
+	view_close(handler, view, TRUE);
+	if (!document->views) {
+		document_free(handler, document);
 	}
 }
 
