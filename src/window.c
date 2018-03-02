@@ -215,8 +215,8 @@ void window_search_here(chandler *handler)
 {
 	cview *view = get_current_view(handler);
 	gboolean found = FALSE;
-	if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "session") == 0) {
-		if (view) {
+	if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "session") == 0 && view) {
+		if (!view->document->source_file_saver && !view->document->source_file_loader) {
 			found = gtk_source_search_context_forward2(view->document->source_search_context,
 				&view->document->iter_insert,
 				&view->document->search_match_start,
@@ -252,8 +252,8 @@ void window_search_next(chandler *handler)
 	gboolean found = FALSE;
 	GtkTextIter iter_beginning;
 	GtkTextMark *text_mark = NULL;
-	if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "session") == 0) {
-		if (view) {
+	if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "session") == 0 && view) {
+		if (!view->document->source_file_saver && !view->document->source_file_loader) {
 			if (gtk_text_buffer_get_has_selection(GTK_TEXT_BUFFER(view->document->source_buffer))) {
 				text_mark = gtk_text_buffer_get_selection_bound(GTK_TEXT_BUFFER(view->document->source_buffer));
 			} else {
@@ -285,8 +285,8 @@ void window_search_previous(chandler *handler)
 	cview *view = get_current_view(handler);
 	gboolean found = FALSE;
 	GtkTextIter iter_beginning;
-	if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "session") == 0) {
-		if (view) {
+	if (g_strcmp0(gtk_stack_get_visible_child_name(GTK_STACK(handler->window.stack)), "session") == 0 && view) {
+		if (!view->document->source_file_saver && !view->document->source_file_loader) {
 			GtkTextMark *text_mark = gtk_text_buffer_get_insert(GTK_TEXT_BUFFER(view->document->source_buffer));
 			text_mark = gtk_text_buffer_get_insert(GTK_TEXT_BUFFER(view->document->source_buffer));
 			gtk_text_buffer_get_iter_at_mark(GTK_TEXT_BUFFER(view->document->source_buffer), &iter_beginning, text_mark);
