@@ -17,7 +17,7 @@ build:
 	$(CC) -Wall $(CFLAGS) -c file_chooser_save.c
 	$(CC) -Wall $(CFLAGS) -c preferences.c
 	$(CC) -Wall $(CFLAGS) -c main.c
-	$(CC) -Wall -g -o ./code *.o $(LDLIBS)
+	$(CC) -Wall -g -o ./code-edit *.o $(LDLIBS)
 	$(MAKE) clear
 
 clear:
