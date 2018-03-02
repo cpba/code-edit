@@ -45,7 +45,6 @@ struct cdocument {
 	GtkSourceFile *source_file;
 	GDateTime *operation_start;
 	GCancellable *cancellable;
-	gboolean cancelled;
 	GtkSourceFileLoader *source_file_loader;
 	GtkSourceFileSaver *source_file_saver;
 	const GtkSourceEncoding *encoding;

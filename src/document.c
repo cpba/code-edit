@@ -175,20 +175,11 @@ static void document_async_ready(GObject *source_object, GAsyncResult *res, gpoi
 		g_object_unref(G_OBJECT(document->cancellable));
 		document->cancellable = NULL;
 	}
-	if (document->cancelled) {
-		view_iter = g_list_first(document->views);
-		while (view_iter) {
-			view = view_iter->data;
-			view_close(handler, view, FALSE);
-			view_iter = g_list_first(document->views);
-		}
-	} else {
-		view_iter = g_list_first(document->views);
-		while (view_iter) {
-			view = view_iter->data;
-			gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), FALSE);
-			view_iter = g_list_next(view_iter);
-		}
+	view_iter = g_list_first(document->views);
+	while (view_iter) {
+		view = view_iter->data;
+		gtk_revealer_set_reveal_child(GTK_REVEALER(view->revealer_progress_bar), FALSE);
+		view_iter = g_list_next(view_iter);
 	}
 	document_update_views(handler, document);
 	gtk_text_buffer_get_start_iter(GTK_TEXT_BUFFER(document->source_buffer), &document->iter_insert);
@@ -304,7 +295,6 @@ cdocument *new_document(chandler *handler, gchar *file_name)
 		document->source_file_loader = NULL;
 		document->source_file_saver = NULL;
 		document->cancellable = NULL;
-		document->cancelled = FALSE;
 		document->encoding = gtk_source_encoding_get_utf8();
 		document->source_buffer = gtk_source_buffer_new(NULL);
 		g_object_ref(G_OBJECT(document->source_buffer));
@@ -367,7 +357,7 @@ void view_close(chandler *handler, cview *view, gboolean ask)
 	GtkWidget *dialog = NULL;
 	gint views_count = g_list_length(view->document->views);
 	if (ask && views_count == 1) {
-		if (!view->document->cancelled && gtk_text_buffer_get_modified(GTK_TEXT_BUFFER(view->document->source_buffer))) {
+		if (gtk_text_buffer_get_modified(GTK_TEXT_BUFFER(view->document->source_buffer))) {
 			dialog = gtk_message_dialog_new(GTK_WINDOW(handler->window.window),
 				GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT | GTK_DIALOG_USE_HEADER_BAR,
 				GTK_MESSAGE_QUESTION,
@@ -481,16 +471,16 @@ void document_add_view(chandler *handler, cdocument *document)
 		gtk_widget_show_all(handler->session.notebook);
 		gtk_widget_show_all(view->box_tab);
 		gtk_widget_hide(view->spinner);
+		/* Show page */
+		gtk_notebook_set_current_page(GTK_NOTEBOOK(handler->session.notebook), page_index);
+		/* Add source completion */
+		source_completion = gtk_source_view_get_completion(GTK_SOURCE_VIEW(view->source_view));
+		gtk_source_completion_add_provider(source_completion, GTK_SOURCE_COMPLETION_PROVIDER(handler->search_and_replace.source_completion_words), NULL);
 		/* Update document */
 		document->views = g_list_append(document->views, view);
 		handler->views = g_list_append(handler->views, view);
 		document_update_views(handler, document);
-		/* Show page */
-		gtk_notebook_set_current_page(GTK_NOTEBOOK(handler->session.notebook), page_index);
 		window_update(handler, view);
-		/* Add source completion */
-		source_completion = gtk_source_view_get_completion(GTK_SOURCE_VIEW(view->source_view));
-		gtk_source_completion_add_provider(source_completion, GTK_SOURCE_COMPLETION_PROVIDER(handler->search_and_replace.source_completion_words), NULL);
 		window_update_preferences(handler);
 	}
 }
