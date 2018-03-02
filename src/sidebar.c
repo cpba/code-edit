@@ -650,7 +650,7 @@ void init_sidebar(chandler *handler)
 	gtk_widget_set_vexpand(scrolled_window, TRUE);
 	gtk_widget_set_halign(scrolled_window, GTK_ALIGN_FILL);
 	gtk_widget_set_valign(scrolled_window, GTK_ALIGN_FILL);
-	gtk_widget_set_size_request(scrolled_window, SIDEBAR_TREE_VIEW_MIN_WIDTH, -1);
+	gtk_widget_set_size_request(scrolled_window, SIDEBAR_MIN_WIDTH, -1);
 	gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolled_window), GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
 	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(scrolled_window)), GTK_STYLE_CLASS_RIGHT);
 	gtk_style_context_add_class(GTK_STYLE_CONTEXT(gtk_widget_get_style_context(scrolled_window)), GTK_STYLE_CLASS_SIDEBAR);
